@@ -337,6 +337,14 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
 .frozen-textarea:empty::before{content:"________________________________________________________________";color:#bbb;font-weight:400}
 .frozen-checkbox{display:inline-block;font-size:1.2em;color:#1a1612;margin-right:6px;line-height:1;vertical-align:middle}
 
+/* Frozen-input dans les coupons : ligne pleine, pas de pointillé qui dépasse */
+.coupon-body .frozen-input{display:block;width:100%;min-width:0;border:none;border-bottom:1px solid #1a1612;padding:3px 0 2px;font-size:13px;font-weight:600;color:#1a1612;background:transparent;margin-top:1px;line-height:1.4}
+.coupon-body .frozen-input:empty::before{content:"";letter-spacing:0}
+.coupon-body .frozen-textarea{font-size:13px;min-height:32px}
+
+/* Mode export PNG des coupons : ombre retirée + bordure soutenue */
+.coupon-png-export{box-shadow:none!important;border:1.5px solid #1a1612!important;background:#fdfaf4!important}
+
 /* Mode export PNG : reprend le format source du contrat (1050px) avec quelques ajustements pour le rendu */
 .contract-png-export{box-shadow:none!important;border:2px solid #1a1612!important;background:#fdfaf4!important;width:1050px!important;max-width:1050px!important;margin:0!important}
 .contract-png-export .org-locked-msg{display:none!important}
@@ -2267,18 +2275,12 @@ function printCoupon(btn){
 function downloadCouponPng(btn){
   var coupon = btn.closest('.coupon');
   if (!coupon) return;
-  // Cloner pour masquer les boutons d'action
-  var clone = coupon.cloneNode(true);
+  // Utiliser la même transformation input → texte que pour les contrats
+  var clone = freezeContractClone(coupon);
+  clone.classList.add('coupon-png-export');
   Array.from(clone.querySelectorAll('.coupon-actions')).forEach(function(b){ b.remove(); });
-  // Recopier les valeurs des inputs (cloneNode ne copie pas les valeurs saisies)
-  var srcInputs = coupon.querySelectorAll('input');
-  var dstInputs = clone.querySelectorAll('input');
-  srcInputs.forEach(function(s, i){
-    if (dstInputs[i]) dstInputs[i].setAttribute('value', s.value || '');
-  });
-  // Container hors écran pour rendu
   var container = document.createElement('div');
-  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:380px;background:#fdfaf4;padding:20px';
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;background:#fdfaf4;padding:24px';
   container.appendChild(clone);
   document.body.appendChild(container);
   var title = (clone.querySelector('.coupon-title') || {}).textContent || 'bon';
