@@ -13,7 +13,8 @@ a:hover{color:#f5c518}
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(10,14,26,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,212,255,.18);z-index:1000;display:flex;align-items:center;padding:0 20px;gap:10px}
-.nav-logo{font-weight:700;color:#00d4ff;font-size:16px;margin-right:auto;letter-spacing:1px}
+.nav-logo{font-weight:700;color:#00d4ff;font-size:16px;margin-right:auto;letter-spacing:1px;cursor:pointer;transition:opacity .2s}
+.nav-logo:hover{opacity:.75;color:#00d4ff}
 .nav-logo span{color:#f5c518}
 .nav-links{display:flex;gap:6px;flex-wrap:wrap}
 .nav-links a{padding:7px 12px;border-radius:6px;font-size:13px;color:#aabbc8;font-weight:500;transition:all .2s}
@@ -122,7 +123,7 @@ th,td{padding:8px 10px;font-size:12px}
 <body>
 
 <nav class="nav">
-  <div class="nav-logo">⚡ <span>MC</span> MASTER CLASH</div>
+  <a class="nav-logo" href="#top">⚡ <span>MC</span> MASTER CLASH</a>
   <div class="nav-links">
     <a href="#gouv">Gouverneur</a>
     <a href="#regl">Règlement</a>
@@ -132,7 +133,7 @@ th,td{padding:8px 10px;font-size:12px}
   </div>
 </nav>
 
-<header class="hero">
+<header class="hero" id="top">
   <div class="hero-badge">Document officiel — État de San Andreas</div>
   <h1>MASTER CLASH</h1>
   <div class="hero-tagline">« Le savoir ne suffit pas. Il faut vaincre. »</div>
