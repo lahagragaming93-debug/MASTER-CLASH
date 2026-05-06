@@ -248,6 +248,59 @@ th,td{padding:8px 10px;font-size:12px}
   .modal{padding:24px 20px}
   .modal-logo{font-size:20px}
 }
+
+/* ========== SIGNATURE CANVAS ========== */
+.sig-wrap{margin-top:18px}
+.sig-canvas{display:block;width:100%;max-width:100%;height:120px;border:1.5px solid #c4b99a;border-radius:4px;background:#fffefb;cursor:crosshair;touch-action:none;box-shadow:inset 0 1px 3px rgba(0,0,0,.08)}
+.sig-canvas:hover{border-color:#8a7a5a}
+.sig-clear{margin-top:6px;padding:5px 12px;background:#f0e8d4;border:1px solid #c4b99a;border-radius:4px;font-size:10px;color:#5a5048;cursor:pointer;font-family:'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.sig-clear:hover{background:#e4d8b8;color:#1a1612}
+.sig-img{display:block;width:100%;max-width:100%;height:120px;object-fit:contain;border:1.5px solid #c4b99a;border-radius:4px;background:#fffefb}
+
+/* ========== VALIDATE BAR ========== */
+.validate-bar{display:flex;justify-content:center;margin:24px auto 0;max-width:900px;gap:12px;flex-wrap:wrap}
+.validate-btn{padding:14px 28px;background:linear-gradient(135deg,#00d4ff 0%,#f5c518 100%);color:#0a0e1a;border:none;border-radius:10px;font-weight:800;font-size:14px;letter-spacing:1.5px;cursor:pointer;font-family:'Montserrat',sans-serif;text-transform:uppercase;box-shadow:0 6px 20px rgba(0,212,255,.3);transition:transform .15s,box-shadow .15s}
+.validate-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,212,255,.45)}
+.validate-btn:active{transform:translateY(0)}
+
+/* ========== LISTE CONTRATS VALIDÉS ========== */
+.validated-empty{text-align:center;padding:40px 20px;color:#6a7a8a;font-style:italic;background:#0f1420;border:1px dashed rgba(0,212,255,.18);border-radius:10px;max-width:900px;margin:0 auto}
+.validated-list{display:flex;flex-direction:column;gap:12px;max-width:900px;margin:0 auto}
+.validated-item{display:flex;align-items:center;gap:14px;background:#0f1420;border:1px solid rgba(0,212,255,.18);border-left:3px solid #00e676;border-radius:10px;padding:16px 18px;transition:all .2s}
+.validated-item:hover{border-color:#00e676;background:rgba(0,230,118,.04)}
+.vi-icon{font-size:32px;flex-shrink:0}
+.vi-info{flex:1;min-width:0}
+.vi-title{font-weight:700;color:#dce4f0;font-size:15px;margin-bottom:2px}
+.vi-partner{color:#f5c518;font-size:13px;font-weight:600;margin-bottom:2px}
+.vi-date{color:#6a7a8a;font-size:11px;letter-spacing:.5px}
+.vi-actions{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+.vi-btn{padding:7px 12px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.8px;cursor:pointer;font-family:'Montserrat',sans-serif;text-transform:uppercase;border:1px solid;background:transparent;transition:all .15s}
+.vi-btn-view{color:#00d4ff;border-color:rgba(0,212,255,.4)}
+.vi-btn-view:hover{background:rgba(0,212,255,.12);border-color:#00d4ff}
+.vi-btn-print{color:#f5c518;border-color:rgba(245,197,24,.4)}
+.vi-btn-print:hover{background:rgba(245,197,24,.12);border-color:#f5c518}
+.vi-btn-del{color:#ff4757;border-color:rgba(255,71,87,.4)}
+.vi-btn-del:hover{background:rgba(255,71,87,.12);border-color:#ff4757}
+.contract-tab .tab-count{display:inline-block;margin-left:6px;padding:1px 7px;background:rgba(0,230,118,.25);color:#00e676;border-radius:10px;font-size:10px;font-weight:800}
+.contract-tab.active .tab-count{background:rgba(10,14,26,.25);color:#0a0e1a}
+
+/* ========== MODAL VIEW (contrat validé) ========== */
+.modal-overlay.modal-view{align-items:flex-start;padding:30px 20px;overflow-y:auto}
+.modal-view-box{background:#0f1420;border:1px solid rgba(0,212,255,.3);border-radius:14px;max-width:980px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,212,255,.15)}
+.modal-view-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(0,212,255,.18);flex-wrap:wrap}
+.modal-view-head h3{flex:1;color:#00d4ff!important;font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:0}
+.modal-view-content .contract-doc{margin:0 auto;max-width:100%}
+.modal-view-content input,.modal-view-content textarea{pointer-events:none;background:transparent!important;border-bottom:1px solid #c4b99a!important}
+.modal-view-content .sig-clear{display:none}
+
+/* ========== PRINT VALIDATED ========== */
+#print-area{display:none}
+@media print{
+  body.print-validated > *:not(#print-area){display:none!important}
+  body.print-validated #print-area{display:block!important}
+  body.print-validated #print-area .contract-doc{box-shadow:none;border:1px solid #888;max-width:100%;margin:0;padding:24px}
+  .validate-bar,.sig-clear{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -528,7 +581,7 @@ th,td{padding:8px 10px;font-size:12px}
 <!-- ===== SECTION CONTRATS ===== -->
 <section id="contrats">
   <h2 class="section-title">Contrats &amp; Bons Officiels</h2>
-  <div class="section-subtitle">Documents de partenariat — Édition Master Clash 2025</div>
+  <div class="section-subtitle">Documents de partenariat — Édition Master Clash 2026</div>
 
   <div class="contract-tabs">
     <div class="contract-tabs-inner">
@@ -538,6 +591,7 @@ th,td{padding:8px 10px;font-size:12px}
       <button class="contract-tab" data-tab="maze">Maze Event</button>
       <button class="contract-tab" data-tab="mfa">MFA Pilotage</button>
       <button class="contract-tab" data-tab="bons">Bons Officiels</button>
+      <button class="contract-tab" data-tab="archives">📁 Contrats validés <span class="tab-count" id="archives-count">0</span></button>
     </div>
   </div>
 
@@ -555,7 +609,7 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="ct-title">Contrat de Partenariat</div>
           <div class="ct-sub">Secteur Esthétique — Master Clash</div>
           <div class="ct-sub">État de San Andreas</div>
-          <div class="ct-ref">Réf. MC-EST-2025</div>
+          <div class="ct-ref">Réf. MC-EST-2026</div>
           <div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>
         </div>
       </div>
@@ -606,18 +660,19 @@ th,td{padding:8px 10px;font-size:12px}
           <h4>Pour l'Organisateur</h4>
           <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
           <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
-          <div class="sig-line"></div>
+          <div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>
         </div>
         <div class="signature-col">
           <h4>Pour le Partenaire</h4>
           <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
           <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
-          <div class="sig-line"></div>
+          <div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>
         </div>
       </div>
 
-      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-EST-2025 — État de San Andreas</div>
+      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-EST-2026 — État de San Andreas</div>
     </div>
+    <div class="validate-bar"><button class="validate-btn" onclick="validateContract('est')">✓ Valider et archiver le contrat</button></div>
   </div>
 
   <!-- ===== Contrat Garage ===== -->
@@ -634,7 +689,7 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="ct-title">Contrat de Partenariat</div>
           <div class="ct-sub">Secteur Garage — Master Clash</div>
           <div class="ct-sub">État de San Andreas</div>
-          <div class="ct-ref">Réf. MC-GAR-2025</div>
+          <div class="ct-ref">Réf. MC-GAR-2026</div>
           <div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>
         </div>
       </div>
@@ -693,18 +748,19 @@ th,td{padding:8px 10px;font-size:12px}
           <h4>Pour l'Organisateur</h4>
           <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
           <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
-          <div class="sig-line"></div>
+          <div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>
         </div>
         <div class="signature-col">
           <h4>Pour le Partenaire</h4>
           <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
           <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
-          <div class="sig-line"></div>
+          <div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>
         </div>
       </div>
 
-      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-GAR-2025 — État de San Andreas</div>
+      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-GAR-2026 — État de San Andreas</div>
     </div>
+    <div class="validate-bar"><button class="validate-btn" onclick="validateContract('gar')">✓ Valider et archiver le contrat</button></div>
   </div>
 
   <!-- ===== Contrat Restaurant ===== -->
@@ -721,7 +777,7 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="ct-title">Contrat de Partenariat</div>
           <div class="ct-sub">Secteur Restauration — Master Clash</div>
           <div class="ct-sub">État de San Andreas</div>
-          <div class="ct-ref">Réf. MC-RES-2025</div>
+          <div class="ct-ref">Réf. MC-RES-2026</div>
           <div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>
         </div>
       </div>
@@ -781,18 +837,19 @@ th,td{padding:8px 10px;font-size:12px}
           <h4>Pour l'Organisateur</h4>
           <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
           <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
-          <div class="sig-line"></div>
+          <div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>
         </div>
         <div class="signature-col">
           <h4>Pour l'Établissement</h4>
           <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
           <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
-          <div class="sig-line"></div>
+          <div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>
         </div>
       </div>
 
-      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-RES-2025 — État de San Andreas</div>
+      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-RES-2026 — État de San Andreas</div>
     </div>
+    <div class="validate-bar"><button class="validate-btn" onclick="validateContract('res')">✓ Valider et archiver le contrat</button></div>
   </div>
 
   <!-- ===== Contrat Maze Event ===== -->
@@ -809,7 +866,7 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="ct-title">Contrat de Partenariat</div>
           <div class="ct-sub">Maze Event — Expériences Prestige</div>
           <div class="ct-sub">État de San Andreas</div>
-          <div class="ct-ref">Réf. MC-MAZE-2025</div>
+          <div class="ct-ref">Réf. MC-MAZE-2026</div>
           <div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>
         </div>
       </div>
@@ -862,18 +919,19 @@ th,td{padding:8px 10px;font-size:12px}
           <h4>Pour l'Organisateur</h4>
           <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
           <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
-          <div class="sig-line"></div>
+          <div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>
         </div>
         <div class="signature-col">
           <h4>Pour Maze Event</h4>
           <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
           <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
-          <div class="sig-line"></div>
+          <div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>
         </div>
       </div>
 
-      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-MAZE-2025 — État de San Andreas</div>
+      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-MAZE-2026 — État de San Andreas</div>
     </div>
+    <div class="validate-bar"><button class="validate-btn" onclick="validateContract('maze')">✓ Valider et archiver le contrat</button></div>
   </div>
 
   <!-- ===== Contrat MFA ===== -->
@@ -890,7 +948,7 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="ct-title">Contrat de Partenariat</div>
           <div class="ct-sub">MFA — Sport &amp; Performance</div>
           <div class="ct-sub">État de San Andreas</div>
-          <div class="ct-ref">Réf. MC-MFA-2025</div>
+          <div class="ct-ref">Réf. MC-MFA-2026</div>
           <div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>
         </div>
       </div>
@@ -952,18 +1010,19 @@ th,td{padding:8px 10px;font-size:12px}
           <h4>Pour l'Organisateur</h4>
           <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
           <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
-          <div class="sig-line"></div>
+          <div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>
         </div>
         <div class="signature-col">
           <h4>Pour la MFA</h4>
           <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
           <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
-          <div class="sig-line"></div>
+          <div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>
         </div>
       </div>
 
-      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-MFA-2025 — État de San Andreas</div>
+      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-MFA-2026 — État de San Andreas</div>
     </div>
+    <div class="validate-bar"><button class="validate-btn" onclick="validateContract('mfa')">✓ Valider et archiver le contrat</button></div>
   </div>
 
   <!-- ===== Bons Officiels ===== -->
@@ -972,7 +1031,7 @@ th,td{padding:8px 10px;font-size:12px}
     <div class="coupons-grid">
 
       <div class="coupon">
-        <div class="coupon-head"><div class="coupon-icon">💇</div><div><div class="coupon-title">Bon Coiffure</div><div class="coupon-sub">Réf. MC-BON-2025</div></div></div>
+        <div class="coupon-head"><div class="coupon-icon">💇</div><div><div class="coupon-title">Bon Coiffure</div><div class="coupon-sub">Réf. MC-BON-2026</div></div></div>
         <div class="coupon-body">
           <div class="field-label">Valeur</div><input type="text" value="300 $">
           <div class="field-label">Établissement partenaire</div><input type="text" placeholder="Nom du salon">
@@ -985,7 +1044,7 @@ th,td{padding:8px 10px;font-size:12px}
       </div>
 
       <div class="coupon">
-        <div class="coupon-head"><div class="coupon-icon">🔧</div><div><div class="coupon-title">Bon Réparation</div><div class="coupon-sub">Réf. MC-BON-2025</div></div></div>
+        <div class="coupon-head"><div class="coupon-icon">🔧</div><div><div class="coupon-title">Bon Réparation</div><div class="coupon-sub">Réf. MC-BON-2026</div></div></div>
         <div class="coupon-body">
           <div class="field-label">Valeur</div><input type="text" placeholder="$ à compléter">
           <div class="field-label">Établissement partenaire</div><input type="text" placeholder="Nom du garage">
@@ -998,7 +1057,7 @@ th,td{padding:8px 10px;font-size:12px}
       </div>
 
       <div class="coupon">
-        <div class="coupon-head"><div class="coupon-icon">🍽️</div><div><div class="coupon-title">Bon Repas</div><div class="coupon-sub">Réf. MC-BON-2025</div></div></div>
+        <div class="coupon-head"><div class="coupon-icon">🍽️</div><div><div class="coupon-title">Bon Repas</div><div class="coupon-sub">Réf. MC-BON-2026</div></div></div>
         <div class="coupon-body">
           <div class="field-label">Valeur</div><input type="text" value="1 100 $ — 10 menus">
           <div class="field-label">Établissement partenaire</div><input type="text" placeholder="Nom du restaurant">
@@ -1011,7 +1070,7 @@ th,td{padding:8px 10px;font-size:12px}
       </div>
 
       <div class="coupon">
-        <div class="coupon-head"><div class="coupon-icon">💆</div><div><div class="coupon-title">Bon Esthétique</div><div class="coupon-sub">Réf. MC-BON-2025</div></div></div>
+        <div class="coupon-head"><div class="coupon-icon">💆</div><div><div class="coupon-title">Bon Esthétique</div><div class="coupon-sub">Réf. MC-BON-2026</div></div></div>
         <div class="coupon-body">
           <div class="field-label">Valeur</div><input type="text" placeholder="$ à compléter">
           <div class="field-label">Établissement partenaire</div><input type="text" placeholder="Nom du salon">
@@ -1024,7 +1083,7 @@ th,td{padding:8px 10px;font-size:12px}
       </div>
 
       <div class="coupon">
-        <div class="coupon-head"><div class="coupon-icon">🏎️</div><div><div class="coupon-title">Bon Stage Pilotage</div><div class="coupon-sub">Réf. MC-BON-2025 — MFA</div></div></div>
+        <div class="coupon-head"><div class="coupon-icon">🏎️</div><div><div class="coupon-title">Bon Stage Pilotage</div><div class="coupon-sub">Réf. MC-BON-2026 — MFA</div></div></div>
         <div class="coupon-body">
           <div class="field-label">Valeur</div><input type="text" value="1 000 $ — 15 min">
           <div class="field-label">Établissement partenaire</div><input type="text" value="MFA">
@@ -1037,7 +1096,7 @@ th,td{padding:8px 10px;font-size:12px}
       </div>
 
       <div class="coupon">
-        <div class="coupon-head"><div class="coupon-icon">🚁</div><div><div class="coupon-title">Bon Hélicoptère</div><div class="coupon-sub">Réf. MC-BON-2025 — Maze Event</div></div></div>
+        <div class="coupon-head"><div class="coupon-icon">🚁</div><div><div class="coupon-title">Bon Hélicoptère</div><div class="coupon-sub">Réf. MC-BON-2026 — Maze Event</div></div></div>
         <div class="coupon-body">
           <div class="field-label">Valeur</div><input type="text" value="2 000 $ — 15 min">
           <div class="field-label">Établissement partenaire</div><input type="text" value="Maze Event">
@@ -1049,6 +1108,13 @@ th,td{padding:8px 10px;font-size:12px}
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ===== Contrats validés ===== -->
+  <div class="contract-panel" id="panel-archives">
+    <div id="validated-container">
+      <div class="validated-empty">Aucun contrat validé pour le moment.<br>Remplissez un contrat, signez-le et cliquez sur « Valider et archiver ».</div>
     </div>
   </div>
 </section>
@@ -1395,6 +1461,21 @@ th,td{padding:8px 10px;font-size:12px}
   MASTER CLASH — Document officiel — Réservé à l'animateur — État de San Andreas
 </footer>
 
+<!-- ===== ZONE IMPRESSION (pour contrats validés) ===== -->
+<div id="print-area"></div>
+
+<!-- ===== MODAL VIEW (contrat validé) ===== -->
+<div class="modal-overlay modal-view" id="view-modal">
+  <div class="modal-view-box">
+    <div class="modal-view-head">
+      <h3 id="view-modal-title">Contrat validé</h3>
+      <button class="vi-btn vi-btn-print" onclick="printValidated()">🖨 Imprimer</button>
+      <button class="vi-btn vi-btn-view" onclick="closeViewModal()">✕ Fermer</button>
+    </div>
+    <div class="modal-view-content" id="view-modal-content"></div>
+  </div>
+</div>
+
 <!-- ===== MODAL CODE ===== -->
 <div class="modal-overlay" id="mc-modal">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mc-modal-title">
@@ -1414,12 +1495,26 @@ th,td{padding:8px 10px;font-size:12px}
 </div>
 
 <script>
-(function(){
-  var SECRET = 'MASTER2025';
-  var SK = 'mc_unlocked_v1';
-  var unlocked = sessionStorage.getItem(SK) === '1';
-  var pendingTarget = null;
+// ===========================================================
+// MASTER CLASH — Logique : verrou code + contrats + archives
+// ===========================================================
 
+var MC_SECRET = 'MASTER2026';
+var MC_UNLOCK_KEY = 'mc_unlocked_v1';
+var MC_ARCHIVE_KEY = 'mc_archives_v1';
+
+var CONTRACT_LABELS = {
+  est:  { label: 'Contrat Esthétique',     icon: '💆', ref: 'MC-EST-2026'  },
+  gar:  { label: 'Contrat Garage',         icon: '🔧', ref: 'MC-GAR-2026'  },
+  res:  { label: 'Contrat Restaurant',     icon: '🍽️', ref: 'MC-RES-2026'  },
+  maze: { label: 'Contrat Maze Event',     icon: '🚁', ref: 'MC-MAZE-2026' },
+  mfa:  { label: 'Contrat MFA Pilotage',   icon: '🏎️', ref: 'MC-MFA-2026'  }
+};
+
+// ===== VERROU PAR CODE =====
+(function(){
+  var unlocked = localStorage.getItem(MC_UNLOCK_KEY) === '1';
+  var pendingTarget = null;
   var modal = document.getElementById('mc-modal');
   var input = document.getElementById('mc-code-input');
   var err = document.getElementById('mc-code-error');
@@ -1437,7 +1532,6 @@ th,td{padding:8px 10px;font-size:12px}
       });
     }
   }
-
   function openModal(target){
     pendingTarget = target;
     modal.classList.add('active');
@@ -1445,18 +1539,16 @@ th,td{padding:8px 10px;font-size:12px}
     input.value = '';
     setTimeout(function(){ input.focus(); }, 50);
   }
-
   function closeModal(){
     modal.classList.remove('active');
     err.textContent = '';
     input.value = '';
   }
-
   function tryUnlock(){
     var code = (input.value || '').trim().toUpperCase();
-    if (code === SECRET){
+    if (code === MC_SECRET){
       unlocked = true;
-      try { sessionStorage.setItem(SK, '1'); } catch(e){}
+      try { localStorage.setItem(MC_UNLOCK_KEY, '1'); } catch(e){}
       applyUnlockState();
       var t = pendingTarget;
       closeModal();
@@ -1472,52 +1564,285 @@ th,td{padding:8px 10px;font-size:12px}
       input.focus();
     }
   }
-
-  // Liens nav verrouillés
   document.querySelectorAll('.locked-link').forEach(function(link){
     link.addEventListener('click', function(e){
-      if (!unlocked){
-        e.preventDefault();
-        openModal(link.getAttribute('data-section'));
-      }
+      if (!unlocked){ e.preventDefault(); openModal(link.getAttribute('data-section')); }
     });
   });
-
-  // Boutons d'overlay sur sections
   document.querySelectorAll('.lock-overlay').forEach(function(ov){
     ov.addEventListener('click', function(e){
-      if (!unlocked){
-        e.preventDefault();
-        openModal(ov.getAttribute('data-section'));
-      }
+      if (!unlocked){ e.preventDefault(); openModal(ov.getAttribute('data-section')); }
     });
   });
-
   form.addEventListener('submit', function(e){ e.preventDefault(); tryUnlock(); });
   cancelBtn.addEventListener('click', closeModal);
   modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+    var vm = document.getElementById('view-modal');
+    if (e.key === 'Escape' && vm && vm.classList.contains('active')) closeViewModal();
   });
-
   applyUnlockState();
-
-  // ===== Onglets Contrats =====
-  document.querySelectorAll('.contract-tab').forEach(function(tab){
-    tab.addEventListener('click', function(){
-      var target = tab.getAttribute('data-tab');
-      document.querySelectorAll('.contract-tab').forEach(function(t){ t.classList.remove('active'); });
-      document.querySelectorAll('.contract-panel').forEach(function(p){ p.classList.remove('active'); });
-      tab.classList.add('active');
-      var panel = document.getElementById('panel-' + target);
-      if (panel) panel.classList.add('active');
-    });
-  });
 })();
 
-function printActive(){
-  window.print();
+// ===== ONGLETS CONTRATS =====
+document.querySelectorAll('.contract-tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    var target = tab.getAttribute('data-tab');
+    document.querySelectorAll('.contract-tab').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.contract-panel').forEach(function(p){ p.classList.remove('active'); });
+    tab.classList.add('active');
+    var panel = document.getElementById('panel-' + target);
+    if (panel) panel.classList.add('active');
+    if (target === 'archives') renderArchivesList();
+  });
+});
+
+// ===== SIGNATURE CANVAS =====
+function initSigCanvas(canvas){
+  if (canvas.dataset.sigInit) return;
+  canvas.dataset.sigInit = '1';
+  var ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#1a1612';
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  var drawing = false;
+  function pos(e){
+    var r = canvas.getBoundingClientRect();
+    return [
+      (e.clientX - r.left) * (canvas.width / r.width),
+      (e.clientY - r.top) * (canvas.height / r.height)
+    ];
+  }
+  canvas.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    try { canvas.setPointerCapture(e.pointerId); } catch(_){}
+    drawing = true;
+    var p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p[0], p[1]);
+  });
+  canvas.addEventListener('pointermove', function(e){
+    if (!drawing) return;
+    var p = pos(e);
+    ctx.lineTo(p[0], p[1]);
+    ctx.stroke();
+  });
+  canvas.addEventListener('pointerup', function(){ drawing = false; });
+  canvas.addEventListener('pointercancel', function(){ drawing = false; });
+  canvas.addEventListener('pointerleave', function(){ drawing = false; });
 }
+document.querySelectorAll('.sig-canvas').forEach(initSigCanvas);
+
+function clearSig(btn){
+  var wrap = btn.closest('.sig-wrap');
+  if (!wrap) return;
+  var cv = wrap.querySelector('canvas.sig-canvas');
+  if (!cv) return;
+  cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
+}
+function isCanvasBlank(canvas){
+  var ctx = canvas.getContext('2d');
+  var data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  for (var i = 3; i < data.length; i += 4){ if (data[i] !== 0) return false; }
+  return true;
+}
+
+// ===== ARCHIVES =====
+function getArchives(){
+  try { return JSON.parse(localStorage.getItem(MC_ARCHIVE_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function saveArchives(list){
+  localStorage.setItem(MC_ARCHIVE_KEY, JSON.stringify(list));
+  updateArchivesCount();
+}
+function updateArchivesCount(){
+  var c = document.getElementById('archives-count');
+  if (c) c.textContent = getArchives().length;
+}
+
+function validateContract(type){
+  var panel = document.getElementById('panel-' + type);
+  if (!panel) return;
+  var doc = panel.querySelector('.contract-doc');
+  var inputs = Array.from(doc.querySelectorAll('input, textarea'));
+  var canvases = Array.from(doc.querySelectorAll('canvas.sig-canvas'));
+
+  var anySig = canvases.some(function(c){ return !isCanvasBlank(c); });
+  if (!anySig){
+    alert('⚠ Aucune signature détectée.\nVeuillez signer le contrat avant de l\'archiver.');
+    return;
+  }
+
+  // Détecter un nom de partenaire
+  var partnerName = '';
+  inputs.forEach(function(el){
+    if (partnerName) return;
+    var lbl = el.previousElementSibling && el.previousElementSibling.textContent || '';
+    if (el.type === 'text' && el.value && /raison|nom|établissement/i.test(lbl)){
+      partnerName = el.value;
+    }
+  });
+  if (!partnerName){
+    var firstText = inputs.find(function(el){ return el.type === 'text' && el.value; });
+    if (firstText) partnerName = firstText.value;
+  }
+  if (!partnerName) partnerName = '— Partenaire non nommé —';
+
+  var fields = inputs.map(function(el){
+    if (el.type === 'checkbox') return el.checked ? 1 : 0;
+    return el.value || '';
+  });
+  var signatures = canvases.map(function(c){
+    return isCanvasBlank(c) ? '' : c.toDataURL('image/png');
+  });
+
+  var record = {
+    id: 'C' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    type: type,
+    partnerName: partnerName,
+    validatedAt: new Date().toISOString(),
+    fields: fields,
+    signatures: signatures
+  };
+  var list = getArchives();
+  list.unshift(record);
+  saveArchives(list);
+
+  alert('✓ Contrat archivé avec succès !\n\nVous pouvez le retrouver dans l\'onglet « 📁 Contrats validés ».');
+  var archTab = document.querySelector('.contract-tab[data-tab="archives"]');
+  if (archTab) archTab.click();
+}
+
+function escHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
+  });
+}
+function fmtDate(iso){
+  var d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' })
+       + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+}
+function renderArchivesList(){
+  var c = document.getElementById('validated-container');
+  if (!c) return;
+  var list = getArchives();
+  if (list.length === 0){
+    c.innerHTML = '<div class="validated-empty">Aucun contrat validé pour le moment.<br>Remplissez un contrat, signez-le et cliquez sur « Valider et archiver ».</div>';
+    return;
+  }
+  c.innerHTML = '<div class="validated-list">' + list.map(function(r){
+    var meta = CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄', ref: '' };
+    return '<div class="validated-item" data-id="' + escHtml(r.id) + '">'
+      + '<div class="vi-icon">' + meta.icon + '</div>'
+      + '<div class="vi-info">'
+        + '<div class="vi-title">' + escHtml(meta.label) + ' <span style="color:#6a7a8a;font-weight:400;font-size:11px">— ' + escHtml(meta.ref) + '</span></div>'
+        + '<div class="vi-partner">' + escHtml(r.partnerName) + '</div>'
+        + '<div class="vi-date">Validé le ' + fmtDate(r.validatedAt) + '</div>'
+      + '</div>'
+      + '<div class="vi-actions">'
+        + '<button class="vi-btn vi-btn-view" onclick="viewArchive(\'' + r.id + '\')">👁 Voir</button>'
+        + '<button class="vi-btn vi-btn-print" onclick="printArchive(\'' + r.id + '\')">🖨 Imprimer</button>'
+        + '<button class="vi-btn vi-btn-del" onclick="deleteArchive(\'' + r.id + '\')">🗑 Supprimer</button>'
+      + '</div>'
+    + '</div>';
+  }).join('') + '</div>';
+}
+
+function buildArchiveDoc(record){
+  var srcPanel = document.getElementById('panel-' + record.type);
+  if (!srcPanel) return null;
+  var srcDoc = srcPanel.querySelector('.contract-doc');
+  var clone = srcDoc.cloneNode(true);
+  var inputs = Array.from(clone.querySelectorAll('input, textarea'));
+  inputs.forEach(function(el, i){
+    var v = record.fields[i];
+    if (el.type === 'checkbox'){ el.checked = !!v; }
+    else { el.value = v == null ? '' : v; }
+    el.setAttribute('readonly', 'readonly');
+    el.setAttribute('disabled', 'disabled');
+  });
+  var canvases = Array.from(clone.querySelectorAll('canvas.sig-canvas'));
+  canvases.forEach(function(c, i){
+    var dataURL = record.signatures[i];
+    if (dataURL){
+      var img = document.createElement('img');
+      img.src = dataURL;
+      img.className = 'sig-img';
+      c.replaceWith(img);
+    } else {
+      var ph = document.createElement('div');
+      ph.className = 'sig-img';
+      ph.style.cssText = 'display:flex;align-items:center;justify-content:center;color:#aaa;font-style:italic;font-size:11px';
+      ph.textContent = '(non signé)';
+      c.replaceWith(ph);
+    }
+  });
+  Array.from(clone.querySelectorAll('.sig-clear')).forEach(function(b){ b.remove(); });
+  return clone;
+}
+
+function viewArchive(id){
+  var rec = getArchives().find(function(r){ return r.id === id; });
+  if (!rec) return;
+  var meta = CONTRACT_LABELS[rec.type] || { label: rec.type };
+  document.getElementById('view-modal-title').textContent = meta.label + ' — ' + rec.partnerName;
+  var clone = buildArchiveDoc(rec);
+  var content = document.getElementById('view-modal-content');
+  content.innerHTML = '';
+  if (clone) content.appendChild(clone);
+  document.getElementById('view-modal').classList.add('active');
+}
+function closeViewModal(){
+  document.getElementById('view-modal').classList.remove('active');
+  document.getElementById('view-modal-content').innerHTML = '';
+}
+function printValidated(){
+  var content = document.getElementById('view-modal-content');
+  var clone = content.firstElementChild;
+  if (!clone) return;
+  var area = document.getElementById('print-area');
+  area.innerHTML = '';
+  area.appendChild(clone.cloneNode(true));
+  document.body.classList.add('print-validated');
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){
+      document.body.classList.remove('print-validated');
+      area.innerHTML = '';
+    }, 200);
+  }, 80);
+}
+function printArchive(id){
+  var rec = getArchives().find(function(r){ return r.id === id; });
+  if (!rec) return;
+  var clone = buildArchiveDoc(rec);
+  var area = document.getElementById('print-area');
+  area.innerHTML = '';
+  if (clone) area.appendChild(clone);
+  document.body.classList.add('print-validated');
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){
+      document.body.classList.remove('print-validated');
+      area.innerHTML = '';
+    }, 200);
+  }, 80);
+}
+function deleteArchive(id){
+  if (!confirm('Supprimer définitivement ce contrat validé ?')) return;
+  var list = getArchives().filter(function(r){ return r.id !== id; });
+  saveArchives(list);
+  renderArchivesList();
+}
+
+function printActive(){ window.print(); }
+
+updateArchivesCount();
 </script>
 
 </body>
