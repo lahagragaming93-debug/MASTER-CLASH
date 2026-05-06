@@ -230,6 +230,20 @@ th,td{padding:8px 10px;font-size:12px}
 .coupon-btn{padding:5px 10px;background:#0f1420;border:1px solid rgba(0,212,255,.4);color:#00d4ff;border-radius:5px;font-weight:700;font-size:10px;letter-spacing:.8px;cursor:pointer;font-family:'Montserrat',sans-serif;text-transform:uppercase;transition:all .15s}
 .coupon-btn:hover{background:rgba(0,212,255,.12);border-color:#00d4ff}
 
+/* Admin */
+.admin-btn{padding:10px 18px;background:linear-gradient(135deg,#00d4ff 0%,#f5c518 100%);color:#0a0e1a;border:none;border-radius:8px;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;font-family:'Montserrat',sans-serif;text-transform:uppercase;margin-right:8px;margin-top:6px;transition:all .15s}
+.admin-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,212,255,.35)}
+.admin-btn-secondary{background:transparent;color:#00d4ff;border:1px solid rgba(0,212,255,.4)}
+.admin-btn-secondary:hover{background:rgba(0,212,255,.1);border-color:#00d4ff;box-shadow:none}
+.admin-btn-danger{background:#ff4757;color:#fff}
+.admin-btn-danger:hover{background:#ff2c3f;box-shadow:0 4px 14px rgba(255,71,87,.4)}
+.admin-btn-mini{padding:3px 9px;background:transparent;border:1px solid rgba(0,212,255,.3);color:#00d4ff;border-radius:5px;font-weight:600;font-size:10px;cursor:pointer;font-family:'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:.5px;margin-left:6px}
+.admin-btn-mini:hover{background:rgba(0,212,255,.1)}
+#admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:10px}
+.admin-stat{background:#141926;border:1px solid rgba(0,212,255,.15);border-left:3px solid #00d4ff;border-radius:8px;padding:14px}
+.admin-stat-label{font-size:10px;color:#6a7a8a;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.admin-stat-value{font-size:24px;font-weight:800;color:#f5c518;margin-top:4px}
+
 /* PRINT */
 @media print{
   body{background:#fff!important;color:#000!important}
@@ -385,6 +399,7 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
     <a href="#contrats">Contrats</a>
     <a href="#ques" class="locked-link" data-section="ques"><span class="lock-icon">🔒</span>Questions</a>
     <a href="#budget" class="locked-link" data-section="budget"><span class="lock-icon">🔒</span>Budget</a>
+    <a href="#admin" class="locked-link" data-section="admin"><span class="lock-icon">🔧</span>Admin</a>
   </div>
 </nav>
 
@@ -1553,6 +1568,51 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
 </div>
 </section>
 
+<!-- ===== SECTION ADMIN ===== -->
+<section id="admin">
+  <h2 class="section-title">🔧 Administration</h2>
+  <div class="section-subtitle">Réservé à l'organisateur — gestion du code &amp; des archives</div>
+<div class="locked-wrap" data-section="admin">
+<div class="locked-content locked">
+
+  <div class="card card-yellow">
+    <h3 style="margin-top:0">🔑 Code d'accès</h3>
+    <p>Le code actuel protège l'accès aux sections sensibles : Gouverneur, Questions, Budget, Bons, validation des contrats, impression et téléchargement PNG.</p>
+    <p style="font-family:'Courier New',monospace;background:#141926;padding:8px 14px;border-radius:6px;display:inline-block;letter-spacing:3px;color:#f5c518;font-weight:700">Code actuel : <span id="admin-current-code">••••••••</span> <button class="admin-btn-mini" onclick="toggleShowCode()">👁 Afficher</button></p>
+    <div style="margin-top:14px">
+      <button class="admin-btn" onclick="changeSecret()">🔑 Changer le code</button>
+      <button class="admin-btn admin-btn-secondary" onclick="resetSecret()">↺ Restaurer le code par défaut</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">📊 Statistiques</h3>
+    <div id="admin-stats">Chargement…</div>
+    <button class="admin-btn admin-btn-secondary" onclick="refreshAdminStats()">↻ Actualiser</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">🔓 Session de déblocage</h3>
+    <p>Le déblocage actuel est valide tant que le navigateur n'est pas réinitialisé.</p>
+    <button class="admin-btn admin-btn-secondary" onclick="lockAllSections()">🔒 Re-verrouiller toutes les sections</button>
+  </div>
+
+  <div class="card card-red">
+    <h3 style="margin-top:0;color:#ff4757">⚠ Zone dangereuse</h3>
+    <p>Actions irréversibles. À utiliser avec précaution.</p>
+    <button class="admin-btn admin-btn-danger" onclick="clearAllArchives()">🗑 Effacer tous les contrats archivés</button>
+  </div>
+
+</div>
+<div class="lock-overlay" data-section="admin">
+  <div class="lock-big">🔧</div>
+  <div class="lock-msg">Administration</div>
+  <div class="lock-sub">Code requis pour accéder à l'administration</div>
+  <button class="lock-btn">Entrer le code</button>
+</div>
+</div>
+</section>
+
 <footer>
   MASTER CLASH — Document officiel — Réservé à l'animateur — État de San Andreas
 </footer>
@@ -1594,9 +1654,11 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
 // MASTER CLASH — Logique : verrou code + contrats + archives
 // ===========================================================
 
-var MC_SECRET = 'MASTER2026';
+var MC_DEFAULT_SECRET = 'MASTER2026';
+var MC_SECRET_KEY = 'mc_secret_v1';
 var MC_UNLOCK_KEY = 'mc_unlocked_v1';
 var MC_ARCHIVE_KEY = 'mc_archives_v1';
+var MC_SECRET = localStorage.getItem(MC_SECRET_KEY) || MC_DEFAULT_SECRET;
 
 var CONTRACT_LABELS = {
   est:  { label: 'Contrat Esthétique',     icon: '💆', ref: 'MC-EST-2026'  },
@@ -2300,6 +2362,98 @@ function freezeContractClone(doc){
 }
 
 updateArchivesCount();
+
+// ===== ADMIN =====
+var _showCode = false;
+function toggleShowCode(){
+  _showCode = !_showCode;
+  var el = document.getElementById('admin-current-code');
+  if (el) el.textContent = _showCode ? MC_SECRET : '••••••••';
+  var btn = el && el.nextElementSibling;
+  if (btn) btn.textContent = _showCode ? '🙈 Masquer' : '👁 Afficher';
+}
+function changeSecret(){
+  var oldCode = window.prompt('🔑 Étape 1/3 — Saisissez le code actuel :');
+  if (oldCode === null) return;
+  if ((oldCode || '').trim().toUpperCase() !== MC_SECRET){
+    alert('⚠ Code actuel incorrect.');
+    return;
+  }
+  var newCode = window.prompt('🔑 Étape 2/3 — Saisissez le NOUVEAU code (4 caractères minimum, lettres/chiffres) :');
+  if (newCode === null) return;
+  newCode = (newCode || '').trim().toUpperCase();
+  if (newCode.length < 4){
+    alert('⚠ Le code doit faire au moins 4 caractères.');
+    return;
+  }
+  if (!/^[A-Z0-9]+$/.test(newCode)){
+    alert('⚠ Le code ne doit contenir que des lettres et chiffres (sans espaces ni accents).');
+    return;
+  }
+  var confirmCode = window.prompt('🔑 Étape 3/3 — Confirmez le nouveau code :');
+  if (confirmCode === null) return;
+  if ((confirmCode || '').trim().toUpperCase() !== newCode){
+    alert('⚠ Les codes ne correspondent pas. Annulé.');
+    return;
+  }
+  MC_SECRET = newCode;
+  try { localStorage.setItem(MC_SECRET_KEY, newCode); } catch(e){}
+  if (_showCode){
+    var el = document.getElementById('admin-current-code');
+    if (el) el.textContent = MC_SECRET;
+  }
+  alert('✓ Code modifié avec succès.\nNouveau code : ' + newCode);
+}
+function resetSecret(){
+  if (!confirm('Restaurer le code par défaut (' + MC_DEFAULT_SECRET + ') ?')) return;
+  if (!requireOrgCode()) return;
+  MC_SECRET = MC_DEFAULT_SECRET;
+  try { localStorage.removeItem(MC_SECRET_KEY); } catch(e){}
+  if (_showCode){
+    var el = document.getElementById('admin-current-code');
+    if (el) el.textContent = MC_SECRET;
+  }
+  alert('✓ Code restauré au défaut : ' + MC_DEFAULT_SECRET);
+}
+function lockAllSections(){
+  if (!confirm('Re-verrouiller toutes les sections ? Le code devra être ressaisi.')) return;
+  try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+  alert('✓ Sections re-verrouillées. La page va se recharger.');
+  setTimeout(function(){ location.reload(); }, 200);
+}
+function clearAllArchives(){
+  if (!confirm('⚠ ATTENTION\n\nVous êtes sur le point d\'effacer TOUS les contrats archivés (en attente + validés).\n\nCette action est IRRÉVERSIBLE.\n\nContinuer ?')) return;
+  if (!requireOrgCode()) return;
+  try { localStorage.removeItem(MC_ARCHIVE_KEY); } catch(e){}
+  updateArchivesCount();
+  refreshAdminStats();
+  if (document.getElementById('panel-archives').classList.contains('active')) renderArchivesList();
+  alert('✓ Toutes les archives ont été effacées.');
+}
+function refreshAdminStats(){
+  var c = document.getElementById('admin-stats');
+  if (!c) return;
+  var list = getArchives();
+  var pending = list.filter(function(r){ return r.status === 'pending'; }).length;
+  var validated = list.filter(function(r){ return r.status === 'validated'; }).length;
+  var byType = {};
+  list.forEach(function(r){ byType[r.type] = (byType[r.type] || 0) + 1; });
+  var oldest = list.length ? list[list.length - 1].submittedAt || list[list.length - 1].validatedAt : null;
+  var html = ''
+    + '<div class="admin-stat"><div class="admin-stat-label">Total contrats</div><div class="admin-stat-value">' + list.length + '</div></div>'
+    + '<div class="admin-stat" style="border-left-color:#ffab40"><div class="admin-stat-label">⏳ En attente</div><div class="admin-stat-value" style="color:#ffab40">' + pending + '</div></div>'
+    + '<div class="admin-stat" style="border-left-color:#00e676"><div class="admin-stat-label">✓ Validés</div><div class="admin-stat-value" style="color:#00e676">' + validated + '</div></div>';
+  Object.keys(byType).forEach(function(t){
+    var meta = CONTRACT_LABELS[t] || { label: t, icon: '📄' };
+    html += '<div class="admin-stat"><div class="admin-stat-label">' + meta.icon + ' ' + meta.label.replace('Contrat ', '') + '</div><div class="admin-stat-value">' + byType[t] + '</div></div>';
+  });
+  c.innerHTML = html;
+}
+// Refresh stats à chaque ouverture de la section admin
+document.querySelector('a[href="#admin"]').addEventListener('click', function(){
+  setTimeout(refreshAdminStats, 100);
+});
+refreshAdminStats();
 </script>
 
 </body>
