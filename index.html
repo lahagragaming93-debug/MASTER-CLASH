@@ -344,9 +344,13 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
 .contract-png-export .org-locked-msg{display:none!important}
 .contract-png-export .checkbox-line{font-size:9px!important}
 
-/* Mode pending dans modal : signature org dessinable */
+/* Mode pending dans modal : zone Organisateur entièrement éditable */
 .modal-view-content[data-mode="pending"] .signature-col:first-child .sig-canvas{border:2px solid #ffab40!important;background:#fff8e8!important;cursor:crosshair!important;box-shadow:0 0 0 3px rgba(255,171,64,.15)!important;pointer-events:auto!important}
-.modal-view-content[data-mode="pending"] .signature-col:first-child .sig-clear{display:inline-block!important}
+.modal-view-content[data-mode="pending"] .signature-col:first-child .sig-clear{display:inline-block!important;pointer-events:auto!important}
+.modal-view-content[data-mode="pending"] .signature-col:first-child input,
+.modal-view-content[data-mode="pending"] .signature-col:first-child textarea{pointer-events:auto!important;background:#fff8e8!important;cursor:text!important;border-bottom:1px dashed #c8a44a!important;color:#1a1612!important}
+.modal-view-content[data-mode="pending"] .signature-col:first-child input:focus,
+.modal-view-content[data-mode="pending"] .signature-col:first-child textarea:focus{background:rgba(255,171,64,.2)!important;border-bottom-color:#1a1612!important;outline:none}
 .modal-view-content[data-mode="pending"] .signature-col:first-child::before{content:"⚠ Zone de signature à compléter par l'organisateur";display:block;font-size:10px;color:#ffab40;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-family:'Montserrat',sans-serif}
 
 /* ========== MODAL VIEW (contrat validé) ========== */
