@@ -2023,7 +2023,6 @@ var SECTION_PERMS = {
 
 function applyAuthState(){
   var user = getCurrentUser();
-  var navUser = document.getElementById('nav-user');
   var loginBtn = document.getElementById('nav-login-btn');
   var userBox = document.getElementById('nav-user-box');
 
@@ -2040,53 +2039,73 @@ function applyAuthState(){
     userBox.style.display = 'none';
   }
 
-  // Appliquer les permissions sur les sections lockées
-  // gouv, ques, budget, bons, admin → débloquées si l'utilisateur a le droit
-  var protectedSections = [
-    { id: 'gouv', perm: 'gouv' },
-    { id: 'ques', perm: 'ques' },
-    { id: 'budget', perm: 'budget' }
+  // Liste de toutes les sections / panels protégés
+  var protectedItems = [
+    { sectionId: 'gouv', perm: 'gouv', linkSelector: '.nav-links a[href="#gouv"]' },
+    { sectionId: 'ques', perm: 'ques', linkSelector: '.nav-links a[href="#ques"]' },
+    { sectionId: 'budget', perm: 'budget', linkSelector: '.nav-links a[href="#budget"]' }
   ];
-  protectedSections.forEach(function(sec){
-    var section = document.getElementById(sec.id);
+  protectedItems.forEach(function(item){
+    var section = document.getElementById(item.sectionId);
     if (!section) return;
     var content = section.querySelector('.locked-content');
     var overlay = section.querySelector('.lock-overlay');
-    if (!content) return;
-    if (userHasPerm(sec.perm)){
-      content.classList.remove('locked');
-      if (overlay) overlay.style.display = 'none';
+    var hasAccess = userIsAdmin() || userHasPerm(item.perm);
+    if (content){
+      if (hasAccess) content.classList.remove('locked');
+      else content.classList.add('locked');
     }
-    // Sinon : on laisse l'état (peut être débloqué via code admin)
+    if (overlay) overlay.style.display = hasAccess ? 'none' : '';
+    // Mise à jour visuelle du lien dans la nav (retirer le cadenas si accès)
+    var link = document.querySelector(item.linkSelector);
+    if (link){
+      var icon = link.querySelector('.lock-icon');
+      if (hasAccess){
+        if (icon) icon.style.display = 'none';
+        link.classList.remove('locked-link-visual');
+        link.classList.add('access-ok');
+      } else {
+        if (icon) icon.style.display = '';
+        link.classList.remove('access-ok');
+      }
+    }
   });
 
-  // Bons : accessible si perm 'bons'
+  // Bons (panel à l'intérieur de Contrats)
   var bonsPanel = document.getElementById('panel-bons');
   if (bonsPanel){
     var bc = bonsPanel.querySelector('.locked-content');
     var bo = bonsPanel.querySelector('.lock-overlay');
-    if (bc && userHasPerm('bons')){
-      bc.classList.remove('locked');
-      if (bo) bo.style.display = 'none';
+    var bonsAccess = userIsAdmin() || userHasPerm('bons');
+    if (bc){
+      if (bonsAccess) bc.classList.remove('locked');
+      else bc.classList.add('locked');
     }
+    if (bo) bo.style.display = bonsAccess ? 'none' : '';
+    // Mise à jour de l'onglet "🔒 Bons Officiels"
+    var bonsTab = document.querySelector('.contract-tab[data-tab="bons"]');
+    if (bonsTab) bonsTab.innerHTML = bonsAccess ? 'Bons Officiels' : '🔒 Bons Officiels';
   }
 
-  // Admin : seuls les admins voient
+  // Admin
   var adminLink = document.querySelector('.nav-links a[href="#admin"]');
   var adminSection = document.getElementById('admin');
+  var ac = adminSection && adminSection.querySelector('.locked-content');
+  var ao = adminSection && adminSection.querySelector('.lock-overlay');
   if (userIsAdmin()){
-    if (adminLink) adminLink.style.display = '';
-    var ac = adminSection && adminSection.querySelector('.locked-content');
-    var ao = adminSection && adminSection.querySelector('.lock-overlay');
-    if (ac){ ac.classList.remove('locked'); }
-    if (ao){ ao.style.display = 'none'; }
+    if (adminLink){
+      adminLink.style.display = '';
+      var icon = adminLink.querySelector('.lock-icon');
+      if (icon) icon.style.display = 'none';
+    }
+    if (ac) ac.classList.remove('locked');
+    if (ao) ao.style.display = 'none';
     renderUsersList();
   } else {
-    if (adminLink) adminLink.style.display = user ? 'none' : '';
-    // Si user connecté mais pas admin : on masque la section admin
-    if (user && !userIsAdmin()){
-      if (adminLink) adminLink.style.display = 'none';
-    }
+    // Non-admin : on cache complètement l'onglet Admin de la nav (inutile)
+    if (adminLink) adminLink.style.display = 'none';
+    if (ac) ac.classList.add('locked');
+    if (ao) ao.style.display = '';
   }
 }
 
@@ -2189,7 +2208,17 @@ function saveUserFromModal(){
     });
   }
   saveUsers(users);
+  // Si on a édité son propre compte, forcer un reload pour que les nouvelles perms s'appliquent partout
+  var current = getCurrentUser();
+  var editingSelf = _userEditingUsername && current && current.username === _userEditingUsername;
   closeUserModal();
+  if (editingSelf){
+    try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+    mcAlert('✓ Compte modifié.\nLa page va se recharger pour appliquer les changements.', { title: 'Succès' }).then(function(){
+      location.reload();
+    });
+    return;
+  }
   renderUsersList();
   applyAuthState();
   mcAlert('✓ Utilisateur ' + (_userEditingUsername ? 'modifié' : 'créé') + ' avec succès.', { title: 'Succès' });
@@ -2369,14 +2398,19 @@ var CONTRACT_LABELS = {
   }
   document.querySelectorAll('.locked-link').forEach(function(link){
     link.addEventListener('click', function(e){
+      var section = link.getAttribute('data-section');
+      // Si l'utilisateur connecté a la permission ou est admin, laisser passer le clic (scroll vers la section)
+      if (userIsAdmin() || userHasPerm(section)) return;
       e.preventDefault();
-      showAccessDenied(link.getAttribute('data-section'));
+      showAccessDenied(section);
     });
   });
   document.querySelectorAll('.lock-overlay').forEach(function(ov){
     ov.addEventListener('click', function(e){
+      var section = ov.getAttribute('data-section');
+      if (userIsAdmin() || userHasPerm(section)) return;
       e.preventDefault();
-      showAccessDenied(ov.getAttribute('data-section'));
+      showAccessDenied(section);
     });
   });
   // Anciennes fonctions de modale code (conservées pour compatibilité, plus utilisées pour les sections)
