@@ -1907,15 +1907,17 @@ function doLogin(){
     return;
   }
   setSession(user.username);
-  closeLoginModal();
-  applyAuthState();
-  mcAlert('✓ Bienvenue ' + (user.displayName || user.username) + ' !', { title: 'Connexion réussie' });
+  // Reset complet : on retire le déblocage par code et on recharge pour appliquer les perms du nouveau user
+  try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+  location.reload();
 }
 function doLogout(){
   mcConfirm('Voulez-vous vous déconnecter ?', { okText: 'Déconnexion' }).then(function(ok){
     if (!ok) return;
     clearSession();
-    applyAuthState();
+    // Reset complet : retirer aussi le déblocage par code → repartir à l'état "nouvel utilisateur"
+    try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+    location.reload();
   });
 }
 
@@ -1979,10 +1981,24 @@ function doRegister(){
   });
   saveUsers(users);
   setSession(u);
-  closeRegisterModal();
-  applyAuthState();
-  mcAlert('✓ Bienvenue ' + dn + ' !\n\nVotre compte a été créé et vous êtes connecté.\nVous avez accès au Règlement, aux Partenaires et aux Contrats.\n\nPour des accès supplémentaires (Bons, Budget...), contactez l\'organisateur.', { title: 'Compte créé' });
+  try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+  // On stocke un flag temporaire pour afficher le message de bienvenue après le reload
+  try { sessionStorage.setItem('mc_just_registered', dn); } catch(e){}
+  location.reload();
 }
+
+// Au chargement, si on vient de s'inscrire, afficher le message de bienvenue
+(function(){
+  try {
+    var justReg = sessionStorage.getItem('mc_just_registered');
+    if (justReg){
+      sessionStorage.removeItem('mc_just_registered');
+      setTimeout(function(){
+        mcAlert('✓ Bienvenue ' + justReg + ' !\n\nVotre compte a été créé et vous êtes connecté.\nVous avez accès au Règlement, aux Partenaires et aux Contrats.\n\nPour des accès supplémentaires, contactez l\'organisateur.', { title: 'Compte créé' });
+      }, 200);
+    }
+  } catch(e){}
+})();
 
 // ----- PERMISSIONS -----
 function userHasPerm(perm){
