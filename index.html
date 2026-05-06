@@ -16,13 +16,54 @@ a{color:#00d4ff;text-decoration:none}
 a:hover{color:#f5c518}
 
 /* NAV */
-.nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(10,14,26,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,212,255,.18);z-index:1000;display:flex;align-items:center;padding:0 20px;gap:10px}
+.nav{position:fixed;top:0;left:0;right:0;min-height:52px;background:rgba(10,14,26,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,212,255,.18);z-index:1000;display:flex;align-items:center;padding:0 20px;gap:10px;flex-wrap:wrap}
 .nav-logo{font-weight:700;color:#00d4ff;font-size:16px;margin-right:auto;letter-spacing:1px;cursor:pointer;transition:opacity .2s}
 .nav-logo:hover{opacity:.75;color:#00d4ff}
 .nav-logo span{color:#f5c518}
 .nav-links{display:flex;gap:6px;flex-wrap:wrap}
 .nav-links a{padding:7px 12px;border-radius:6px;font-size:13px;color:#aabbc8;font-weight:500;transition:all .2s}
 .nav-links a:hover{background:rgba(0,212,255,.1);color:#00d4ff}
+.nav-user{display:flex;align-items:center;gap:8px;margin-left:6px}
+.nav-login-btn{padding:6px 14px;background:linear-gradient(135deg,#00d4ff 0%,#f5c518 100%);color:#0a0e1a;border:none;border-radius:6px;font-weight:700;font-size:12px;letter-spacing:.8px;cursor:pointer;font-family:inherit;text-transform:uppercase}
+.nav-login-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,212,255,.35)}
+.nav-user-box{display:flex;align-items:center;gap:8px;background:#141926;border:1px solid rgba(0,212,255,.25);border-radius:30px;padding:4px 10px 4px 4px}
+.nav-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#0f1420;border:1px solid rgba(0,212,255,.4)}
+.nav-user-text{display:flex;flex-direction:column;line-height:1.1}
+.nav-username{color:#dce4f0;font-size:12px;font-weight:700}
+.nav-userrole{color:#6a7a8a;font-size:9px;text-transform:uppercase;letter-spacing:.8px}
+.nav-userrole.admin{color:#f5c518}
+.nav-logout-btn{width:26px;height:26px;border-radius:50%;background:transparent;border:1px solid rgba(255,71,87,.4);color:#ff4757;cursor:pointer;font-size:14px;font-family:inherit;font-weight:700;padding:0;display:flex;align-items:center;justify-content:center}
+.nav-logout-btn:hover{background:rgba(255,71,87,.15);border-color:#ff4757}
+
+/* AUTH inputs */
+.auth-label{display:block;font-size:11px;color:#aabbc8;text-transform:uppercase;letter-spacing:1px;margin:14px 0 4px;font-weight:600}
+.auth-input{width:100%;padding:10px 14px;background:#141926;border:1px solid rgba(0,212,255,.25);border-radius:8px;color:#dce4f0;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box}
+.auth-input:focus{border-color:#00d4ff;box-shadow:0 0 0 3px rgba(0,212,255,.15)}
+.avatar-row{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap}
+.avatar-preview{width:60px;height:60px;border-radius:50%;object-fit:cover;background:#141926;border:2px dashed rgba(0,212,255,.3)}
+.perm-line{display:flex;align-items:center;gap:8px;font-size:13px;color:#dce4f0;cursor:pointer;padding:5px 0;font-family:inherit}
+.perm-line input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#00d4ff}
+
+/* USERS LIST (admin) */
+.users-list{display:flex;flex-direction:column;gap:10px}
+.user-item{display:flex;align-items:center;gap:12px;background:#141926;border:1px solid rgba(0,212,255,.18);border-radius:10px;padding:12px}
+.user-item.admin-item{border-left:3px solid #f5c518}
+.user-item-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#0f1420;border:1px solid rgba(0,212,255,.4);flex-shrink:0}
+.user-item-info{flex:1;min-width:0}
+.user-item-name{font-weight:700;color:#dce4f0;font-size:14px}
+.user-item-login{color:#6a7a8a;font-size:11px;letter-spacing:.5px;font-family:'Courier New',monospace}
+.user-item-perms{font-size:10px;color:#00d4ff;margin-top:3px;letter-spacing:.3px}
+.user-item-perms.admin{color:#f5c518;font-weight:700}
+.user-item-actions{display:flex;gap:5px;flex-wrap:wrap}
+.user-item-btn{padding:5px 9px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;font-family:inherit;text-transform:uppercase;border:1px solid;background:transparent}
+.user-item-btn.edit{color:#00d4ff;border-color:rgba(0,212,255,.4)}
+.user-item-btn.edit:hover{background:rgba(0,212,255,.12)}
+.user-item-btn.del{color:#ff4757;border-color:rgba(255,71,87,.4)}
+.user-item-btn.del:hover{background:rgba(255,71,87,.12)}
+
+@media(max-width:900px){
+  .nav-user{margin-left:0;justify-content:center;width:100%;border-top:1px solid rgba(0,212,255,.1);padding-top:6px}
+}
 
 /* HERO */
 .hero{padding:100px 20px 60px;text-align:center;background:radial-gradient(ellipse at center,rgba(0,212,255,.08) 0%,transparent 70%);border-bottom:1px solid rgba(0,212,255,.12)}
@@ -399,6 +440,17 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
     <a href="#ques" class="locked-link" data-section="ques"><span class="lock-icon">🔒</span>Questions</a>
     <a href="#budget" class="locked-link" data-section="budget"><span class="lock-icon">🔒</span>Budget</a>
     <a href="#admin" class="locked-link" data-section="admin"><span class="lock-icon">🔧</span>Admin</a>
+  </div>
+  <div class="nav-user" id="nav-user">
+    <button class="nav-login-btn" id="nav-login-btn" onclick="openLoginModal()">🔐 Connexion</button>
+    <div class="nav-user-box" id="nav-user-box" style="display:none">
+      <img class="nav-avatar" id="nav-avatar" src="" alt="">
+      <div class="nav-user-text">
+        <div class="nav-username" id="nav-username"></div>
+        <div class="nav-userrole" id="nav-userrole"></div>
+      </div>
+      <button class="nav-logout-btn" onclick="doLogout()" title="Déconnexion">⏻</button>
+    </div>
   </div>
 </nav>
 
@@ -1596,6 +1648,13 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
     <button class="admin-btn admin-btn-secondary" onclick="lockAllSections()">🔒 Re-verrouiller toutes les sections</button>
   </div>
 
+  <div class="card">
+    <h3 style="margin-top:0">👥 Comptes utilisateurs</h3>
+    <p>Créez des comptes pour les partenaires/entreprises avec un avatar, un nom d'utilisateur et un mot de passe. Vous pouvez attribuer des droits d'accès personnalisés à chaque compte.</p>
+    <button class="admin-btn" onclick="openUserModal()">➕ Créer un utilisateur</button>
+    <div id="users-list" style="margin-top:14px"></div>
+  </div>
+
   <div class="card card-red">
     <h3 style="margin-top:0;color:#ff4757">⚠ Zone dangereuse</h3>
     <p>Actions irréversibles. À utiliser avec précaution.</p>
@@ -1627,6 +1686,71 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
       <div id="view-modal-actions" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
     <div class="modal-view-content" id="view-modal-content"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL LOGIN ===== -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-logo">⚡ MASTER CLASH</div>
+    <div class="modal-sub">Connexion partenaire</div>
+    <h3>Identifiez-vous</h3>
+    <p>Saisissez vos identifiants fournis par l'organisateur.</p>
+    <form id="login-form" onsubmit="return false" style="text-align:left">
+      <label class="auth-label">Nom d'utilisateur</label>
+      <input type="text" id="login-username" placeholder="ex: vinewood" autocomplete="off" class="auth-input">
+      <label class="auth-label">Mot de passe</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="off" class="auth-input">
+      <div class="modal-error" id="login-error"></div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-secondary" onclick="closeLoginModal()">Annuler</button>
+        <button type="submit" class="modal-btn modal-btn-primary" onclick="doLogin()">Se connecter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL UTILISATEUR (création/édition par admin) ===== -->
+<div class="modal-overlay" id="user-modal" style="align-items:flex-start;padding:30px 20px;overflow-y:auto">
+  <div class="modal" style="max-width:520px;text-align:left">
+    <div class="modal-logo" style="text-align:center">⚡ MASTER CLASH</div>
+    <div class="modal-sub" style="text-align:center" id="user-modal-sub">Créer un utilisateur</div>
+    <h3 id="user-modal-title" style="text-align:center">Nouvel utilisateur</h3>
+    <form id="user-form" onsubmit="return false">
+      <label class="auth-label">Nom d'utilisateur (login)</label>
+      <input type="text" id="user-username" placeholder="ex: vinewood" autocomplete="off" class="auth-input">
+      <label class="auth-label">Nom affiché (entreprise / personne)</label>
+      <input type="text" id="user-displayname" placeholder="ex: Vinewood Salon" autocomplete="off" class="auth-input">
+      <label class="auth-label" id="user-pw-label">Mot de passe</label>
+      <input type="text" id="user-password" placeholder="Mot de passe (visible)" autocomplete="off" class="auth-input">
+      <label class="auth-label">Avatar (image au choix)</label>
+      <div class="avatar-row">
+        <img id="user-avatar-preview" class="avatar-preview" src="" alt="">
+        <input type="file" id="user-avatar-file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+        <button type="button" class="modal-btn modal-btn-secondary" onclick="document.getElementById('user-avatar-file').click()">📷 Choisir une image</button>
+        <button type="button" class="modal-btn modal-btn-secondary" onclick="clearAvatarPreview()">✕</button>
+      </div>
+      <label class="auth-label">Rôle &amp; permissions</label>
+      <div style="background:#141926;padding:12px;border-radius:8px;border:1px solid rgba(0,212,255,.15)">
+        <label class="perm-line"><input type="checkbox" id="user-isadmin"> <strong style="color:#f5c518">👑 Compte ADMIN (tous les droits)</strong></label>
+        <div style="margin:10px 0 6px;font-size:11px;color:#6a7a8a;text-transform:uppercase;letter-spacing:1px">Sections accessibles</div>
+        <label class="perm-line"><input type="checkbox" class="perm-cb" data-perm="regl" checked> Règlement</label>
+        <label class="perm-line"><input type="checkbox" class="perm-cb" data-perm="part" checked> Partenaires</label>
+        <label class="perm-line"><input type="checkbox" class="perm-cb" data-perm="contrats" checked> Contrats (consultation &amp; signature)</label>
+        <label class="perm-line"><input type="checkbox" class="perm-cb" data-perm="gouv"> Dossier Gouverneur</label>
+        <label class="perm-line"><input type="checkbox" class="perm-cb" data-perm="ques"> Banque de Questions</label>
+        <label class="perm-line"><input type="checkbox" class="perm-cb" data-perm="budget"> Budget</label>
+        <label class="perm-line"><input type="checkbox" class="perm-cb" data-perm="bons"> Bons Officiels</label>
+        <div style="margin:10px 0 6px;font-size:11px;color:#6a7a8a;text-transform:uppercase;letter-spacing:1px">Actions privilégiées</div>
+        <label class="perm-line"><input type="checkbox" class="perm-cb" data-perm="validate"> Valider les contrats (signature organisateur)</label>
+        <label class="perm-line"><input type="checkbox" class="perm-cb" data-perm="print"> Imprimer / télécharger PNG</label>
+      </div>
+      <div class="modal-error" id="user-error"></div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-secondary" onclick="closeUserModal()">Annuler</button>
+        <button type="submit" class="modal-btn modal-btn-primary" onclick="saveUserFromModal()">Enregistrer</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -1672,7 +1796,334 @@ var MC_DEFAULT_SECRET = 'MASTER2026';
 var MC_SECRET_KEY = 'mc_secret_v1';
 var MC_UNLOCK_KEY = 'mc_unlocked_v1';
 var MC_ARCHIVE_KEY = 'mc_archives_v1';
+var MC_USERS_KEY = 'mc_users_v1';
+var MC_SESSION_KEY = 'mc_session_v1';
 var MC_SECRET = localStorage.getItem(MC_SECRET_KEY) || MC_DEFAULT_SECRET;
+
+// ===========================================================
+// AUTHENTIFICATION (système RP — pas une vraie sécurité serveur)
+// ===========================================================
+function getUsers(){
+  try { return JSON.parse(localStorage.getItem(MC_USERS_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function saveUsers(list){ localStorage.setItem(MC_USERS_KEY, JSON.stringify(list)); }
+function getCurrentUser(){
+  try {
+    var s = JSON.parse(localStorage.getItem(MC_SESSION_KEY) || 'null');
+    if (!s) return null;
+    var users = getUsers();
+    return users.find(function(u){ return u.username === s.username; }) || null;
+  } catch(e){ return null; }
+}
+function setSession(username){ localStorage.setItem(MC_SESSION_KEY, JSON.stringify({ username: username, loginAt: new Date().toISOString() })); }
+function clearSession(){ localStorage.removeItem(MC_SESSION_KEY); }
+
+// Avatars par défaut (SVG inline data URI)
+function defaultAvatar(name){
+  var initials = (name || '?').trim().slice(0, 2).toUpperCase();
+  var hue = 0;
+  for (var i = 0; i < (name || '').length; i++) hue = (hue + name.charCodeAt(i)) % 360;
+  var bg = 'hsl(' + hue + ',50%,30%)';
+  var fg = 'hsl(' + hue + ',60%,75%)';
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="' + bg + '"/><text x="40" y="50" font-size="34" font-family="Arial" font-weight="bold" fill="' + fg + '" text-anchor="middle">' + initials + '</text></svg>';
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+
+// Initialisation : créer le compte admin BoulaTV au 1er lancement
+function initAdminUser(){
+  var users = getUsers();
+  if (users.length === 0){
+    users.push({
+      username: 'BoulaTV',
+      password: 'BoulaTV2026',
+      displayName: 'BoulaTV (Organisateur)',
+      avatar: defaultAvatar('BT'),
+      isAdmin: true,
+      perms: ['regl','part','contrats','gouv','ques','budget','bons','validate','print'],
+      createdAt: new Date().toISOString()
+    });
+    saveUsers(users);
+  }
+}
+initAdminUser();
+
+// ----- LOGIN -----
+function openLoginModal(){
+  document.getElementById('login-modal').classList.add('active');
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  setTimeout(function(){ document.getElementById('login-username').focus(); }, 60);
+}
+function closeLoginModal(){ document.getElementById('login-modal').classList.remove('active'); }
+function doLogin(){
+  var u = (document.getElementById('login-username').value || '').trim();
+  var p = document.getElementById('login-password').value || '';
+  if (!u || !p){ document.getElementById('login-error').textContent = 'Saisissez votre identifiant et votre mot de passe.'; return; }
+  var users = getUsers();
+  var user = users.find(function(x){ return x.username.toLowerCase() === u.toLowerCase(); });
+  if (!user || user.password !== p){
+    document.getElementById('login-error').textContent = '⚠ Identifiants incorrects.';
+    return;
+  }
+  setSession(user.username);
+  closeLoginModal();
+  applyAuthState();
+  mcAlert('✓ Bienvenue ' + (user.displayName || user.username) + ' !', { title: 'Connexion réussie' });
+}
+function doLogout(){
+  mcConfirm('Voulez-vous vous déconnecter ?', { okText: 'Déconnexion' }).then(function(ok){
+    if (!ok) return;
+    clearSession();
+    applyAuthState();
+  });
+}
+
+// ----- PERMISSIONS -----
+function userHasPerm(perm){
+  var u = getCurrentUser();
+  if (!u) return false;
+  if (u.isAdmin) return true;
+  return (u.perms || []).indexOf(perm) !== -1;
+}
+function userIsAdmin(){
+  var u = getCurrentUser();
+  return !!(u && u.isAdmin);
+}
+
+// Sections : selon les perms du user, on affiche/masque le contenu
+// Sans login : Règlement et Partenaires accessibles en lecture seule
+var SECTION_PERMS = {
+  gouv: 'gouv',
+  ques: 'ques',
+  budget: 'budget',
+  admin: null // admin only via isAdmin
+};
+
+function applyAuthState(){
+  var user = getCurrentUser();
+  var navUser = document.getElementById('nav-user');
+  var loginBtn = document.getElementById('nav-login-btn');
+  var userBox = document.getElementById('nav-user-box');
+
+  if (user){
+    loginBtn.style.display = 'none';
+    userBox.style.display = '';
+    document.getElementById('nav-avatar').src = user.avatar || defaultAvatar(user.displayName || user.username);
+    document.getElementById('nav-username').textContent = user.displayName || user.username;
+    var roleEl = document.getElementById('nav-userrole');
+    roleEl.textContent = user.isAdmin ? '👑 Admin' : 'Partenaire';
+    roleEl.className = 'nav-userrole' + (user.isAdmin ? ' admin' : '');
+  } else {
+    loginBtn.style.display = '';
+    userBox.style.display = 'none';
+  }
+
+  // Appliquer les permissions sur les sections lockées
+  // gouv, ques, budget, bons, admin → débloquées si l'utilisateur a le droit
+  var protectedSections = [
+    { id: 'gouv', perm: 'gouv' },
+    { id: 'ques', perm: 'ques' },
+    { id: 'budget', perm: 'budget' }
+  ];
+  protectedSections.forEach(function(sec){
+    var section = document.getElementById(sec.id);
+    if (!section) return;
+    var content = section.querySelector('.locked-content');
+    var overlay = section.querySelector('.lock-overlay');
+    if (!content) return;
+    if (userHasPerm(sec.perm)){
+      content.classList.remove('locked');
+      if (overlay) overlay.style.display = 'none';
+    }
+    // Sinon : on laisse l'état (peut être débloqué via code admin)
+  });
+
+  // Bons : accessible si perm 'bons'
+  var bonsPanel = document.getElementById('panel-bons');
+  if (bonsPanel){
+    var bc = bonsPanel.querySelector('.locked-content');
+    var bo = bonsPanel.querySelector('.lock-overlay');
+    if (bc && userHasPerm('bons')){
+      bc.classList.remove('locked');
+      if (bo) bo.style.display = 'none';
+    }
+  }
+
+  // Admin : seuls les admins voient
+  var adminLink = document.querySelector('.nav-links a[href="#admin"]');
+  var adminSection = document.getElementById('admin');
+  if (userIsAdmin()){
+    if (adminLink) adminLink.style.display = '';
+    var ac = adminSection && adminSection.querySelector('.locked-content');
+    var ao = adminSection && adminSection.querySelector('.lock-overlay');
+    if (ac){ ac.classList.remove('locked'); }
+    if (ao){ ao.style.display = 'none'; }
+    renderUsersList();
+  } else {
+    if (adminLink) adminLink.style.display = user ? 'none' : '';
+    // Si user connecté mais pas admin : on masque la section admin
+    if (user && !userIsAdmin()){
+      if (adminLink) adminLink.style.display = 'none';
+    }
+  }
+}
+
+// ----- GESTION UTILISATEURS (modale création/édition) -----
+var _userEditingUsername = null;
+var _userAvatarDataURL = '';
+
+function openUserModal(editUsername){
+  _userEditingUsername = editUsername || null;
+  _userAvatarDataURL = '';
+  var modal = document.getElementById('user-modal');
+  document.getElementById('user-error').textContent = '';
+  document.getElementById('user-modal-title').textContent = editUsername ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur';
+  document.getElementById('user-modal-sub').textContent = editUsername ? 'Édition utilisateur' : 'Créer un utilisateur';
+  document.getElementById('user-pw-label').textContent = editUsername ? 'Mot de passe (laisser vide pour ne pas changer)' : 'Mot de passe';
+
+  if (editUsername){
+    var users = getUsers();
+    var u = users.find(function(x){ return x.username === editUsername; });
+    if (!u) return;
+    document.getElementById('user-username').value = u.username;
+    document.getElementById('user-username').disabled = true;
+    document.getElementById('user-displayname').value = u.displayName || '';
+    document.getElementById('user-password').value = '';
+    document.getElementById('user-avatar-preview').src = u.avatar || defaultAvatar(u.displayName || u.username);
+    _userAvatarDataURL = u.avatar || '';
+    document.getElementById('user-isadmin').checked = !!u.isAdmin;
+    document.querySelectorAll('.perm-cb').forEach(function(cb){
+      cb.checked = (u.perms || []).indexOf(cb.dataset.perm) !== -1;
+    });
+  } else {
+    document.getElementById('user-username').value = '';
+    document.getElementById('user-username').disabled = false;
+    document.getElementById('user-displayname').value = '';
+    document.getElementById('user-password').value = '';
+    document.getElementById('user-avatar-preview').src = defaultAvatar('?');
+    document.getElementById('user-isadmin').checked = false;
+    document.querySelectorAll('.perm-cb').forEach(function(cb){
+      cb.checked = ['regl','part','contrats'].indexOf(cb.dataset.perm) !== -1;
+    });
+  }
+  modal.classList.add('active');
+}
+function closeUserModal(){ document.getElementById('user-modal').classList.remove('active'); }
+
+function handleAvatarUpload(ev){
+  var file = ev.target.files[0];
+  if (!file) return;
+  if (file.size > 800 * 1024){
+    mcAlert('⚠ L\'image est trop lourde (max 800 Ko).\nUtilisez une image plus petite.', { title: 'Erreur' });
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    _userAvatarDataURL = e.target.result;
+    document.getElementById('user-avatar-preview').src = _userAvatarDataURL;
+  };
+  reader.readAsDataURL(file);
+}
+function clearAvatarPreview(){
+  _userAvatarDataURL = '';
+  var name = document.getElementById('user-displayname').value || '?';
+  document.getElementById('user-avatar-preview').src = defaultAvatar(name);
+}
+
+function saveUserFromModal(){
+  var username = (document.getElementById('user-username').value || '').trim();
+  var displayName = (document.getElementById('user-displayname').value || '').trim();
+  var password = document.getElementById('user-password').value || '';
+  var isAdmin = document.getElementById('user-isadmin').checked;
+  var perms = Array.from(document.querySelectorAll('.perm-cb')).filter(function(cb){ return cb.checked; }).map(function(cb){ return cb.dataset.perm; });
+  var err = document.getElementById('user-error');
+
+  if (!username){ err.textContent = '⚠ Saisissez un nom d\'utilisateur.'; return; }
+  if (!/^[a-zA-Z0-9._-]+$/.test(username)){ err.textContent = '⚠ Nom d\'utilisateur : lettres, chiffres, points, tirets seulement.'; return; }
+  if (!displayName){ err.textContent = '⚠ Saisissez un nom affiché.'; return; }
+  if (!_userEditingUsername && !password){ err.textContent = '⚠ Saisissez un mot de passe.'; return; }
+  if (password && password.length < 4){ err.textContent = '⚠ Le mot de passe doit faire au moins 4 caractères.'; return; }
+
+  var users = getUsers();
+  if (_userEditingUsername){
+    var idx = users.findIndex(function(x){ return x.username === _userEditingUsername; });
+    if (idx === -1){ err.textContent = 'Utilisateur introuvable.'; return; }
+    users[idx].displayName = displayName;
+    if (password) users[idx].password = password;
+    users[idx].avatar = _userAvatarDataURL || defaultAvatar(displayName);
+    users[idx].isAdmin = isAdmin;
+    users[idx].perms = perms;
+  } else {
+    var exists = users.find(function(x){ return x.username.toLowerCase() === username.toLowerCase(); });
+    if (exists){ err.textContent = '⚠ Ce nom d\'utilisateur existe déjà.'; return; }
+    users.push({
+      username: username,
+      password: password,
+      displayName: displayName,
+      avatar: _userAvatarDataURL || defaultAvatar(displayName),
+      isAdmin: isAdmin,
+      perms: perms,
+      createdAt: new Date().toISOString()
+    });
+  }
+  saveUsers(users);
+  closeUserModal();
+  renderUsersList();
+  applyAuthState();
+  mcAlert('✓ Utilisateur ' + (_userEditingUsername ? 'modifié' : 'créé') + ' avec succès.', { title: 'Succès' });
+}
+
+function deleteUser(username){
+  if (username === 'BoulaTV'){
+    mcAlert('⚠ Le compte BoulaTV ne peut pas être supprimé.', { title: 'Erreur' });
+    return;
+  }
+  mcConfirm('Supprimer le compte « ' + username + ' » ?\n\nCette action est irréversible.', { title: '🗑 Supprimer', okText: 'Supprimer' })
+    .then(function(ok){
+      if (!ok) return;
+      var users = getUsers().filter(function(x){ return x.username !== username; });
+      saveUsers(users);
+      // Si on supprime le user actuellement loggé, déconnecter
+      var current = getCurrentUser();
+      if (current && current.username === username){
+        clearSession();
+        applyAuthState();
+      }
+      renderUsersList();
+      mcAlert('✓ Utilisateur supprimé.', { title: 'Succès' });
+    });
+}
+
+function renderUsersList(){
+  var c = document.getElementById('users-list');
+  if (!c) return;
+  var users = getUsers();
+  if (users.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px">Aucun utilisateur.</div>'; return; }
+  c.innerHTML = '<div class="users-list">' + users.map(function(u){
+    var permsLabel = u.isAdmin ? '👑 ADMIN — tous les droits'
+      : ((u.perms || []).length ? (u.perms || []).join(', ') : 'Aucun droit');
+    return '<div class="user-item' + (u.isAdmin ? ' admin-item' : '') + '">'
+      + '<img class="user-item-avatar" src="' + (u.avatar || defaultAvatar(u.displayName || u.username)) + '" alt="">'
+      + '<div class="user-item-info">'
+        + '<div class="user-item-name">' + escHtml(u.displayName || u.username) + '</div>'
+        + '<div class="user-item-login">@' + escHtml(u.username) + '</div>'
+        + '<div class="user-item-perms' + (u.isAdmin ? ' admin' : '') + '">' + escHtml(permsLabel) + '</div>'
+      + '</div>'
+      + '<div class="user-item-actions">'
+        + '<button class="user-item-btn edit" onclick="openUserModal(\'' + u.username + '\')">✎ Modifier</button>'
+        + (u.username === 'BoulaTV' ? '' : '<button class="user-item-btn del" onclick="deleteUser(\'' + u.username + '\')">🗑</button>')
+      + '</div>'
+    + '</div>';
+  }).join('') + '</div>';
+}
+
+// Init au chargement
+applyAuthState();
+// Login modal : Enter = submit
+document.getElementById('login-password').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
+document.getElementById('login-username').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('login-password').focus(); } });
 
 // ===========================================================
 // DIALOGUE CUSTOM (remplace alert/confirm/prompt — compatible CEF FiveM)
@@ -2329,7 +2780,11 @@ function deleteArchive(id){
 function printActive(){ window.print(); }
 
 // Demande le code organisateur via modale custom (compatible CEF FiveM)
-function requireOrgCode(titleMsg){
+// Si l'utilisateur connecté a la perm "validate" ou est admin, on n'exige pas le code
+function requireOrgCode(titleMsg, requiredPerm){
+  // Bypass : utilisateur connecté avec les droits adéquats
+  var perm = requiredPerm || 'validate';
+  if (userIsAdmin() || userHasPerm(perm)) return Promise.resolve(true);
   return mcPrompt(titleMsg || 'Cette action requiert le code organisateur.', {
     title: '🔒 Code requis',
     inputType: 'password',
