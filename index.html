@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MASTER CLASH — Document officiel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;scroll-padding-top:60px}
@@ -118,6 +121,133 @@ body{font-size:14px}
 .q-text{font-size:14px}
 th,td{padding:8px 10px;font-size:12px}
 }
+
+/* ========== LOCKED SECTIONS ========== */
+.lock-icon{margin-right:3px;font-size:11px}
+.locked-wrap{position:relative}
+.locked-content{position:relative;transition:filter .3s}
+.locked-content.locked{filter:blur(8px);pointer-events:none;user-select:none}
+.lock-overlay{display:none;position:absolute;inset:0;background:rgba(10,14,26,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:50;align-items:center;justify-content:center;flex-direction:column;gap:14px;border-radius:10px;text-align:center;padding:20px;pointer-events:auto;cursor:pointer}
+.locked-content.locked + .lock-overlay,.locked-content.locked ~ .lock-overlay{display:flex}
+.lock-overlay .lock-big{font-size:48px}
+.lock-overlay .lock-msg{color:#f5c518;font-weight:700;font-size:18px;letter-spacing:1px;text-transform:uppercase}
+.lock-overlay .lock-sub{color:#aabbc8;font-size:13px}
+.lock-overlay .lock-btn{padding:10px 22px;background:linear-gradient(135deg,#00d4ff 0%,#f5c518 100%);color:#0a0e1a;border:none;border-radius:8px;font-weight:700;font-size:14px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+
+/* ========== MODAL ========== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal{background:#0f1420;border:1px solid rgba(0,212,255,.3);border-radius:14px;padding:36px 30px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,212,255,.15)}
+.modal-logo{font-weight:800;font-size:24px;letter-spacing:2px;margin-bottom:6px;background:linear-gradient(135deg,#00d4ff 0%,#f5c518 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.modal-sub{color:#6a7a8a;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px}
+.modal h3{color:#dce4f0;font-size:16px;font-weight:600;margin:0 0 8px;color:#dce4f0!important}
+.modal p{color:#aabbc8;font-size:13px;margin-bottom:18px}
+.modal input[type=password]{width:100%;padding:12px 14px;background:#141926;border:1px solid rgba(0,212,255,.3);border-radius:8px;color:#dce4f0;font-size:16px;font-family:'Segoe UI',Tahoma,sans-serif;letter-spacing:3px;text-align:center;outline:none}
+.modal input[type=password]:focus{border-color:#00d4ff;box-shadow:0 0 0 3px rgba(0,212,255,.15)}
+.modal-error{color:#ff4757;font-size:12px;margin-top:10px;min-height:16px;font-weight:600}
+.modal-actions{display:flex;gap:8px;margin-top:18px}
+.modal-btn{flex:1;padding:12px;border:none;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;text-transform:uppercase;font-family:inherit}
+.modal-btn-primary{background:linear-gradient(135deg,#00d4ff 0%,#f5c518 100%);color:#0a0e1a}
+.modal-btn-secondary{background:transparent;color:#aabbc8;border:1px solid rgba(0,212,255,.2)}
+.modal-btn-secondary:hover{color:#00d4ff;border-color:#00d4ff}
+
+/* ========== CONTRATS SECTION ========== */
+#contrats .contract-tabs{position:sticky;top:52px;background:rgba(15,20,32,.95);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:12px 0;margin-bottom:24px;border-bottom:1px solid rgba(0,212,255,.15);z-index:90;overflow-x:auto;white-space:nowrap}
+.contract-tabs-inner{display:inline-flex;gap:8px;padding:0 4px}
+.contract-tab{padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;background:#141926;border:1px solid rgba(0,212,255,.18);color:#aabbc8;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap}
+.contract-tab:hover{background:rgba(0,212,255,.1);color:#00d4ff;border-color:#00d4ff}
+.contract-tab.active{background:linear-gradient(135deg,#00d4ff 0%,#f5c518 100%);color:#0a0e1a;border-color:transparent;font-weight:700}
+
+.contract-panel{display:none}
+.contract-panel.active{display:block}
+
+.contract-doc{background:#fdfaf4;color:#2a2520;border:1px solid #c4b99a;border-radius:6px;padding:36px 40px;margin:0 auto;max-width:900px;font-family:Georgia,'Times New Roman',serif;line-height:1.7;font-size:14px;box-shadow:0 12px 40px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.2)}
+.contract-doc h2,.contract-doc h3,.contract-doc h4,.contract-doc strong{color:#2a2520}
+.contract-doc h2{font-family:'Montserrat',sans-serif;font-size:22px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;color:#1a1612}
+.contract-doc h3{font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#1a1612;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid #c4b99a}
+.contract-doc h4{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;color:#1a1612;margin:14px 0 6px}
+.contract-doc p{color:#2a2520;margin-bottom:10px}
+.contract-doc ul{margin:8px 0 12px 22px;color:#2a2520}
+.contract-doc ul li{margin-bottom:6px;color:#2a2520}
+.contract-doc strong{font-weight:700;color:#1a1612}
+
+.contract-header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;padding-bottom:18px;border-bottom:2px solid #1a1612;margin-bottom:22px;flex-wrap:wrap}
+.contract-logo-block{background:#0a0e1a;border:1.5px solid #c8a44a;border-radius:6px;padding:14px 18px;min-width:200px;text-align:center;font-family:'Montserrat',sans-serif}
+.cl-line1{font-size:18px;font-weight:800;color:#dce4f0;letter-spacing:2px;line-height:1}
+.cl-line1 .bolt{color:#00d4ff;font-weight:900}
+.cl-line2{font-size:18px;font-weight:800;color:#dce4f0;letter-spacing:2px;line-height:1.1;margin-top:2px}
+.cl-line2 .chevron{color:#f5c518;font-weight:900}
+.cl-tag{font-family:Georgia,serif;font-style:italic;font-size:9px;color:#aabbc8;margin-top:6px;letter-spacing:.3px}
+.contract-meta{flex:1;min-width:240px;text-align:right;font-family:'Montserrat',sans-serif}
+.contract-meta .ct-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#1a1612;line-height:1.4}
+.contract-meta .ct-sub{font-size:11px;color:#5a5048;margin-top:3px;font-family:Georgia,serif;font-style:italic}
+.contract-meta .ct-ref{font-size:11px;color:#1a1612;font-weight:700;margin-top:8px;letter-spacing:1px}
+.contract-meta .ct-ed{font-size:11px;color:#5a5048;margin-top:4px}
+
+.contract-doc input[type=text],.contract-doc input[type=number],.contract-doc input[type=date],.contract-doc textarea{font-family:Georgia,serif;font-size:14px;color:#1a1612;background:rgba(196,185,154,.12);border:none;border-bottom:1px dashed #8a7a5a;padding:3px 6px;outline:none;min-width:80px}
+.contract-doc input[type=text]{min-width:160px}
+.contract-doc input[type=number]{width:90px;text-align:right}
+.contract-doc input[type=date]{min-width:140px}
+.contract-doc textarea{display:block;width:100%;min-height:60px;resize:vertical;border:1px dashed #8a7a5a;border-radius:4px;padding:8px;margin-top:4px;background:rgba(196,185,154,.08)}
+.contract-doc input:focus,.contract-doc textarea:focus{background:rgba(245,197,24,.15);border-bottom-color:#1a1612}
+.contract-doc label.checkbox-line{display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin-right:14px;font-size:13px}
+.contract-doc input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:#1a1612}
+
+.contract-doc .field-row{display:flex;flex-wrap:wrap;gap:16px;margin:8px 0}
+.contract-doc .field-row > div{flex:1;min-width:200px}
+.contract-doc .field-label{font-family:'Montserrat',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#5a5048;margin-bottom:3px;font-weight:600}
+
+.signature-block{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:30px;padding-top:18px;border-top:1px solid #c4b99a}
+.signature-col h4{font-family:'Montserrat',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#1a1612;margin-bottom:10px}
+.signature-col .sig-field{margin-bottom:8px}
+.signature-col .sig-field .field-label{margin-bottom:2px}
+.signature-col .sig-line{border-bottom:1px solid #1a1612;height:42px;margin-top:18px;position:relative}
+.signature-col .sig-line::before{content:"Signature";position:absolute;bottom:-14px;left:0;font-size:9px;color:#8a7a5a;font-family:'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:1px}
+
+.contract-footer{margin-top:24px;padding-top:14px;border-top:1px solid #c4b99a;font-size:10px;color:#5a5048;text-align:center;font-family:'Montserrat',sans-serif;letter-spacing:.5px}
+
+.print-bar{display:flex;justify-content:flex-end;margin:0 auto 14px;max-width:900px;gap:8px}
+.print-btn{padding:10px 18px;background:#0f1420;border:1px solid rgba(0,212,255,.3);color:#00d4ff;border-radius:8px;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;font-family:inherit;text-transform:uppercase;transition:all .2s}
+.print-btn:hover{background:rgba(0,212,255,.1);border-color:#00d4ff}
+
+/* BONS */
+.coupons-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;max-width:900px;margin:0 auto}
+.coupon{background:#fdfaf4;color:#2a2520;border:1.5px solid #c4b99a;border-radius:8px;padding:18px;font-family:Georgia,serif;position:relative;page-break-inside:avoid;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.coupon::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#c8a44a,#f5c518,#c8a44a);border-radius:8px 8px 0 0}
+.coupon-head{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px dashed #c4b99a;margin-bottom:10px}
+.coupon-icon{font-size:28px}
+.coupon-title{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#1a1612;line-height:1.2}
+.coupon-sub{font-size:10px;color:#5a5048;font-style:italic}
+.coupon-body{font-size:13px}
+.coupon-body .field-label{font-family:'Montserrat',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#5a5048;margin:6px 0 1px;font-weight:600}
+.coupon-body input{width:100%;background:transparent;border:none;border-bottom:1px dashed #8a7a5a;font-family:Georgia,serif;font-size:13px;color:#1a1612;padding:2px 0;outline:none}
+.coupon-body input:focus{border-bottom-color:#1a1612;background:rgba(245,197,24,.1)}
+.coupon-warn{margin-top:12px;padding:8px;background:rgba(245,197,24,.15);border-left:3px solid #c8a44a;font-size:10px;font-family:'Montserrat',sans-serif;font-weight:600;color:#1a1612;text-transform:uppercase;letter-spacing:.5px}
+.coupon-foot{margin-top:6px;font-size:9px;color:#5a5048;text-align:center;font-style:italic;font-family:Georgia,serif}
+
+/* PRINT */
+@media print{
+  body{background:#fff!important;color:#000!important}
+  .nav,.hero,#gouv,#regl,#part,#ques,#budget,footer,.contract-tabs,.print-bar,.modal-overlay{display:none!important}
+  section#contrats{padding:0;margin:0;max-width:100%}
+  .section-title,.section-subtitle{display:none!important}
+  .contract-panel{display:none!important}
+  .contract-panel.active{display:block!important}
+  .contract-doc{box-shadow:none;border:1px solid #888;max-width:100%;margin:0;padding:24px}
+  .coupons-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .coupon{box-shadow:none;border:1px solid #888;page-break-inside:avoid}
+  @page{size:A4;margin:12mm}
+}
+
+@media(max-width:768px){
+  .contract-doc{padding:22px 18px;font-size:13px}
+  .contract-header{flex-direction:column;align-items:stretch}
+  .contract-meta{text-align:left}
+  .signature-block{grid-template-columns:1fr;gap:20px}
+  #contrats .contract-tabs{top:110px}
+  .modal{padding:24px 20px}
+  .modal-logo{font-size:20px}
+}
 </style>
 </head>
 <body>
@@ -128,8 +258,9 @@ th,td{padding:8px 10px;font-size:12px}
     <a href="#gouv">Gouverneur</a>
     <a href="#regl">Règlement</a>
     <a href="#part">Partenaires</a>
-    <a href="#ques">Questions</a>
-    <a href="#budget">Budget</a>
+    <a href="#contrats">Contrats</a>
+    <a href="#ques" class="locked-link" data-section="ques"><span class="lock-icon">🔒</span>Questions</a>
+    <a href="#budget" class="locked-link" data-section="budget"><span class="lock-icon">🔒</span>Budget</a>
   </div>
 </nav>
 
@@ -394,10 +525,540 @@ th,td{padding:8px 10px;font-size:12px}
   <blockquote>Pour toute demande de partenariat : contactez directement l'équipe organisatrice de MASTER CLASH.</blockquote>
 </section>
 
+<!-- ===== SECTION CONTRATS ===== -->
+<section id="contrats">
+  <h2 class="section-title">Contrats &amp; Bons Officiels</h2>
+  <div class="section-subtitle">Documents de partenariat — Édition Master Clash 2025</div>
+
+  <div class="contract-tabs">
+    <div class="contract-tabs-inner">
+      <button class="contract-tab active" data-tab="est">Esthétique</button>
+      <button class="contract-tab" data-tab="gar">Garage</button>
+      <button class="contract-tab" data-tab="res">Restaurant</button>
+      <button class="contract-tab" data-tab="maze">Maze Event</button>
+      <button class="contract-tab" data-tab="mfa">MFA Pilotage</button>
+      <button class="contract-tab" data-tab="bons">Bons Officiels</button>
+    </div>
+  </div>
+
+  <!-- ===== Contrat Esthétique ===== -->
+  <div class="contract-panel active" id="panel-est">
+    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
+    <div class="contract-doc">
+      <div class="contract-header">
+        <div class="contract-logo-block">
+          <div class="cl-line1"><span class="bolt">⚡</span> MASTER</div>
+          <div class="cl-line2">CL<span class="chevron">▲</span>SH</div>
+          <div class="cl-tag">Le savoir ne suffit pas. Il faut vaincre.</div>
+        </div>
+        <div class="contract-meta">
+          <div class="ct-title">Contrat de Partenariat</div>
+          <div class="ct-sub">Secteur Esthétique — Master Clash</div>
+          <div class="ct-sub">État de San Andreas</div>
+          <div class="ct-ref">Réf. MC-EST-2025</div>
+          <div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>
+        </div>
+      </div>
+
+      <h3>Préambule</h3>
+      <p>Le présent contrat est conclu entre l'Organisation <strong>Master Clash</strong> (ci-après « l'Organisateur ») et le Partenaire ci-après désigné, en vue de la fourniture de prestations esthétiques (coiffure, tatouage, soins) dans le cadre de l'événement Master Clash.</p>
+
+      <h3>Identification du partenaire</h3>
+      <div class="field-row">
+        <div><div class="field-label">Raison sociale</div><input type="text" placeholder="Nom de l'enseigne"></div>
+        <div><div class="field-label">Représentant légal</div><input type="text" placeholder="Nom &amp; prénom"></div>
+      </div>
+      <div class="field-row">
+        <div><div class="field-label">Adresse</div><input type="text" placeholder="Adresse complète"></div>
+        <div><div class="field-label">Contact</div><input type="text" placeholder="Téléphone / email"></div>
+      </div>
+
+      <h3>Article 1 — Engagements du Partenaire</h3>
+      <h4>1.1 Bons de coiffure</h4>
+      <p>Le Partenaire s'engage à fournir <input type="number" placeholder="N"> bons de coiffure d'une valeur unitaire de <input type="number" value="300"> $ chacun.</p>
+      <h4>1.2 Bons de tatouage / esthétique</h4>
+      <p>Le Partenaire s'engage à fournir <input type="number" placeholder="N"> bons d'une valeur unitaire de <input type="number" placeholder="$"> $ chacun.</p>
+      <div class="field-label">Prestation à préciser</div>
+      <textarea placeholder="Détail de la prestation couverte par le bon (ex: tatouage taille moyenne, soin du visage, manucure...)"></textarea>
+      <h4>1.3 Acceptation des bons officiels</h4>
+      <p>Le Partenaire s'engage à <strong>accepter et détruire</strong> les bons officiels Master Clash après chaque utilisation, conformément à la planche officielle annexée.</p>
+      <h4>1.4 Contribution financière (optionnelle)</h4>
+      <p>Contribution financière complémentaire à la production : <input type="number" placeholder="0"> $ — <input type="text" placeholder="Mode de versement"></p>
+
+      <h3>Article 2 — Contreparties offertes par l'Organisateur</h3>
+      <ul>
+        <li>Mention explicite du Partenaire lors de chaque remise de lot esthétique.</li>
+        <li>Visibilité sur l'ensemble des supports de communication officiels de l'événement.</li>
+        <li>Possibilité d'intégrer une question sponsorisée durant la Manche 1 (sur accord).</li>
+        <li>Bilan de visibilité post-événement fourni sur demande.</li>
+      </ul>
+
+      <h3>Article 3 — Conditions générales</h3>
+      <ul>
+        <li>Validité des bons : <input type="text" placeholder="ex: 90 jours après l'événement"></li>
+        <li>Usage unique, non cessible, non échangeable contre du numéraire.</li>
+        <li>Contrat conclu pour <strong>une (1) édition</strong> de Master Clash, renouvelable par avenant écrit.</li>
+        <li>Tout litige sera tranché à l'amiable, à défaut par les juridictions compétentes de San Andreas.</li>
+      </ul>
+
+      <div class="signature-block">
+        <div class="signature-col">
+          <h4>Pour l'Organisateur</h4>
+          <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
+          <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
+          <div class="sig-line"></div>
+        </div>
+        <div class="signature-col">
+          <h4>Pour le Partenaire</h4>
+          <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
+          <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
+          <div class="sig-line"></div>
+        </div>
+      </div>
+
+      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-EST-2025 — État de San Andreas</div>
+    </div>
+  </div>
+
+  <!-- ===== Contrat Garage ===== -->
+  <div class="contract-panel" id="panel-gar">
+    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
+    <div class="contract-doc">
+      <div class="contract-header">
+        <div class="contract-logo-block">
+          <div class="cl-line1"><span class="bolt">⚡</span> MASTER</div>
+          <div class="cl-line2">CL<span class="chevron">▲</span>SH</div>
+          <div class="cl-tag">Le savoir ne suffit pas. Il faut vaincre.</div>
+        </div>
+        <div class="contract-meta">
+          <div class="ct-title">Contrat de Partenariat</div>
+          <div class="ct-sub">Secteur Garage — Master Clash</div>
+          <div class="ct-sub">État de San Andreas</div>
+          <div class="ct-ref">Réf. MC-GAR-2025</div>
+          <div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>
+        </div>
+      </div>
+
+      <h3>Préambule</h3>
+      <p>Le présent contrat est conclu entre l'Organisation <strong>Master Clash</strong> et le Partenaire ci-après désigné, en vue de la fourniture de prestations de réparation, entretien et tuning automobile dans le cadre de l'événement Master Clash.</p>
+
+      <h3>Identification du partenaire</h3>
+      <div class="field-row">
+        <div><div class="field-label">Raison sociale</div><input type="text" placeholder="Nom du garage"></div>
+        <div><div class="field-label">Représentant légal</div><input type="text" placeholder="Nom &amp; prénom"></div>
+      </div>
+      <div class="field-row">
+        <div><div class="field-label">Adresse</div><input type="text" placeholder="Adresse complète"></div>
+        <div><div class="field-label">Contact</div><input type="text" placeholder="Téléphone / email"></div>
+      </div>
+
+      <h3>Article 1 — Engagements du Partenaire</h3>
+      <h4>1.1 Bons de réparation</h4>
+      <p>Le Partenaire s'engage à fournir <input type="number" placeholder="N"> bons de réparation d'une valeur unitaire de <input type="number" placeholder="$"> $ chacun.</p>
+      <h4>1.2 Prestations couvertes</h4>
+      <ul>
+        <li>Réparation mécanique &amp; carrosserie.</li>
+        <li>Entretien courant (vidange, freinage, pneumatiques).</li>
+        <li>Lavage intérieur / extérieur.</li>
+        <li>Tuning et personnalisation esthétique.</li>
+      </ul>
+      <p>Si la valeur de la prestation excède le montant du bon, la différence est à la charge du bénéficiaire.</p>
+      <h4>1.3 Contribution financière à la production</h4>
+      <div class="field-row">
+        <div><div class="field-label">Montant</div><input type="number" placeholder="$"> $</div>
+        <div><div class="field-label">Mode de versement</div><input type="text" placeholder="Virement / espèces"></div>
+        <div><div class="field-label">Date limite</div><input type="date"></div>
+      </div>
+      <h4>1.4 Don en cash brut (optionnel)</h4>
+      <p>Don en numéraire pour la dotation des finalistes : <input type="number" placeholder="$"> $</p>
+
+      <h3>Article 2 — Contreparties offertes par l'Organisateur</h3>
+      <ul>
+        <li>Mention <strong>« Partenaire Production »</strong> en cas de contribution financière.</li>
+        <li>Visibilité renforcée sur l'ensemble des supports officiels.</li>
+        <li>Mention lors des remises de lot et bilans post-événement.</li>
+        <li>Possibilité d'intégrer une question sponsorisée.</li>
+      </ul>
+
+      <h3>Article 3 — Conditions générales</h3>
+      <ul>
+        <li>Validité des bons : <input type="text" placeholder="ex: 90 jours après l'événement"></li>
+        <li>Usage unique, non cessible.</li>
+        <li>Contrat conclu pour une (1) édition.</li>
+        <li>Litiges : règlement amiable, à défaut juridictions de San Andreas.</li>
+      </ul>
+
+      <div class="signature-block">
+        <div class="signature-col">
+          <h4>Pour l'Organisateur</h4>
+          <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
+          <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
+          <div class="sig-line"></div>
+        </div>
+        <div class="signature-col">
+          <h4>Pour le Partenaire</h4>
+          <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
+          <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
+          <div class="sig-line"></div>
+        </div>
+      </div>
+
+      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-GAR-2025 — État de San Andreas</div>
+    </div>
+  </div>
+
+  <!-- ===== Contrat Restaurant ===== -->
+  <div class="contract-panel" id="panel-res">
+    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
+    <div class="contract-doc">
+      <div class="contract-header">
+        <div class="contract-logo-block">
+          <div class="cl-line1"><span class="bolt">⚡</span> MASTER</div>
+          <div class="cl-line2">CL<span class="chevron">▲</span>SH</div>
+          <div class="cl-tag">Le savoir ne suffit pas. Il faut vaincre.</div>
+        </div>
+        <div class="contract-meta">
+          <div class="ct-title">Contrat de Partenariat</div>
+          <div class="ct-sub">Secteur Restauration — Master Clash</div>
+          <div class="ct-sub">État de San Andreas</div>
+          <div class="ct-ref">Réf. MC-RES-2025</div>
+          <div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>
+        </div>
+      </div>
+
+      <h3>Préambule</h3>
+      <p>Le présent contrat est conclu entre l'Organisation <strong>Master Clash</strong> et l'Établissement de restauration ci-après désigné, en vue de la fourniture de bons repas dans le cadre de l'événement Master Clash.</p>
+
+      <h3>Identification de l'établissement</h3>
+      <div class="field-row">
+        <div><div class="field-label">Raison sociale</div><input type="text" placeholder="Nom du restaurant"></div>
+        <div><div class="field-label">Représentant légal</div><input type="text" placeholder="Nom &amp; prénom"></div>
+      </div>
+      <div class="field-row">
+        <div><div class="field-label">Adresse</div><input type="text" placeholder="Adresse complète"></div>
+        <div><div class="field-label">Contact</div><input type="text" placeholder="Téléphone / email"></div>
+      </div>
+
+      <h3>Article 1 — Engagements de l'Établissement</h3>
+      <h4>1.1 Bons repas</h4>
+      <p>L'Établissement s'engage à fournir <input type="number" placeholder="N"> bons repas d'une valeur unitaire de <input type="number" value="1100"> $ chacun.</p>
+      <h4>1.2 Composition d'un bon</h4>
+      <p>Chaque bon repas équivaut à un <strong>menu complet pour 10 personnes</strong> incluant :</p>
+      <ul>
+        <li>Une entrée par convive.</li>
+        <li>Un plat principal par convive.</li>
+        <li>Un dessert par convive.</li>
+      </ul>
+      <h4>1.3 Boissons</h4>
+      <p>
+        <label class="checkbox-line"><input type="checkbox"> Boissons incluses</label>
+        <label class="checkbox-line"><input type="checkbox" checked> Boissons non incluses</label>
+      </p>
+      <h4>1.4 Modalités d'utilisation</h4>
+      <ul>
+        <li><strong>Réservation préalable obligatoire</strong> par le bénéficiaire auprès de l'Établissement.</li>
+        <li>L'Établissement s'engage à <strong>détruire les bons après usage</strong>.</li>
+        <li>Les bons sont nominatifs et non cessibles.</li>
+      </ul>
+
+      <h3>Article 2 — Contreparties offertes par l'Organisateur</h3>
+      <ul>
+        <li>Mention de l'Établissement lors de chaque remise de bon repas.</li>
+        <li>Visibilité sur tous les supports de communication officiels.</li>
+        <li>Possibilité d'intégrer une question sponsorisée.</li>
+        <li>Bilan de visibilité post-événement.</li>
+      </ul>
+
+      <h3>Article 3 — Conditions générales</h3>
+      <ul>
+        <li>Validité des bons : <input type="text" placeholder="ex: 6 mois après l'événement"></li>
+        <li>Usage unique, non cessible, non remboursable.</li>
+        <li>Contrat conclu pour une (1) édition.</li>
+      </ul>
+
+      <div class="signature-block">
+        <div class="signature-col">
+          <h4>Pour l'Organisateur</h4>
+          <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
+          <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
+          <div class="sig-line"></div>
+        </div>
+        <div class="signature-col">
+          <h4>Pour l'Établissement</h4>
+          <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
+          <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
+          <div class="sig-line"></div>
+        </div>
+      </div>
+
+      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-RES-2025 — État de San Andreas</div>
+    </div>
+  </div>
+
+  <!-- ===== Contrat Maze Event ===== -->
+  <div class="contract-panel" id="panel-maze">
+    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
+    <div class="contract-doc">
+      <div class="contract-header">
+        <div class="contract-logo-block">
+          <div class="cl-line1"><span class="bolt">⚡</span> MASTER</div>
+          <div class="cl-line2">CL<span class="chevron">▲</span>SH</div>
+          <div class="cl-tag">Le savoir ne suffit pas. Il faut vaincre.</div>
+        </div>
+        <div class="contract-meta">
+          <div class="ct-title">Contrat de Partenariat</div>
+          <div class="ct-sub">Maze Event — Expériences Prestige</div>
+          <div class="ct-sub">État de San Andreas</div>
+          <div class="ct-ref">Réf. MC-MAZE-2025</div>
+          <div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>
+        </div>
+      </div>
+
+      <h3>Préambule</h3>
+      <p>Le présent contrat est conclu entre l'Organisation <strong>Master Clash</strong> et la société <strong>Maze Event</strong>, en vue de la fourniture de baptêmes hélicoptère destinés aux finalistes de l'événement Master Clash.</p>
+
+      <h3>Identification de Maze Event</h3>
+      <div class="field-row">
+        <div><div class="field-label">Raison sociale</div><input type="text" value="Maze Event"></div>
+        <div><div class="field-label">Représentant légal</div><input type="text" placeholder="Nom &amp; prénom"></div>
+      </div>
+      <div class="field-row">
+        <div><div class="field-label">Adresse</div><input type="text" placeholder="Adresse complète"></div>
+        <div><div class="field-label">Contact</div><input type="text" placeholder="Téléphone / email"></div>
+      </div>
+
+      <h3>Article 1 — Engagements de Maze Event</h3>
+      <h4>1.1 Baptêmes hélicoptère</h4>
+      <p>Maze Event s'engage à fournir <strong>4 sessions</strong> baptême hélicoptère d'une durée de <strong>15 minutes</strong> chacune, valeur unitaire <input type="number" value="2000"> $.</p>
+      <h4>1.2 Contenu de chaque session</h4>
+      <ul>
+        <li>Briefing sécurité &amp; consignes de vol.</li>
+        <li>Vol panoramique au-dessus de Los Santos.</li>
+        <li>Atterrissage sécurisé &amp; débriefing.</li>
+      </ul>
+      <h4>1.3 Capacité par session</h4>
+      <p>Capacité maximale par vol : <input type="number" placeholder="ex: 3"> passager(s).</p>
+      <h4>1.4 Planning</h4>
+      <p>Sessions programmées <strong>après l'événement</strong> selon disponibilités, valables <input type="text" placeholder="ex: 6 mois">.</p>
+      <h4>1.5 Présence événementielle (optionnelle)</h4>
+      <p>
+        <label class="checkbox-line"><input type="checkbox"> Banner / kakemono sur site</label>
+        <label class="checkbox-line"><input type="checkbox"> Représentant Maze Event présent</label>
+      </p>
+
+      <h3>Article 2 — Contreparties offertes par l'Organisateur</h3>
+      <ul>
+        <li>Positionnement <strong>« Partenaire Expériences Prestige »</strong>.</li>
+        <li>Mention dédiée lors de la <strong>finale</strong> de Master Clash.</li>
+        <li>Communication post-événement avec mise en avant des bénéficiaires.</li>
+        <li>Visibilité maximale sur tous les supports officiels.</li>
+      </ul>
+
+      <h3>Article 3 — Clause de sécurité</h3>
+      <p><strong>Maze Event est seule responsable</strong> de la conduite, de la sécurité et de l'assurance des vols. L'Organisateur ne saurait être tenu responsable d'incidents survenus pendant les sessions.</p>
+
+      <div class="signature-block">
+        <div class="signature-col">
+          <h4>Pour l'Organisateur</h4>
+          <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
+          <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
+          <div class="sig-line"></div>
+        </div>
+        <div class="signature-col">
+          <h4>Pour Maze Event</h4>
+          <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
+          <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
+          <div class="sig-line"></div>
+        </div>
+      </div>
+
+      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-MAZE-2025 — État de San Andreas</div>
+    </div>
+  </div>
+
+  <!-- ===== Contrat MFA ===== -->
+  <div class="contract-panel" id="panel-mfa">
+    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
+    <div class="contract-doc">
+      <div class="contract-header">
+        <div class="contract-logo-block">
+          <div class="cl-line1"><span class="bolt">⚡</span> MASTER</div>
+          <div class="cl-line2">CL<span class="chevron">▲</span>SH</div>
+          <div class="cl-tag">Le savoir ne suffit pas. Il faut vaincre.</div>
+        </div>
+        <div class="contract-meta">
+          <div class="ct-title">Contrat de Partenariat</div>
+          <div class="ct-sub">MFA — Sport &amp; Performance</div>
+          <div class="ct-sub">État de San Andreas</div>
+          <div class="ct-ref">Réf. MC-MFA-2025</div>
+          <div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>
+        </div>
+      </div>
+
+      <h3>Préambule</h3>
+      <p>Le présent contrat est conclu entre l'Organisation <strong>Master Clash</strong> et l'écurie <strong>MFA (Motorsport / Pilotage)</strong>, en vue de la fourniture de stages de pilotage automobile destinés aux qualifiés de Manche 2 et finalistes de l'événement Master Clash.</p>
+
+      <h3>Identification de la MFA</h3>
+      <div class="field-row">
+        <div><div class="field-label">Raison sociale</div><input type="text" value="MFA"></div>
+        <div><div class="field-label">Représentant légal</div><input type="text" placeholder="Nom &amp; prénom"></div>
+      </div>
+      <div class="field-row">
+        <div><div class="field-label">Adresse</div><input type="text" placeholder="Adresse complète"></div>
+        <div><div class="field-label">Contact</div><input type="text" placeholder="Téléphone / email"></div>
+      </div>
+
+      <h3>Article 1 — Engagements de la MFA</h3>
+      <h4>1.1 Sessions pilotage</h4>
+      <p>La MFA s'engage à fournir <strong>12 sessions</strong> de pilotage automobile, soit :</p>
+      <ul>
+        <li><strong>8 sessions</strong> pour les qualifiés de Manche 2.</li>
+        <li><strong>4 sessions</strong> pour les finalistes de la Grande Finale.</li>
+      </ul>
+      <p>Durée par session : <strong>15 minutes</strong>, valeur unitaire <input type="number" value="1000"> $.</p>
+      <h4>1.2 Contenu de chaque session</h4>
+      <ul>
+        <li>Briefing technique &amp; consignes de sécurité.</li>
+        <li>Mise à disposition de l'équipement (combinaison, casque).</li>
+        <li>Session de pilotage sur circuit.</li>
+        <li>Debriefing post-session avec instructeur.</li>
+      </ul>
+      <h4>1.3 Véhicule(s) &amp; circuit</h4>
+      <div class="field-row">
+        <div><div class="field-label">Véhicule(s) mis à disposition</div><input type="text" placeholder="Modèles" style="width:100%"></div>
+        <div><div class="field-label">Circuit utilisé</div><input type="text" placeholder="Nom du circuit" style="width:100%"></div>
+      </div>
+      <h4>1.4 Planning</h4>
+      <p>Sessions programmées <strong>après l'événement</strong> selon disponibilités, valables <input type="text" placeholder="ex: 6 mois">.</p>
+      <h4>1.5 Présence événementielle (optionnelle)</h4>
+      <p>
+        <label class="checkbox-line"><input type="checkbox"> Banner / véhicule MFA exposé</label>
+        <label class="checkbox-line"><input type="checkbox"> Représentant MFA présent</label>
+      </p>
+
+      <h3>Article 2 — Contreparties offertes par l'Organisateur</h3>
+      <ul>
+        <li>Positionnement <strong>« Partenaire Sport &amp; Performance »</strong>.</li>
+        <li>Mention de la MFA à chaque remise de bon stage pilotage.</li>
+        <li>Possibilité d'intégrer une question sponsorisée (thème automobile / motorsport).</li>
+        <li>Visibilité renforcée sur tous les supports officiels.</li>
+      </ul>
+
+      <h3>Article 3 — Clause de sécurité</h3>
+      <p><strong>La MFA est seule responsable</strong> de l'encadrement, de la sécurité et de l'assurance des sessions de pilotage. L'Organisateur ne saurait être tenu responsable d'incidents survenus pendant les stages.</p>
+
+      <div class="signature-block">
+        <div class="signature-col">
+          <h4>Pour l'Organisateur</h4>
+          <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
+          <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
+          <div class="sig-line"></div>
+        </div>
+        <div class="signature-col">
+          <h4>Pour la MFA</h4>
+          <div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>
+          <div class="sig-field"><div class="field-label">Date</div><input type="date"></div>
+          <div class="sig-line"></div>
+        </div>
+      </div>
+
+      <div class="contract-footer">MASTER CLASH — Document officiel — Réf. MC-MFA-2025 — État de San Andreas</div>
+    </div>
+  </div>
+
+  <!-- ===== Bons Officiels ===== -->
+  <div class="contract-panel" id="panel-bons">
+    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer la planche de bons</button></div>
+    <div class="coupons-grid">
+
+      <div class="coupon">
+        <div class="coupon-head"><div class="coupon-icon">💇</div><div><div class="coupon-title">Bon Coiffure</div><div class="coupon-sub">Réf. MC-BON-2025</div></div></div>
+        <div class="coupon-body">
+          <div class="field-label">Valeur</div><input type="text" value="300 $">
+          <div class="field-label">Établissement partenaire</div><input type="text" placeholder="Nom du salon">
+          <div class="field-label">Bénéficiaire</div><input type="text" placeholder="Nom du gagnant">
+          <div class="field-label">Numéro de bon</div><input type="text" placeholder="MC-COI-XXXX">
+          <div class="field-label">Valable jusqu'au</div><input type="date">
+          <div class="coupon-warn">⚠ Usage unique — À détruire après utilisation</div>
+          <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
+        </div>
+      </div>
+
+      <div class="coupon">
+        <div class="coupon-head"><div class="coupon-icon">🔧</div><div><div class="coupon-title">Bon Réparation</div><div class="coupon-sub">Réf. MC-BON-2025</div></div></div>
+        <div class="coupon-body">
+          <div class="field-label">Valeur</div><input type="text" placeholder="$ à compléter">
+          <div class="field-label">Établissement partenaire</div><input type="text" placeholder="Nom du garage">
+          <div class="field-label">Bénéficiaire</div><input type="text" placeholder="Nom du gagnant">
+          <div class="field-label">Numéro de bon</div><input type="text" placeholder="MC-REP-XXXX">
+          <div class="field-label">Valable jusqu'au</div><input type="date">
+          <div class="coupon-warn">⚠ Usage unique — À détruire après utilisation</div>
+          <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
+        </div>
+      </div>
+
+      <div class="coupon">
+        <div class="coupon-head"><div class="coupon-icon">🍽️</div><div><div class="coupon-title">Bon Repas</div><div class="coupon-sub">Réf. MC-BON-2025</div></div></div>
+        <div class="coupon-body">
+          <div class="field-label">Valeur</div><input type="text" value="1 100 $ — 10 menus">
+          <div class="field-label">Établissement partenaire</div><input type="text" placeholder="Nom du restaurant">
+          <div class="field-label">Bénéficiaire</div><input type="text" placeholder="Nom du gagnant">
+          <div class="field-label">Numéro de bon</div><input type="text" placeholder="MC-REP-XXXX">
+          <div class="field-label">Valable jusqu'au</div><input type="date">
+          <div class="coupon-warn">⚠ Usage unique — Réservation obligatoire</div>
+          <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
+        </div>
+      </div>
+
+      <div class="coupon">
+        <div class="coupon-head"><div class="coupon-icon">💆</div><div><div class="coupon-title">Bon Esthétique</div><div class="coupon-sub">Réf. MC-BON-2025</div></div></div>
+        <div class="coupon-body">
+          <div class="field-label">Valeur</div><input type="text" placeholder="$ à compléter">
+          <div class="field-label">Établissement partenaire</div><input type="text" placeholder="Nom du salon">
+          <div class="field-label">Bénéficiaire</div><input type="text" placeholder="Nom du gagnant">
+          <div class="field-label">Numéro de bon</div><input type="text" placeholder="MC-EST-XXXX">
+          <div class="field-label">Valable jusqu'au</div><input type="date">
+          <div class="coupon-warn">⚠ Usage unique — À détruire après utilisation</div>
+          <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
+        </div>
+      </div>
+
+      <div class="coupon">
+        <div class="coupon-head"><div class="coupon-icon">🏎️</div><div><div class="coupon-title">Bon Stage Pilotage</div><div class="coupon-sub">Réf. MC-BON-2025 — MFA</div></div></div>
+        <div class="coupon-body">
+          <div class="field-label">Valeur</div><input type="text" value="1 000 $ — 15 min">
+          <div class="field-label">Établissement partenaire</div><input type="text" value="MFA">
+          <div class="field-label">Bénéficiaire</div><input type="text" placeholder="Nom du gagnant">
+          <div class="field-label">Numéro de bon</div><input type="text" placeholder="MC-PIL-XXXX">
+          <div class="field-label">Valable jusqu'au</div><input type="date">
+          <div class="coupon-warn">⚠ Réservation obligatoire — Sécurité MFA</div>
+          <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
+        </div>
+      </div>
+
+      <div class="coupon">
+        <div class="coupon-head"><div class="coupon-icon">🚁</div><div><div class="coupon-title">Bon Hélicoptère</div><div class="coupon-sub">Réf. MC-BON-2025 — Maze Event</div></div></div>
+        <div class="coupon-body">
+          <div class="field-label">Valeur</div><input type="text" value="2 000 $ — 15 min">
+          <div class="field-label">Établissement partenaire</div><input type="text" value="Maze Event">
+          <div class="field-label">Bénéficiaire</div><input type="text" placeholder="Nom du finaliste">
+          <div class="field-label">Numéro de bon</div><input type="text" placeholder="MC-HEL-XXXX">
+          <div class="field-label">Valable jusqu'au</div><input type="date">
+          <div class="coupon-warn">⚠ Réservation obligatoire — Sécurité Maze Event</div>
+          <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- ===== SECTION 4 — QUESTIONS ===== -->
 <section id="ques">
   <h2 class="section-title">Banque de Questions</h2>
   <div class="section-subtitle">Section 4 — 200 questions au total</div>
+<div class="locked-wrap" data-section="ques">
+<div class="locked-content locked">
 
   <div class="q-subnav">
     <div class="q-subnav-inner">
@@ -625,12 +1286,23 @@ th,td{padding:8px 10px;font-size:12px}
   <div class="q-card blind"><div class="q-head"><span class="q-num">B08</span><span class="q-cat">Musique</span><span class="badge b-blind">Blind</span><span class="badge b-pts-v">15s</span></div><div class="q-text">Identifiez le rappeur ou la rappeuse.</div><div class="q-answer">Playlist animateur</div></div>
   <div class="q-card blind"><div class="q-head"><span class="q-num">B09</span><span class="q-cat">Musique</span><span class="badge b-blind">Blind</span><span class="badge b-pts-v">15s</span></div><div class="q-text">Quelle est la nationalité de l'artiste ?</div><div class="q-answer">Playlist animateur</div></div>
   <div class="q-card blind"><div class="q-head"><span class="q-num">B10</span><span class="q-cat">Gaming</span><span class="badge b-blind">Blind</span><span class="badge b-pts-v">15s</span></div><div class="q-text">Identifiez ce thème musical de jeu vidéo.</div><div class="q-answer">Playlist animateur</div></div>
+
+</div>
+<div class="lock-overlay" data-section="ques">
+  <div class="lock-big">🔒</div>
+  <div class="lock-msg">Accès restreint</div>
+  <div class="lock-sub">Code requis pour consulter la banque de questions</div>
+  <button class="lock-btn">Entrer le code</button>
+</div>
+</div>
 </section>
 
 <!-- ===== SECTION 5 — BUDGET ===== -->
 <section id="budget">
   <h2 class="section-title">Estimation Budget — À financer</h2>
   <div class="section-subtitle">Section 5 — Chiffrage prévisionnel</div>
+<div class="locked-wrap" data-section="budget">
+<div class="locked-content locked">
 
   <h3>Manche 1 — 30 éliminés (chacun reçoit les 3 bons)</h3>
   <div class="table-wrap">
@@ -708,11 +1380,145 @@ th,td{padding:8px 10px;font-size:12px}
   </div>
 
   <blockquote>Note : le financement est prévu via partenaires privés (bons en nature) + potentiel sponsoring État / Ville de Los Santos pour les frais de production et primes cash.</blockquote>
+
+</div>
+<div class="lock-overlay" data-section="budget">
+  <div class="lock-big">🔒</div>
+  <div class="lock-msg">Accès restreint</div>
+  <div class="lock-sub">Code requis pour consulter le budget</div>
+  <button class="lock-btn">Entrer le code</button>
+</div>
+</div>
 </section>
 
 <footer>
   MASTER CLASH — Document officiel — Réservé à l'animateur — État de San Andreas
 </footer>
+
+<!-- ===== MODAL CODE ===== -->
+<div class="modal-overlay" id="mc-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mc-modal-title">
+    <div class="modal-logo">⚡ MASTER CLASH</div>
+    <div class="modal-sub">Accès restreint</div>
+    <h3 id="mc-modal-title">Code requis</h3>
+    <p>Cette section est protégée. Saisissez le code d'accès pour continuer.</p>
+    <form id="mc-code-form" onsubmit="return false">
+      <input type="password" id="mc-code-input" placeholder="••••••••" autocomplete="off" maxlength="32" inputmode="text">
+      <div class="modal-error" id="mc-code-error"></div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-secondary" id="mc-code-cancel">Annuler</button>
+        <button type="submit" class="modal-btn modal-btn-primary" id="mc-code-submit">Accéder</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  var SECRET = 'MASTER2025';
+  var SK = 'mc_unlocked_v1';
+  var unlocked = sessionStorage.getItem(SK) === '1';
+  var pendingTarget = null;
+
+  var modal = document.getElementById('mc-modal');
+  var input = document.getElementById('mc-code-input');
+  var err = document.getElementById('mc-code-error');
+  var form = document.getElementById('mc-code-form');
+  var cancelBtn = document.getElementById('mc-code-cancel');
+
+  function applyUnlockState(){
+    if (unlocked){
+      document.querySelectorAll('.locked-content').forEach(function(el){ el.classList.remove('locked'); });
+      document.querySelectorAll('.lock-overlay').forEach(function(el){ el.style.display = 'none'; });
+      document.querySelectorAll('.locked-link').forEach(function(el){
+        el.classList.remove('locked-link');
+        var lockSpan = el.querySelector('.lock-icon');
+        if (lockSpan) lockSpan.remove();
+      });
+    }
+  }
+
+  function openModal(target){
+    pendingTarget = target;
+    modal.classList.add('active');
+    err.textContent = '';
+    input.value = '';
+    setTimeout(function(){ input.focus(); }, 50);
+  }
+
+  function closeModal(){
+    modal.classList.remove('active');
+    err.textContent = '';
+    input.value = '';
+  }
+
+  function tryUnlock(){
+    var code = (input.value || '').trim().toUpperCase();
+    if (code === SECRET){
+      unlocked = true;
+      try { sessionStorage.setItem(SK, '1'); } catch(e){}
+      applyUnlockState();
+      var t = pendingTarget;
+      closeModal();
+      if (t){
+        setTimeout(function(){
+          var sec = document.getElementById(t);
+          if (sec) sec.scrollIntoView({behavior:'smooth', block:'start'});
+        }, 80);
+      }
+    } else {
+      err.textContent = 'Code incorrect';
+      input.value = '';
+      input.focus();
+    }
+  }
+
+  // Liens nav verrouillés
+  document.querySelectorAll('.locked-link').forEach(function(link){
+    link.addEventListener('click', function(e){
+      if (!unlocked){
+        e.preventDefault();
+        openModal(link.getAttribute('data-section'));
+      }
+    });
+  });
+
+  // Boutons d'overlay sur sections
+  document.querySelectorAll('.lock-overlay').forEach(function(ov){
+    ov.addEventListener('click', function(e){
+      if (!unlocked){
+        e.preventDefault();
+        openModal(ov.getAttribute('data-section'));
+      }
+    });
+  });
+
+  form.addEventListener('submit', function(e){ e.preventDefault(); tryUnlock(); });
+  cancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+  });
+
+  applyUnlockState();
+
+  // ===== Onglets Contrats =====
+  document.querySelectorAll('.contract-tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      var target = tab.getAttribute('data-tab');
+      document.querySelectorAll('.contract-tab').forEach(function(t){ t.classList.remove('active'); });
+      document.querySelectorAll('.contract-panel').forEach(function(p){ p.classList.remove('active'); });
+      tab.classList.add('active');
+      var panel = document.getElementById('panel-' + target);
+      if (panel) panel.classList.add('active');
+    });
+  });
+})();
+
+function printActive(){
+  window.print();
+}
+</script>
 
 </body>
 </html>
