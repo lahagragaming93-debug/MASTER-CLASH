@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;scroll-padding-top:60px}
@@ -224,11 +225,14 @@ th,td{padding:8px 10px;font-size:12px}
 .coupon-body input:focus{border-bottom-color:#1a1612;background:rgba(245,197,24,.1)}
 .coupon-warn{margin-top:12px;padding:8px;background:rgba(245,197,24,.15);border-left:3px solid #c8a44a;font-size:10px;font-family:'Montserrat',sans-serif;font-weight:600;color:#1a1612;text-transform:uppercase;letter-spacing:.5px}
 .coupon-foot{margin-top:6px;font-size:9px;color:#5a5048;text-align:center;font-style:italic;font-family:Georgia,serif}
+.coupon-actions{display:flex;gap:6px;margin-top:10px;justify-content:flex-end}
+.coupon-btn{padding:5px 10px;background:#0f1420;border:1px solid rgba(0,212,255,.4);color:#00d4ff;border-radius:5px;font-weight:700;font-size:10px;letter-spacing:.8px;cursor:pointer;font-family:'Montserrat',sans-serif;text-transform:uppercase;transition:all .15s}
+.coupon-btn:hover{background:rgba(0,212,255,.12);border-color:#00d4ff}
 
 /* PRINT */
 @media print{
   body{background:#fff!important;color:#000!important}
-  .nav,.hero,#gouv,#regl,#part,#ques,#budget,footer,.contract-tabs,.print-bar,.modal-overlay{display:none!important}
+  .nav,.hero,#gouv,#regl,#part,#ques,#budget,footer,.contract-tabs,.print-bar,.modal-overlay,.coupon-actions,.validate-bar{display:none!important}
   section#contrats{padding:0;margin:0;max-width:100%}
   .section-title,.section-subtitle{display:none!important}
   .contract-panel{display:none!important}
@@ -283,6 +287,28 @@ th,td{padding:8px 10px;font-size:12px}
 .vi-btn-del:hover{background:rgba(255,71,87,.12);border-color:#ff4757}
 .contract-tab .tab-count{display:inline-block;margin-left:6px;padding:1px 7px;background:rgba(0,230,118,.25);color:#00e676;border-radius:10px;font-size:10px;font-weight:800}
 .contract-tab.active .tab-count{background:rgba(10,14,26,.25);color:#0a0e1a}
+.tab-count-pending{background:rgba(255,171,64,.25)!important;color:#ffab40!important;margin-left:4px}
+.contract-tab.active .tab-count-pending{background:rgba(10,14,26,.25)!important;color:#0a0e1a!important}
+
+/* Statuts contrats */
+.archives-section-title{color:#dce4f0;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin:18px auto 12px;max-width:900px;display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid rgba(0,212,255,.18)}
+.archives-section-title.pending{color:#ffab40}
+.archives-section-title.validated{color:#00e676}
+.status-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:800;letter-spacing:1px;margin-left:8px;font-family:'Montserrat',sans-serif}
+.status-pending{background:rgba(255,171,64,.18);color:#ffab40;border:1px solid rgba(255,171,64,.4)}
+.status-validated{background:rgba(0,230,118,.18);color:#00e676;border:1px solid rgba(0,230,118,.4)}
+.validated-item.pending-item{border-left-color:#ffab40}
+.validated-item.pending-item:hover{border-color:#ffab40;background:rgba(255,171,64,.04)}
+.vi-btn-sign{color:#ffab40;border-color:rgba(255,171,64,.5)!important;background:rgba(255,171,64,.06)!important;font-weight:800!important}
+.vi-btn-sign:hover{background:rgba(255,171,64,.18)!important;border-color:#ffab40!important}
+.vi-btn-confirm{color:#0a0e1a!important;background:linear-gradient(135deg,#00e676 0%,#00d4ff 100%)!important;border:none!important;font-weight:800!important;padding:10px 18px!important;font-size:12px!important}
+.vi-btn-confirm:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,230,118,.35)}
+.sig-img-placeholder{display:flex;align-items:center;justify-content:center;color:#aaa;font-style:italic;font-size:12px;width:100%;height:120px;border:1.5px dashed #c4b99a;border-radius:4px;background:#fffefb;font-family:Georgia,serif}
+
+/* Mode pending dans modal : signature org dessinable */
+.modal-view-content[data-mode="pending"] .signature-col:first-child .sig-canvas{border:2px solid #ffab40!important;background:#fff8e8!important;cursor:crosshair!important;box-shadow:0 0 0 3px rgba(255,171,64,.15)!important;pointer-events:auto!important}
+.modal-view-content[data-mode="pending"] .signature-col:first-child .sig-clear{display:inline-block!important}
+.modal-view-content[data-mode="pending"] .signature-col:first-child::before{content:"⚠ Zone de signature à compléter par l'organisateur";display:block;font-size:10px;color:#ffab40;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-family:'Montserrat',sans-serif}
 
 /* ========== MODAL VIEW (contrat validé) ========== */
 .modal-overlay.modal-view{align-items:flex-start;padding:30px 20px;overflow-y:auto}
@@ -308,7 +334,7 @@ th,td{padding:8px 10px;font-size:12px}
 <nav class="nav">
   <a class="nav-logo" href="#top">⚡ <span>MC</span> MASTER CLASH</a>
   <div class="nav-links">
-    <a href="#gouv">Gouverneur</a>
+    <a href="#gouv" class="locked-link" data-section="gouv"><span class="lock-icon">🔒</span>Gouverneur</a>
     <a href="#regl">Règlement</a>
     <a href="#part">Partenaires</a>
     <a href="#contrats">Contrats</a>
@@ -332,6 +358,8 @@ th,td{padding:8px 10px;font-size:12px}
 <section id="gouv">
   <h2 class="section-title">Dossier Gouverneur</h2>
   <div class="section-subtitle">Section 1 — Présentation officielle</div>
+<div class="locked-wrap" data-section="gouv">
+<div class="locked-content locked">
 
   <div class="card">
     <h3 style="margin-top:0">Présentation du projet</h3>
@@ -405,6 +433,15 @@ th,td{padding:8px 10px;font-size:12px}
       <li>Possibilité d'intégrer des catégories spéciales ou tournois par équipes.</li>
     </ul>
   </div>
+
+</div>
+<div class="lock-overlay" data-section="gouv">
+  <div class="lock-big">🔒</div>
+  <div class="lock-msg">Accès restreint</div>
+  <div class="lock-sub">Code requis pour consulter le dossier Gouverneur</div>
+  <button class="lock-btn">Entrer le code</button>
+</div>
+</div>
 </section>
 
 <!-- ===== SECTION 2 — RÈGLEMENT ===== -->
@@ -591,13 +628,13 @@ th,td{padding:8px 10px;font-size:12px}
       <button class="contract-tab" data-tab="maze">Maze Event</button>
       <button class="contract-tab" data-tab="mfa">MFA Pilotage</button>
       <button class="contract-tab" data-tab="bons">Bons Officiels</button>
-      <button class="contract-tab" data-tab="archives">📁 Contrats validés <span class="tab-count" id="archives-count">0</span></button>
+      <button class="contract-tab" data-tab="archives">📁 Contrats <span class="tab-count" id="archives-count">0</span><span class="tab-count tab-count-pending" id="archives-pending-count" style="display:none">0</span></button>
     </div>
   </div>
 
   <!-- ===== Contrat Esthétique ===== -->
   <div class="contract-panel active" id="panel-est">
-    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
+    <div class="print-bar"><button class="print-btn" onclick="downloadActiveContractPng(this)">⬇ Télécharger PNG</button><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
     <div class="contract-doc">
       <div class="contract-header">
         <div class="contract-logo-block">
@@ -677,7 +714,7 @@ th,td{padding:8px 10px;font-size:12px}
 
   <!-- ===== Contrat Garage ===== -->
   <div class="contract-panel" id="panel-gar">
-    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
+    <div class="print-bar"><button class="print-btn" onclick="downloadActiveContractPng(this)">⬇ Télécharger PNG</button><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
     <div class="contract-doc">
       <div class="contract-header">
         <div class="contract-logo-block">
@@ -765,7 +802,7 @@ th,td{padding:8px 10px;font-size:12px}
 
   <!-- ===== Contrat Restaurant ===== -->
   <div class="contract-panel" id="panel-res">
-    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
+    <div class="print-bar"><button class="print-btn" onclick="downloadActiveContractPng(this)">⬇ Télécharger PNG</button><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
     <div class="contract-doc">
       <div class="contract-header">
         <div class="contract-logo-block">
@@ -854,7 +891,7 @@ th,td{padding:8px 10px;font-size:12px}
 
   <!-- ===== Contrat Maze Event ===== -->
   <div class="contract-panel" id="panel-maze">
-    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
+    <div class="print-bar"><button class="print-btn" onclick="downloadActiveContractPng(this)">⬇ Télécharger PNG</button><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
     <div class="contract-doc">
       <div class="contract-header">
         <div class="contract-logo-block">
@@ -936,7 +973,7 @@ th,td{padding:8px 10px;font-size:12px}
 
   <!-- ===== Contrat MFA ===== -->
   <div class="contract-panel" id="panel-mfa">
-    <div class="print-bar"><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
+    <div class="print-bar"><button class="print-btn" onclick="downloadActiveContractPng(this)">⬇ Télécharger PNG</button><button class="print-btn" onclick="printActive()">🖨 Imprimer ce contrat</button></div>
     <div class="contract-doc">
       <div class="contract-header">
         <div class="contract-logo-block">
@@ -1041,6 +1078,10 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="coupon-warn">⚠ Usage unique — À détruire après utilisation</div>
           <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
         </div>
+        <div class="coupon-actions">
+          <button class="coupon-btn" onclick="printCoupon(this)">🖨 Imprimer</button>
+          <button class="coupon-btn" onclick="downloadCouponPng(this)">⬇ PNG</button>
+        </div>
       </div>
 
       <div class="coupon">
@@ -1053,6 +1094,10 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="field-label">Valable jusqu'au</div><input type="date">
           <div class="coupon-warn">⚠ Usage unique — À détruire après utilisation</div>
           <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
+        </div>
+        <div class="coupon-actions">
+          <button class="coupon-btn" onclick="printCoupon(this)">🖨 Imprimer</button>
+          <button class="coupon-btn" onclick="downloadCouponPng(this)">⬇ PNG</button>
         </div>
       </div>
 
@@ -1067,6 +1112,10 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="coupon-warn">⚠ Usage unique — Réservation obligatoire</div>
           <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
         </div>
+        <div class="coupon-actions">
+          <button class="coupon-btn" onclick="printCoupon(this)">🖨 Imprimer</button>
+          <button class="coupon-btn" onclick="downloadCouponPng(this)">⬇ PNG</button>
+        </div>
       </div>
 
       <div class="coupon">
@@ -1079,6 +1128,10 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="field-label">Valable jusqu'au</div><input type="date">
           <div class="coupon-warn">⚠ Usage unique — À détruire après utilisation</div>
           <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
+        </div>
+        <div class="coupon-actions">
+          <button class="coupon-btn" onclick="printCoupon(this)">🖨 Imprimer</button>
+          <button class="coupon-btn" onclick="downloadCouponPng(this)">⬇ PNG</button>
         </div>
       </div>
 
@@ -1093,6 +1146,10 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="coupon-warn">⚠ Réservation obligatoire — Sécurité MFA</div>
           <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
         </div>
+        <div class="coupon-actions">
+          <button class="coupon-btn" onclick="printCoupon(this)">🖨 Imprimer</button>
+          <button class="coupon-btn" onclick="downloadCouponPng(this)">⬇ PNG</button>
+        </div>
       </div>
 
       <div class="coupon">
@@ -1105,6 +1162,10 @@ th,td{padding:8px 10px;font-size:12px}
           <div class="field-label">Valable jusqu'au</div><input type="date">
           <div class="coupon-warn">⚠ Réservation obligatoire — Sécurité Maze Event</div>
           <div class="coupon-foot">Émis par l'État de San Andreas — Document non duplicable</div>
+        </div>
+        <div class="coupon-actions">
+          <button class="coupon-btn" onclick="printCoupon(this)">🖨 Imprimer</button>
+          <button class="coupon-btn" onclick="downloadCouponPng(this)">⬇ PNG</button>
         </div>
       </div>
 
@@ -1468,9 +1529,8 @@ th,td{padding:8px 10px;font-size:12px}
 <div class="modal-overlay modal-view" id="view-modal">
   <div class="modal-view-box">
     <div class="modal-view-head">
-      <h3 id="view-modal-title">Contrat validé</h3>
-      <button class="vi-btn vi-btn-print" onclick="printValidated()">🖨 Imprimer</button>
-      <button class="vi-btn vi-btn-view" onclick="closeViewModal()">✕ Fermer</button>
+      <h3 id="view-modal-title">Contrat</h3>
+      <div id="view-modal-actions" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
     <div class="modal-view-content" id="view-modal-content"></div>
   </div>
@@ -1659,8 +1719,16 @@ function saveArchives(list){
   updateArchivesCount();
 }
 function updateArchivesCount(){
+  var list = getArchives();
+  var pending = list.filter(function(r){ return r.status === 'pending'; }).length;
+  var validated = list.filter(function(r){ return r.status === 'validated' || !r.status; }).length;
   var c = document.getElementById('archives-count');
-  if (c) c.textContent = getArchives().length;
+  if (c) c.textContent = validated;
+  var p = document.getElementById('archives-pending-count');
+  if (p){
+    if (pending > 0){ p.textContent = '⏳ ' + pending; p.style.display = 'inline-block'; }
+    else { p.style.display = 'none'; }
+  }
 }
 
 function validateContract(type){
@@ -1670,13 +1738,14 @@ function validateContract(type){
   var inputs = Array.from(doc.querySelectorAll('input, textarea'));
   var canvases = Array.from(doc.querySelectorAll('canvas.sig-canvas'));
 
-  var anySig = canvases.some(function(c){ return !isCanvasBlank(c); });
-  if (!anySig){
-    alert('⚠ Aucune signature détectée.\nVeuillez signer le contrat avant de l\'archiver.');
+  // Convention : index 0 = Organisateur, index 1 = Partenaire
+  // Le partenaire DOIT avoir signé (index 1) pour soumettre.
+  if (canvases.length < 2 || isCanvasBlank(canvases[1])){
+    alert('⚠ Veuillez signer la zone « Pour le Partenaire » avant de soumettre le contrat.');
     return;
   }
 
-  // Détecter un nom de partenaire
+  // Détecter le nom du partenaire
   var partnerName = '';
   inputs.forEach(function(el){
     if (partnerName) return;
@@ -1695,7 +1764,9 @@ function validateContract(type){
     if (el.type === 'checkbox') return el.checked ? 1 : 0;
     return el.value || '';
   });
-  var signatures = canvases.map(function(c){
+  // On enregistre uniquement la signature partenaire ; l'organisateur signera plus tard
+  var signatures = canvases.map(function(c, i){
+    if (i === 0) return ''; // Organisateur : à signer après par l'organisateur
     return isCanvasBlank(c) ? '' : c.toDataURL('image/png');
   });
 
@@ -1703,7 +1774,9 @@ function validateContract(type){
     id: 'C' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
     type: type,
     partnerName: partnerName,
-    validatedAt: new Date().toISOString(),
+    status: 'pending',
+    submittedAt: new Date().toISOString(),
+    validatedAt: null,
     fields: fields,
     signatures: signatures
   };
@@ -1711,9 +1784,37 @@ function validateContract(type){
   list.unshift(record);
   saveArchives(list);
 
-  alert('✓ Contrat archivé avec succès !\n\nVous pouvez le retrouver dans l\'onglet « 📁 Contrats validés ».');
+  // Réinitialiser le formulaire pour ne pas garder l'ancienne signature
+  canvases.forEach(function(c){ c.getContext('2d').clearRect(0, 0, c.width, c.height); });
+
+  alert('✓ Contrat soumis !\n\nIl est désormais EN ATTENTE de validation par l\'organisateur.\nRetrouvez-le dans l\'onglet « 📁 Contrats ».');
   var archTab = document.querySelector('.contract-tab[data-tab="archives"]');
   if (archTab) archTab.click();
+}
+
+// ===== ORGANISATEUR : SIGNATURE & VALIDATION FINALE =====
+function organizerSignAndValidate(id){
+  var content = document.getElementById('view-modal-content');
+  var orgCanvas = content.querySelector('canvas.sig-canvas[data-role="org"]');
+  if (!orgCanvas){
+    alert('Erreur : zone de signature organisateur introuvable.');
+    return;
+  }
+  if (isCanvasBlank(orgCanvas)){
+    alert('⚠ Veuillez signer en tant qu\'organisateur avant de confirmer.');
+    return;
+  }
+  var dataURL = orgCanvas.toDataURL('image/png');
+  var list = getArchives();
+  var idx = list.findIndex(function(r){ return r.id === id; });
+  if (idx === -1) return;
+  list[idx].signatures[0] = dataURL;
+  list[idx].status = 'validated';
+  list[idx].validatedAt = new Date().toISOString();
+  saveArchives(list);
+  closeViewModal();
+  renderArchivesList();
+  alert('✓ Contrat validé et archivé définitivement.\nIl est maintenant non-éditable et imprimable.');
 }
 
 function escHtml(s){
@@ -1730,30 +1831,63 @@ function fmtDate(iso){
 function renderArchivesList(){
   var c = document.getElementById('validated-container');
   if (!c) return;
+  updateArchivesCount();
   var list = getArchives();
   if (list.length === 0){
-    c.innerHTML = '<div class="validated-empty">Aucun contrat validé pour le moment.<br>Remplissez un contrat, signez-le et cliquez sur « Valider et archiver ».</div>';
+    c.innerHTML = '<div class="validated-empty">Aucun contrat soumis pour le moment.<br>Remplissez un contrat, signez-le et cliquez sur « Valider et archiver ».</div>';
     return;
   }
-  c.innerHTML = '<div class="validated-list">' + list.map(function(r){
+  var pending = list.filter(function(r){ return r.status === 'pending'; });
+  var validated = list.filter(function(r){ return r.status === 'validated' || !r.status; });
+
+  function rowPending(r){
+    var meta = CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄', ref: '' };
+    return '<div class="validated-item pending-item" data-id="' + escHtml(r.id) + '">'
+      + '<div class="vi-icon">' + meta.icon + '</div>'
+      + '<div class="vi-info">'
+        + '<div class="vi-title">' + escHtml(meta.label) + ' <span class="status-badge status-pending">⏳ EN ATTENTE</span></div>'
+        + '<div class="vi-partner">' + escHtml(r.partnerName) + '</div>'
+        + '<div class="vi-date">Soumis par le partenaire le ' + fmtDate(r.submittedAt || r.validatedAt) + '</div>'
+      + '</div>'
+      + '<div class="vi-actions">'
+        + '<button class="vi-btn vi-btn-sign" onclick="viewArchive(\'' + r.id + '\')">✍ Voir et signer</button>'
+        + '<button class="vi-btn vi-btn-del" onclick="deleteArchive(\'' + r.id + '\')">🗑 Refuser</button>'
+      + '</div>'
+    + '</div>';
+  }
+  function rowValidated(r){
     var meta = CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄', ref: '' };
     return '<div class="validated-item" data-id="' + escHtml(r.id) + '">'
       + '<div class="vi-icon">' + meta.icon + '</div>'
       + '<div class="vi-info">'
-        + '<div class="vi-title">' + escHtml(meta.label) + ' <span style="color:#6a7a8a;font-weight:400;font-size:11px">— ' + escHtml(meta.ref) + '</span></div>'
+        + '<div class="vi-title">' + escHtml(meta.label) + ' <span class="status-badge status-validated">✓ VALIDÉ</span></div>'
         + '<div class="vi-partner">' + escHtml(r.partnerName) + '</div>'
         + '<div class="vi-date">Validé le ' + fmtDate(r.validatedAt) + '</div>'
       + '</div>'
       + '<div class="vi-actions">'
         + '<button class="vi-btn vi-btn-view" onclick="viewArchive(\'' + r.id + '\')">👁 Voir</button>'
         + '<button class="vi-btn vi-btn-print" onclick="printArchive(\'' + r.id + '\')">🖨 Imprimer</button>'
+        + '<button class="vi-btn vi-btn-print" onclick="downloadContractPng(\'' + r.id + '\')">⬇ PNG</button>'
         + '<button class="vi-btn vi-btn-del" onclick="deleteArchive(\'' + r.id + '\')">🗑 Supprimer</button>'
       + '</div>'
     + '</div>';
-  }).join('') + '</div>';
+  }
+
+  var html = '';
+  if (pending.length){
+    html += '<div class="archives-section-title pending">⏳ En attente de votre validation (' + pending.length + ')</div>';
+    html += '<div class="validated-list">' + pending.map(rowPending).join('') + '</div>';
+  }
+  if (validated.length){
+    html += '<div class="archives-section-title validated">✓ Contrats validés &amp; archivés (' + validated.length + ')</div>';
+    html += '<div class="validated-list">' + validated.map(rowValidated).join('') + '</div>';
+  }
+  c.innerHTML = html;
 }
 
-function buildArchiveDoc(record){
+function buildArchiveDoc(record, opts){
+  opts = opts || {};
+  var editableOrg = !!opts.editableOrgSignature;
   var srcPanel = document.getElementById('panel-' + record.type);
   if (!srcPanel) return null;
   var srcDoc = srcPanel.querySelector('.contract-doc');
@@ -1768,21 +1902,33 @@ function buildArchiveDoc(record){
   });
   var canvases = Array.from(clone.querySelectorAll('canvas.sig-canvas'));
   canvases.forEach(function(c, i){
+    var isOrgSlot = (i === 0);
     var dataURL = record.signatures[i];
+    // Cas 1 : signature présente -> img
     if (dataURL){
       var img = document.createElement('img');
       img.src = dataURL;
       img.className = 'sig-img';
       c.replaceWith(img);
-    } else {
-      var ph = document.createElement('div');
-      ph.className = 'sig-img';
-      ph.style.cssText = 'display:flex;align-items:center;justify-content:center;color:#aaa;font-style:italic;font-size:11px';
-      ph.textContent = '(non signé)';
-      c.replaceWith(ph);
+      return;
     }
+    // Cas 2 : organisateur en mode édition -> garder canvas dessinable
+    if (editableOrg && isOrgSlot){
+      c.dataset.role = 'org';
+      return;
+    }
+    // Cas 3 : autre -> placeholder
+    var ph = document.createElement('div');
+    ph.className = 'sig-img-placeholder';
+    ph.textContent = isOrgSlot ? '(en attente — organisateur)' : '(non signé)';
+    c.replaceWith(ph);
   });
-  Array.from(clone.querySelectorAll('.sig-clear')).forEach(function(b){ b.remove(); });
+  // Boutons effacer : garder seulement celui de l'org en mode pending
+  var clearBtns = Array.from(clone.querySelectorAll('.sig-clear'));
+  clearBtns.forEach(function(b, i){
+    if (editableOrg && i === 0) return; // garder
+    b.remove();
+  });
   return clone;
 }
 
@@ -1790,13 +1936,40 @@ function viewArchive(id){
   var rec = getArchives().find(function(r){ return r.id === id; });
   if (!rec) return;
   var meta = CONTRACT_LABELS[rec.type] || { label: rec.type };
-  document.getElementById('view-modal-title').textContent = meta.label + ' — ' + rec.partnerName;
-  var clone = buildArchiveDoc(rec);
+  var isPending = rec.status === 'pending';
+  var titleSuffix = isPending ? '  ⏳ En attente de validation' : '  ✓ Validé';
+  document.getElementById('view-modal-title').textContent = meta.label + ' — ' + rec.partnerName + titleSuffix;
+  var clone = buildArchiveDoc(rec, { editableOrgSignature: isPending });
   var content = document.getElementById('view-modal-content');
   content.innerHTML = '';
+  content.dataset.mode = isPending ? 'pending' : 'validated';
   if (clone) content.appendChild(clone);
+  // Init signature canvas si éditable
+  if (isPending){
+    var orgCanvas = content.querySelector('canvas.sig-canvas[data-role="org"]');
+    if (orgCanvas){
+      // Reset les attributs hérités du clone
+      orgCanvas.removeAttribute('disabled');
+      orgCanvas.removeAttribute('readonly');
+      delete orgCanvas.dataset.sigInit;
+      initSigCanvas(orgCanvas);
+    }
+  }
+  // Configurer les boutons d'action
+  var actions = document.getElementById('view-modal-actions');
+  if (isPending){
+    actions.innerHTML =
+        '<button class="vi-btn vi-btn-confirm" onclick="organizerSignAndValidate(\'' + rec.id + '\')">✓ Confirmer la validation</button>'
+      + '<button class="vi-btn vi-btn-view" onclick="closeViewModal()">✕ Fermer</button>';
+  } else {
+    actions.innerHTML =
+        '<button class="vi-btn vi-btn-print" onclick="printValidated()">🖨 Imprimer</button>'
+      + '<button class="vi-btn vi-btn-print" onclick="downloadContractPng(\'' + rec.id + '\')">⬇ PNG</button>'
+      + '<button class="vi-btn vi-btn-view" onclick="closeViewModal()">✕ Fermer</button>';
+  }
   document.getElementById('view-modal').classList.add('active');
 }
+
 function closeViewModal(){
   document.getElementById('view-modal').classList.remove('active');
   document.getElementById('view-modal-content').innerHTML = '';
@@ -1841,6 +2014,133 @@ function deleteArchive(id){
 }
 
 function printActive(){ window.print(); }
+
+// ===== EXPORT PNG (html2canvas) =====
+function ensureH2C(){
+  if (typeof html2canvas === 'undefined'){
+    alert('⚠ Module d\'export PNG non chargé.\nVérifiez votre connexion internet.');
+    return false;
+  }
+  return true;
+}
+function snapToPng(element, filename){
+  if (!ensureH2C()) return;
+  // Wait microtask for any layout
+  html2canvas(element, {
+    backgroundColor: '#fdfaf4',
+    scale: 2,
+    useCORS: true,
+    logging: false
+  }).then(function(canvas){
+    var link = document.createElement('a');
+    link.download = filename || ('master-clash-' + Date.now() + '.png');
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }).catch(function(err){
+    alert('Erreur lors de la génération du PNG : ' + err);
+  });
+}
+
+// ===== BONS : impression / PNG individuels =====
+function printCoupon(btn){
+  var coupon = btn.closest('.coupon');
+  if (!coupon) return;
+  var area = document.getElementById('print-area');
+  area.innerHTML = '';
+  var clone = coupon.cloneNode(true);
+  // Retirer les boutons d'action
+  Array.from(clone.querySelectorAll('.coupon-actions')).forEach(function(b){ b.remove(); });
+  // Wrapper dans un container avec padding
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:30px;max-width:500px;margin:0 auto';
+  wrap.appendChild(clone);
+  area.appendChild(wrap);
+  document.body.classList.add('print-validated');
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){
+      document.body.classList.remove('print-validated');
+      area.innerHTML = '';
+    }, 200);
+  }, 80);
+}
+function downloadCouponPng(btn){
+  var coupon = btn.closest('.coupon');
+  if (!coupon) return;
+  // Cloner pour masquer les boutons d'action
+  var clone = coupon.cloneNode(true);
+  Array.from(clone.querySelectorAll('.coupon-actions')).forEach(function(b){ b.remove(); });
+  // Recopier les valeurs des inputs (cloneNode ne copie pas les valeurs saisies)
+  var srcInputs = coupon.querySelectorAll('input');
+  var dstInputs = clone.querySelectorAll('input');
+  srcInputs.forEach(function(s, i){
+    if (dstInputs[i]) dstInputs[i].setAttribute('value', s.value || '');
+  });
+  // Container hors écran pour rendu
+  var container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:380px;background:#fdfaf4;padding:20px';
+  container.appendChild(clone);
+  document.body.appendChild(container);
+  var title = (clone.querySelector('.coupon-title') || {}).textContent || 'bon';
+  var slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  setTimeout(function(){
+    snapToPng(container, 'master-clash-' + slug + '.png');
+    setTimeout(function(){ document.body.removeChild(container); }, 1500);
+  }, 60);
+}
+
+// ===== CONTRATS : téléchargement PNG =====
+function downloadActiveContractPng(btn){
+  var panel = btn.closest('.contract-panel');
+  if (!panel) return;
+  var doc = panel.querySelector('.contract-doc');
+  if (!doc) return;
+  // Cloner et figer les inputs en text spans pour un meilleur rendu
+  var clone = freezeContractClone(doc);
+  var container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;background:#fdfaf4;padding:0';
+  container.appendChild(clone);
+  document.body.appendChild(container);
+  var type = panel.id.replace('panel-', '');
+  setTimeout(function(){
+    snapToPng(container, 'master-clash-contrat-' + type + '.png');
+    setTimeout(function(){ document.body.removeChild(container); }, 1500);
+  }, 60);
+}
+function downloadContractPng(id){
+  var rec = getArchives().find(function(r){ return r.id === id; });
+  if (!rec) return;
+  var doc = buildArchiveDoc(rec);
+  if (!doc) return;
+  var clone = freezeContractClone(doc);
+  var container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;background:#fdfaf4;padding:0';
+  container.appendChild(clone);
+  document.body.appendChild(container);
+  var slug = rec.partnerName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 30);
+  setTimeout(function(){
+    snapToPng(container, 'master-clash-' + rec.type + '-' + (slug || 'contrat') + '.png');
+    setTimeout(function(){ document.body.removeChild(container); }, 1500);
+  }, 60);
+}
+// Convertit les <input> en spans pour un meilleur rendu PNG
+function freezeContractClone(doc){
+  var clone = doc.cloneNode(true);
+  // Recopier les valeurs des inputs (le clone ne capture pas la value tapée)
+  var srcInputs = doc.querySelectorAll('input, textarea');
+  var dstInputs = clone.querySelectorAll('input, textarea');
+  srcInputs.forEach(function(s, i){
+    if (!dstInputs[i]) return;
+    if (s.type === 'checkbox') dstInputs[i].checked = s.checked;
+    else dstInputs[i].setAttribute('value', s.value || '');
+    if (dstInputs[i].tagName === 'TEXTAREA') dstInputs[i].textContent = s.value || '';
+  });
+  // Retirer les boutons effacer
+  Array.from(clone.querySelectorAll('.sig-clear')).forEach(function(b){ b.remove(); });
+  return clone;
+}
 
 updateArchivesCount();
 </script>
