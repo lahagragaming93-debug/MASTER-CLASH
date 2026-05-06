@@ -550,7 +550,7 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
   <div class="lock-big">🔒</div>
   <div class="lock-msg">Accès restreint</div>
   <div class="lock-sub">Code requis pour consulter le dossier Gouverneur</div>
-  <button class="lock-btn">Entrer le code</button>
+  <button class="lock-btn">🔐 Voir comment accéder</button>
 </div>
 </div>
 </section>
@@ -1268,7 +1268,7 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
   <div class="lock-big">🔒</div>
   <div class="lock-msg">Bons réservés à l'organisateur</div>
   <div class="lock-sub">Code requis pour consulter et imprimer les bons officiels</div>
-  <button class="lock-btn">Entrer le code</button>
+  <button class="lock-btn">🔐 Voir comment accéder</button>
 </div>
 </div>
   </div>
@@ -1520,7 +1520,7 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
   <div class="lock-big">🔒</div>
   <div class="lock-msg">Accès restreint</div>
   <div class="lock-sub">Code requis pour consulter la banque de questions</div>
-  <button class="lock-btn">Entrer le code</button>
+  <button class="lock-btn">🔐 Voir comment accéder</button>
 </div>
 </div>
 </section>
@@ -1614,7 +1614,7 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
   <div class="lock-big">🔒</div>
   <div class="lock-msg">Accès restreint</div>
   <div class="lock-sub">Code requis pour consulter le budget</div>
-  <button class="lock-btn">Entrer le code</button>
+  <button class="lock-btn">🔐 Voir comment accéder</button>
 </div>
 </div>
 </section>
@@ -1666,7 +1666,7 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
   <div class="lock-big">🔧</div>
   <div class="lock-msg">Administration</div>
   <div class="lock-sub">Code requis pour accéder à l'administration</div>
-  <button class="lock-btn">Entrer le code</button>
+  <button class="lock-btn">🔐 Voir comment accéder</button>
 </div>
 </div>
 </section>
@@ -2353,50 +2353,36 @@ var CONTRACT_LABELS = {
       });
     }
   }
-  function openModal(target){
-    pendingTarget = target;
-    modal.classList.add('active');
-    err.textContent = '';
-    input.value = '';
-    setTimeout(function(){ input.focus(); }, 50);
-  }
-  function closeModal(){
-    modal.classList.remove('active');
-    err.textContent = '';
-    input.value = '';
-  }
-  function tryUnlock(){
-    var code = (input.value || '').trim().toUpperCase();
-    if (code === MC_SECRET){
-      unlocked = true;
-      try { localStorage.setItem(MC_UNLOCK_KEY, '1'); } catch(e){}
-      applyUnlockState();
-      var t = pendingTarget;
-      closeModal();
-      if (t){
-        setTimeout(function(){
-          var sec = document.getElementById(t);
-          if (sec) sec.scrollIntoView({behavior:'smooth', block:'start'});
-        }, 80);
-      }
+  function showAccessDenied(sectionId){
+    var user = getCurrentUser();
+    var msg, title;
+    if (!user){
+      title = '🔐 Connexion requise';
+      msg = 'Cette section est réservée aux utilisateurs autorisés.\n\nConnectez-vous ou créez un compte pour demander l\'accès auprès de l\'organisateur.';
     } else {
-      err.textContent = 'Code incorrect';
-      input.value = '';
-      input.focus();
+      title = '🚫 Accès refusé';
+      msg = 'Votre compte « ' + (user.displayName || user.username) + ' » n\'a pas les permissions nécessaires pour accéder à cette section.\n\nContactez l\'organisateur (BoulaTV) pour demander un accès.';
     }
+    mcAlert(msg, { title: title }).then(function(){
+      if (!user) openLoginModal();
+    });
   }
   document.querySelectorAll('.locked-link').forEach(function(link){
     link.addEventListener('click', function(e){
-      if (!unlocked){ e.preventDefault(); openModal(link.getAttribute('data-section')); }
+      e.preventDefault();
+      showAccessDenied(link.getAttribute('data-section'));
     });
   });
   document.querySelectorAll('.lock-overlay').forEach(function(ov){
     ov.addEventListener('click', function(e){
-      if (!unlocked){ e.preventDefault(); openModal(ov.getAttribute('data-section')); }
+      e.preventDefault();
+      showAccessDenied(ov.getAttribute('data-section'));
     });
   });
-  form.addEventListener('submit', function(e){ e.preventDefault(); tryUnlock(); });
-  cancelBtn.addEventListener('click', closeModal);
+  // Anciennes fonctions de modale code (conservées pour compatibilité, plus utilisées pour les sections)
+  function closeModal(){ modal.classList.remove('active'); err.textContent = ''; input.value = ''; }
+  if (form) form.addEventListener('submit', function(e){ e.preventDefault(); closeModal(); });
+  if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
   modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
@@ -2899,23 +2885,18 @@ function deleteArchive(id){
 
 function printActive(){ window.print(); }
 
-// Demande le code organisateur via modale custom (compatible CEF FiveM)
-// Si l'utilisateur connecté a la perm "validate" ou est admin, on n'exige pas le code
+// Vérifie que l'utilisateur connecté a la permission requise pour cette action.
+// Plus de demande de code : on bloque directement si pas de permission.
 function requireOrgCode(titleMsg, requiredPerm){
-  // Bypass : utilisateur connecté avec les droits adéquats
   var perm = requiredPerm || 'validate';
   if (userIsAdmin() || userHasPerm(perm)) return Promise.resolve(true);
-  return mcPrompt(titleMsg || 'Cette action requiert le code organisateur.', {
-    title: '🔒 Code requis',
-    inputType: 'password',
-    placeholder: '••••••••',
-    okText: 'Valider'
-  }).then(function(code){
-    if (code === null) return false;
-    if ((code || '').trim().toUpperCase() !== MC_SECRET){
-      return mcAlert('⚠ Code incorrect.\nAction annulée.', { title: 'Erreur' }).then(function(){ return false; });
-    }
-    return true;
+  var user = getCurrentUser();
+  var msg = user
+    ? 'Votre compte « ' + (user.displayName || user.username) + ' » n\'a pas la permission nécessaire pour cette action.\n\nContactez l\'organisateur (BoulaTV) pour demander un accès.'
+    : 'Cette action est réservée aux utilisateurs autorisés.\n\nConnectez-vous avec un compte ayant les droits requis.';
+  return mcAlert(msg, { title: '🚫 Permission insuffisante' }).then(function(){
+    if (!user) openLoginModal();
+    return false;
   });
 }
 
