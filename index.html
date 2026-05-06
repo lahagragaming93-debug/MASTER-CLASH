@@ -1,661 +1,547 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Master Clash — Dossier Officiel</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{background:#0a0e1a;color:#dce4f0;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:52px;}
-nav{position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(8,12,22,.97);border-bottom:1px solid rgba(0,212,255,.2);height:52px;display:flex;align-items:center;padding:0 .8rem;gap:.25rem;overflow-x:auto;}
-nav::-webkit-scrollbar{height:2px;}
-nav::-webkit-scrollbar-thumb{background:#00d4ff;}
-.nav-brand{color:#00d4ff;font-weight:900;font-size:.95rem;letter-spacing:3px;white-space:nowrap;margin-right:.6rem;flex-shrink:0;}
-nav a{color:#6a7a8a;text-decoration:none;font-size:.68rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:.3rem .65rem;border-radius:5px;white-space:nowrap;flex-shrink:0;transition:all .15s;border:1px solid transparent;}
-nav a:hover{color:#00d4ff;border-color:rgba(0,212,255,.25);background:rgba(0,212,255,.07);}
-.wrap{max-width:860px;margin:0 auto;padding:2rem 1rem;}
-.hero{text-align:center;padding:2.5rem 1rem 2rem;border-bottom:1px solid rgba(0,212,255,.1);}
-.badge{display:inline-block;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);color:#f5c518;padding:.2rem .8rem;border-radius:20px;font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:.8rem;}
-.hero h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:900;color:#00d4ff;letter-spacing:6px;text-transform:uppercase;line-height:1.05;}
-.hero .tag{color:#f5c518;font-style:italic;margin-top:.4rem;font-size:.95rem;}
-.stats{display:flex;justify-content:center;gap:.7rem;flex-wrap:wrap;margin-top:1.6rem;}
-.stat{background:rgba(255,255,255,.04);border:1px solid rgba(0,212,255,.2);border-radius:10px;padding:.8rem 1.3rem;text-align:center;}
-.stat .n{font-size:1.9rem;font-weight:900;color:#f5c518;line-height:1;}
-.stat .l{font-size:.62rem;color:#6a7a8a;text-transform:uppercase;letter-spacing:1px;margin-top:.2rem;}
-section{padding:2rem 1rem;border-bottom:1px solid rgba(0,212,255,.07);}
-.sh{display:flex;align-items:center;gap:.7rem;margin-bottom:1.3rem;}
-.sh h2{font-size:1.05rem;font-weight:800;color:#00d4ff;text-transform:uppercase;letter-spacing:2px;}
-.sh .ln{flex:1;height:1px;background:linear-gradient(to right,rgba(0,212,255,.2),transparent);}
-.card{background:rgba(255,255,255,.03);border:1px solid rgba(0,212,255,.13);border-left:3px solid #00d4ff;border-radius:8px;padding:1rem 1.2rem;margin-bottom:.7rem;}
-.card h3{color:#00d4ff;font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:.6rem;}
-.card p,.card li{color:#aabbc8;font-size:.85rem;line-height:1.6;margin-bottom:.3rem;}
-.card ul{list-style:none;padding:0;}
-.card li::before{content:"›";color:#00d4ff;margin-right:.4rem;font-weight:bold;}
-.hl{color:#f5c518;font-weight:700;}
-.warn{color:#ff4757;font-weight:700;}
-table{width:100%;border-collapse:collapse;margin:.7rem 0;font-size:.8rem;}
-th{background:rgba(0,212,255,.1);color:#00d4ff;text-transform:uppercase;letter-spacing:.7px;font-size:.68rem;padding:.55rem .75rem;text-align:left;}
-td{padding:.55rem .75rem;border-bottom:1px solid rgba(255,255,255,.05);color:#aabbc8;}
-tr:last-child td{border-bottom:none;}
-.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.7rem 0;}
-@media(max-width:480px){.pgrid{grid-template-columns:1fr;}}
-.pcard{background:rgba(255,255,255,.03);border:1px solid rgba(0,212,255,.13);border-radius:7px;padding:.8rem;}
-.pcard .pt{color:#f5c518;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:.3rem;}
-.pcard p{font-size:.78rem;color:#8090a0;line-height:1.5;}
-.qnav{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.2rem;}
-.qnav a{padding:.3rem .8rem;border-radius:16px;font-size:.68rem;font-weight:700;text-decoration:none;letter-spacing:.5px;border:1px solid;transition:all .15s;}
-.qnav .fa{color:#00e676;border-color:rgba(0,230,118,.35);background:rgba(0,230,118,.06);}
-.qnav .fa:hover{background:rgba(0,230,118,.14);}
-.qnav .mo{color:#ffab40;border-color:rgba(255,171,64,.35);background:rgba(255,171,64,.06);}
-.qnav .mo:hover{background:rgba(255,171,64,.14);}
-.qnav .di{color:#ff6b6b;border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.06);}
-.qnav .di:hover{background:rgba(255,107,107,.14);}
-.qnav .bl{color:#b39ddb;border-color:rgba(179,157,219,.35);background:rgba(179,157,219,.06);}
-.qnav .bl:hover{background:rgba(179,157,219,.14);}
-.qst{font-size:.88rem;font-weight:800;text-transform:uppercase;letter-spacing:2px;padding:.4rem 0 .7rem;margin:1.2rem 0 .6rem;border-bottom:1px solid;}
-.qst.fa{color:#00e676;border-color:rgba(0,230,118,.2);}
-.qst.mo{color:#ffab40;border-color:rgba(255,171,64,.2);}
-.qst.di{color:#ff6b6b;border-color:rgba(255,107,107,.2);}
-.qst.bl{color:#b39ddb;border-color:rgba(179,157,219,.2);}
-.q{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:7px;padding:.75rem .9rem;margin-bottom:.45rem;}
-.qh{display:flex;align-items:center;gap:.4rem;margin-bottom:.35rem;flex-wrap:wrap;}
-.qid{font-size:.68rem;font-weight:800;color:#445566;}
-.qcat{font-size:.62rem;color:#556677;font-style:italic;}
-.qt{font-size:.6rem;font-weight:700;padding:.12rem .45rem;border-radius:3px;text-transform:uppercase;}
-.qt.qcm{background:rgba(0,212,255,.1);color:#00d4ff;}
-.qt.lib{background:rgba(245,197,24,.1);color:#f5c518;}
-.qt.blt{background:rgba(179,157,219,.1);color:#b39ddb;}
-.qpts{margin-left:auto;font-size:.6rem;font-weight:800;padding:.12rem .45rem;border-radius:3px;}
-.qpts.fa{background:rgba(0,230,118,.1);color:#00e676;}
-.qpts.mo{background:rgba(255,171,64,.1);color:#ffab40;}
-.qpts.di{background:rgba(255,107,107,.1);color:#ff6b6b;}
-.qpts.bl{background:rgba(179,157,219,.1);color:#b39ddb;}
-.qq{font-size:.84rem;font-weight:600;color:#dce4f0;margin-bottom:.4rem;line-height:1.4;}
-.choices{list-style:none;padding:0;margin-bottom:.35rem;}
-.choices li{font-size:.77rem;color:#778899;padding:.08rem 0;}
-.choices li.ok{color:#f5c518;font-weight:600;}
-.ans{background:rgba(0,212,255,.06);border-left:2px solid #00d4ff;padding:.25rem .55rem;border-radius:0 4px 4px 0;font-size:.77rem;font-weight:600;color:#00d4ff;}
-footer{text-align:center;padding:1.5rem 1rem;color:#334455;font-size:.7rem;border-top:1px solid rgba(0,212,255,.1);font-style:italic;}
-</style>
-</head>
-<body>
-
-<nav>
-  <span class="nav-brand">⚡ MC</span>
-  <a href="#gouv">Gouverneur</a>
-  <a href="#regl">Règlement</a>
-  <a href="#part">Partenaires</a>
-  <a href="#ques">Questions</a>
-</nav>
-
-<!-- HERO -->
-<div class="wrap">
-<div class="hero">
-  <div class="badge">Document officiel — État de San Andreas</div>
-  <h1>MASTER CLASH</h1>
-  <div class="tag">Le savoir ne suffit pas. Il faut vaincre.</div>
-  <div class="stats">
-    <div class="stat"><div class="n">42</div><div class="l">Participants</div></div>
-    <div class="stat"><div class="n">3</div><div class="l">Manches</div></div>
-    <div class="stat"><div class="n">100%</div><div class="l">Récompenses</div></div>
-  </div>
-</div>
-
-<!-- ════════ GOUVERNEUR ════════ -->
-<section id="gouv">
-<div class="sh"><span>🏛️</span><h2>Dossier Gouverneur</h2><div class="ln"></div></div>
-
-<div class="card">
-  <h3>Présentation du projet</h3>
-  <p>Master Clash est un événement compétitif et immersif alliant culture générale, rapidité et stratégie. 42 participants s'affrontent en trois manches progressives pour décrocher le titre de Grand Vainqueur et remporter la vitrine finale.</p>
-  <p style="margin-top:.4rem">Au-delà du divertissement, Master Clash constitue une opportunité unique pour Los Santos : un événement structuré, professionnel et fédérateur, ancré dans la vie de la communauté.</p>
-</div>
-
-<div class="card">
-  <h3>Objectifs du projet</h3>
-  <ul>
-    <li>Dynamiser la vie sociale et culturelle de Los Santos.</li>
-    <li>Créer un événement fédérateur autour d'une compétition saine et ambitieuse.</li>
-    <li>Stimuler l'économie locale via la mise en valeur des entreprises partenaires.</li>
-    <li>Favoriser les interactions citoyennes et le sentiment d'appartenance.</li>
-    <li>Proposer un programme régulier, structuré et potentiellement récurrent.</li>
-  </ul>
-</div>
-
-<div class="card">
-  <h3>Format et déroulement</h3>
-  <table>
-    <tr><th>Phase</th><th>Participants</th><th>Mécanique</th><th>Objectif</th></tr>
-    <tr><td><span class="hl">Manche 1 — Qualification</span></td><td>42 → 12</td><td>Buzzer — 1 à 3 pts selon difficulté</td><td class="hl">12 points</td></tr>
-    <tr><td><span class="hl">Manche 2 — Sélection</span></td><td>12 → 4</td><td>4 questions max (blind test Q4, 15s)</td><td class="hl">12 points</td></tr>
-    <tr><td><span class="hl">Manche 3 — Finale</span></td><td>4 → 1</td><td>Chronomètre individuel 90 secondes</td><td class="hl">Dernier avec du temps</td></tr>
-  </table>
-</div>
-
-<div class="card">
-  <h3>Impact économique &amp; social</h3>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;">
-    <div>
-      <p style="color:#00d4ff;font-weight:700;margin-bottom:.3rem;">Impact économique</p>
-      <ul><li>Valorisation des enseignes partenaires.</li><li>Bons d'achat distribués localement.</li><li>Visibilité et contact direct avec le public.</li></ul>
-    </div>
-    <div>
-      <p style="color:#00d4ff;font-weight:700;margin-bottom:.3rem;">Impact social</p>
-      <ul><li>Interaction directe entre citoyens.</li><li>Animation régulière de Los Santos.</li><li>Renforcement du lien institutions / citoyens.</li></ul>
-    </div>
-  </div>
-</div>
-
-<div class="card">
-  <h3>Système de récompenses</h3>
-  <table>
-    <tr><th>Étape</th><th>Participants</th><th>Récompense</th></tr>
-    <tr><td>Éliminés Manche 1</td><td>30</td><td>Bons d'achat partenaires</td></tr>
-    <tr><td>Éliminés Manche 2</td><td>8</td><td>Bons premium + expériences partenaires</td></tr>
-    <tr><td>Finaliste 4e place</td><td>1</td><td>Récompense de participation finaliste</td></tr>
-    <tr><td><span class="hl">Podium — 3e / 2e</span></td><td>2</td><td><span class="hl">Récompenses exclusives (podium)</span></td></tr>
-    <tr><td><span class="hl">🏆 Grand Vainqueur</span></td><td>1</td><td><span class="hl">Vitrine finale exceptionnelle</span></td></tr>
-  </table>
-</div>
-
-<div class="card">
-  <h3>Vision &amp; pérennité</h3>
-  <p>Master Clash a vocation à devenir un rendez-vous régulier de la vie culturelle et sociale de Los Santos. Chaque édition peut évoluer dans ses thématiques, ses partenariats et son format.</p>
-  <ul style="margin-top:.5rem"><li>Éditions thématiques saisonnières.</li><li>Format évolutif selon les retours de la communauté.</li><li>Possibilité d'intégrer des catégories spéciales ou tournois par équipes.</li></ul>
-</div>
-</section>
-
-<!-- ════════ RÈGLEMENT ════════ -->
-<section id="regl">
-<div class="sh"><span>📜</span><h2>Règlement Officiel</h2><div class="ln"></div></div>
-
-<div class="card"><h3>Article 1 — Participation</h3><ul><li>L'événement est ouvert à tout citoyen en règle.</li><li>L'inscription préalable est obligatoire pour participer.</li><li>Un comportement exemplaire et respectueux est exigé tout au long de l'événement.</li></ul></div>
-
-<div class="card"><h3>Article 2 — Déroulement général</h3><ul><li>L'événement se déroule en trois manches progressives.</li><li>Chaque participant s'engage à respecter les règles spécifiques à chaque manche.</li><li>Les décisions prises par l'animateur sont <span class="hl">définitives et sans appel.</span></li><li>L'organisateur se réserve le droit d'adapter les règles en cas de force majeure.</li></ul></div>
-
-<div class="card"><h3>Article 3 — Manche 1 : Qualification (42 → 12)</h3><p>Les 42 participants sont répartis en <span class="hl">3 groupes de 14</span>. Les 4 premiers à atteindre <span class="hl">12 points</span> dans chaque groupe accèdent à la manche suivante.</p><ul style="margin-top:.5rem"><li>Questions via un système de buzzer.</li><li>Chaque question rapporte entre 1 et 3 points selon la difficulté.</li><li>Thèmes : culture générale, maths, histoire, géographie, cinéma, musique, questions partenaires.</li><li>Seule la première réponse après activation du buzzer est prise en compte.</li><li>Couper la réponse d'un adversaire est <span class="warn">strictement interdit.</span></li><li>Les éliminés repartent avec des bons d'achat partenaires.</li></ul></div>
-
-<div class="card"><h3>Article 4 — Manche 2 : Sélection (12 → 4)</h3><p>Les 12 qualifiés passent un par un, maximum <span class="hl">4 questions</span> pour atteindre 12 points.</p>
-<table style="margin-top:.6rem"><tr><th>Format</th><th>Points</th><th>Description</th></tr><tr><td class="hl">Réponse directe</td><td>+3 pts</td><td>Le joueur répond sans aide.</td></tr><tr><td class="hl">QCM (4 choix)</td><td>+1 pt</td><td>4 choix proposés à l'écran.</td></tr><tr><td class="hl">Blind Test (Q4)</td><td>Variable</td><td>Extrait sonore — 15 secondes. Uniquement à la 4e question.</td></tr></table>
-<p style="margin-top:.5rem;color:#f5c518;font-weight:700;">Égalité :</p><ul><li>Duel rapide : 3 questions, 1 point par bonne réponse.</li><li>Le premier à atteindre 2 points est qualifié.</li></ul></div>
-
-<div class="card"><h3>Article 5 — Manche 3 : La Grande Finale (4 → 1)</h3><p>Les 4 finalistes s'affrontent avec un capital de temps individuel. Le dernier à conserver du temps remporte la finale.</p><ul style="margin-top:.5rem"><li>Chaque finaliste dispose d'un capital de <span class="hl">90 secondes.</span></li><li>Questions posées à tour de rôle.</li><li>Le chrono démarre dès la fin de l'énoncé.</li><li>Le chrono s'arrête <span class="hl">uniquement</span> lors d'une bonne réponse.</li><li>Mauvaise réponse ou absence : le chrono continue (perte de temps).</li></ul>
-<table style="margin-top:.6rem"><tr><th>Rang</th><th>Récompense</th></tr><tr><td class="hl">🏆 1er — Grand Vainqueur</td><td>Vitrine finale exceptionnelle</td></tr><tr><td>2e place</td><td>Récompense intermédiaire premium</td></tr><tr><td>3e place</td><td>Récompense secondaire</td></tr><tr><td style="color:#445566">4e place</td><td style="color:#445566">Récompense de participation</td></tr></table></div>
-
-<div class="card"><h3>Article 6 — Buzzer</h3><ul><li>Une seule réponse acceptée par activation du buzzer.</li><li>Formellement interdit d'activer le buzzer pour bloquer un adversaire.</li><li>Tout abus peut entraîner une <span class="warn">pénalité ou disqualification.</span></li></ul></div>
-
-<div class="card"><h3>Article 7 — Triche et comportement déloyal</h3><p>Est considéré comme triche : toute aide extérieure (téléphone, oreillette, document), communication entre joueurs, ou utilisation d'un outil quelconque.</p><p class="warn" style="margin-top:.4rem">Sanction : exclusion immédiate et définitive, sans compensation.</p></div>
-
-<div class="card"><h3>Article 8 — Litiges</h3><ul><li>Tout litige est tranché par l'organisateur ou l'animateur.</li><li>Aucune contestation ne peut interrompre une manche active.</li><li>Une procédure d'arbitrage peut être mise en place si nécessaire.</li></ul></div>
-
-<div class="card"><h3>Article 9 — Récompenses</h3><ul><li>Tous les participants reçoivent a minima des bons d'achat partenaires.</li><li>Les récompenses sont non échangeables contre de l'argent (sauf accord partenaire).</li><li>Les récompenses sont remises après validation par l'organisateur.</li><li>Tout comportement irrespectueux peut entraîner la <span class="warn">perte des récompenses.</span></li></ul></div>
+# MASTER CLASH — Brief complet pour Claude Code
+> Fichier de référence pour générer `index.html` — page unique scrollable, optimisée navigateur in-game FiveM (CEF)
 
-<div class="card"><h3>Article 10 — Comportement général</h3><ul><li>Le respect mutuel entre participants est obligatoire.</li><li>Tout comportement toxique ou agressif entraîne une <span class="warn">exclusion immédiate.</span></li><li>Le cadre de l'événement et ses règles doivent être respectés en toutes circonstances.</li></ul></div>
-</section>
+---
 
-<!-- ════════ PARTENAIRES ════════ -->
-<section id="part">
-<div class="sh"><span>🤝</span><h2>Dossier Partenaires</h2><div class="ln"></div></div>
+## 1. Contexte & objectif
 
-<div class="card"><h3>Qu'est-ce que Master Clash ?</h3><p>Master Clash est un événement compétitif alliant culture générale, rapidité et stratégie. 42 participants s'affrontent en trois manches progressives devant un public engagé. L'événement génère une forte interaction entre participants, public et partenaires, dans une atmosphère dynamique et professionnelle.</p></div>
+Créer un fichier `index.html` **unique et autonome** (pas de fichiers CSS/JS séparés, tout inline) contenant l'intégralité du dossier Master Clash. La page doit être scrollable, avec une navigation fixe en haut permettant de sauter entre les sections.
 
-<div class="card">
-  <h3>Pourquoi devenir partenaire ?</h3>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin:.5rem 0;">
-    <div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:6px;padding:.7rem;text-align:center;"><p style="color:#00d4ff;font-weight:700;font-size:.72rem;text-transform:uppercase;margin-bottom:.3rem;">Visibilité</p><p style="font-size:.75rem;color:#7a8a9a;">Votre nom mentionné pendant les questions et lors de chaque remise de lot.</p></div>
-    <div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:6px;padding:.7rem;text-align:center;"><p style="color:#00d4ff;font-weight:700;font-size:.72rem;text-transform:uppercase;margin-bottom:.3rem;">Interaction</p><p style="font-size:.75rem;color:#7a8a9a;">Contact direct avec les participants via vos récompenses.</p></div>
-    <div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:6px;padding:.7rem;text-align:center;"><p style="color:#00d4ff;font-weight:700;font-size:.72rem;text-transform:uppercase;margin-bottom:.3rem;">Image</p><p style="font-size:.75rem;color:#7a8a9a;">Association à un événement de qualité ancré dans la communauté.</p></div>
-  </div>
-</div>
+**Hébergement** : GitHub Pages — `https://lahagragaming93-debug.github.io/MASTER-CLASH/`  
+**Usage principal** : Tablette en jeu (GTA RP / FiveM) — le navigateur CEF ne supporte pas les PDF.
 
-<div class="card">
-  <h3>Niveaux de partenariat</h3>
-  <div class="pgrid">
-    <div class="pcard"><div class="pt">Partenaire Récompenses</div><p>Fournissez des bons d'achat ou services pour les participants éliminés. Votre nom est associé à chaque remise de lot.</p></div>
-    <div class="pcard"><div class="pt">Partenaire Questions</div><p>Une ou plusieurs questions sponsorisées intégrées dans le jeu. Mention explicite de votre enseigne pendant la manche.</p></div>
-    <div class="pcard"><div class="pt">Partenaire Expériences</div><p>Proposez une expérience exclusive (VIP, activité, accès privilégié) pour les finalistes. Visibilité maximale en finale.</p></div>
-    <div class="pcard"><div class="pt">Partenaire Visuel</div><p>Votre logo sur tous les supports de communication officiels : affiches, écrans, documents distribués.</p></div>
-  </div>
-</div>
+---
 
-<div class="card">
-  <h3>Exemples de récompenses par secteur</h3>
-  <table>
-    <tr><th>Secteur</th><th>Exemples de récompenses</th></tr>
-    <tr><td>🍔 Alimentation</td><td>Bons repas, bons drive, paniers garnis, livraison</td></tr>
-    <tr><td>🚗 Automobile / Garage</td><td>Bons entretien, réparation, lavage, tuning</td></tr>
-    <tr><td>💆 Esthétique / Bien-être</td><td>Soins, coiffure, produits de beauté, spa</td></tr>
-    <tr><td>🎟️ Événementiel / VIP</td><td>Accès exclusifs, expériences privées, places événements</td></tr>
-    <tr><td>⚽ Sport / Loisirs</td><td>Stage pilotage, séances sportives, activités exclusives</td></tr>
-    <tr><td>🛍️ Commerce général</td><td>Bons d'achat polyvalents, remises, offres exclusives</td></tr>
-  </table>
-</div>
+## 2. Design & style
 
-<div class="card"><h3>Engagement et conditions</h3><ul><li>Les récompenses sont remises directement aux participants lors de l'événement.</li><li>Votre nom et/ou logo sont mentionnés conformément à l'offre choisie.</li><li>Un bilan de visibilité post-événement peut être fourni sur demande.</li><li>Les termes du partenariat font l'objet d'un accord préalable entre les parties.</li></ul><p style="margin-top:.6rem;text-align:center;color:#00d4ff;font-weight:700;">Pour toute demande : contactez directement l'équipe organisatrice de MASTER CLASH.</p></div>
-</section>
+```
+Palette :
+  Background principal : #0a0e1a
+  Background secondaire : #0f1420
+  Background tertiaire  : #141926
+  Cyan (accent)         : #00d4ff
+  Jaune (accent 2)      : #f5c518
+  Rouge (danger)        : #ff4757
+  Texte principal       : #dce4f0
+  Texte secondaire      : #aabbc8
+  Texte muté            : #6a7a8a
+  Bordure               : rgba(0,212,255,0.18)
 
-<!-- ════════ QUESTIONS ════════ -->
-<section id="ques">
-<div class="sh"><span>❓</span><h2>Banque de Questions</h2><div class="ln"></div></div>
-<div class="qnav">
-  <a class="fa" href="#qfacile">✅ Faciles — 78 questions (1 pt)</a>
-  <a class="mo" href="#qmoyen">⚡ Moyennes — 72 questions (2 pts)</a>
-  <a class="di" href="#qdifficile">🔥 Difficiles — 40 questions (3 pts)</a>
-  <a class="bl" href="#qblind">🎵 Blind Tests — 10 questions</a>
-</div>
+Typographie : 'Segoe UI', Tahoma, sans-serif
+Coins arrondis : 8-12px
+Navigation : fixe en haut, hauteur 52px, fond semi-transparent avec backdrop-filter blur
+Scroll fluide : scroll-behavior: smooth
+```
 
-<!-- FACILES -->
-<div id="qfacile" class="qst fa">Questions Faciles — 1 point</div>
+**Couleurs par niveau de difficulté (questions) :**
+- Facile : `#00e676` (vert)
+- Moyen : `#ffab40` (orange)
+- Difficile : `#ff6b6b` (rouge)
+- Blind Test : `#b39ddb` (violet)
+
+---
+
+## 3. Structure de la page
 
-<div class="q"><div class="qh"><span class="qid">F01</span><span class="qcat">[Culture générale]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle est la capitale de la France ?</p><ul class="choices"><li>A. Lyon</li><li>B. Marseille</li><li class="ok">C. Paris ✓</li><li>D. Nice</li></ul></div>
+```
+[NAV FIXE] ⚡ MC | Gouverneur | Règlement | Partenaires | Questions | Budget
+
+[HERO]
+  - Badge "Document officiel — État de San Andreas"
+  - Titre MASTER CLASH
+  - Tagline "Le savoir ne suffit pas. Il faut vaincre."
+  - 3 stats : 42 Participants | 3 Manches | 100% Récompenses
+
+[SECTION 1] #gouv — Dossier Gouverneur
+[SECTION 2] #regl — Règlement Officiel  
+[SECTION 3] #part — Dossier Partenaires
+[SECTION 4] #ques — Banque de Questions
+[SECTION 5] #budget — Estimation Budget
+
+[FOOTER]
+```
+
+---
+
+## 4. Section 1 — Dossier Gouverneur
+
+### Présentation du projet
+Master Clash est un événement compétitif et immersif alliant culture générale, rapidité et stratégie. 42 participants s'affrontent en trois manches progressives pour décrocher le titre de Grand Vainqueur et remporter la vitrine finale.
+
+Au-delà du divertissement, Master Clash constitue une opportunité unique pour Los Santos : un événement structuré, professionnel et fédérateur, ancré dans la vie de la communauté.
+
+### Objectifs du projet
+- Dynamiser la vie sociale et culturelle de Los Santos.
+- Créer un événement fédérateur autour d'une compétition saine et ambitieuse.
+- Stimuler l'économie locale via la mise en valeur des entreprises partenaires.
+- Favoriser les interactions citoyennes et le sentiment d'appartenance.
+- Proposer un programme régulier, structuré et potentiellement récurrent.
+
+### Format et déroulement (tableau)
+
+| Phase | Participants | Mécanique | Objectif |
+|---|---|---|---|
+| Manche 1 — Qualification | 42 → 12 (3 groupes × 14) | Buzzer — questions 1 à 3 pts selon difficulté | 12 points |
+| Manche 2 — Sélection | 12 → 4 (individuel) | 4 questions max (blind test possible Q4, 15s) | 12 points |
+| Manche 3 — Finale | 4 → 1 Vainqueur | Chronomètre individuel 90 secondes par finaliste | Dernier avec du temps |
+
+### Impact économique & social (2 colonnes)
+
+**Impact économique :**
+- Valorisation des enseignes et commerces partenaires.
+- Bons d'achat distribués aux partenaires locaux.
+- Visibilité, notoriété et contact direct avec le public.
+
+**Impact social :**
+- Interaction directe entre citoyens.
+- Animation régulière de la vie de Los Santos.
+- Renforcement du lien institutions / citoyens.
+
+### Système de récompenses (tableau)
+
+| Étape | Participants | Récompense |
+|---|---|---|
+| Éliminés Manche 1 | 30 | Bons d'achat partenaires |
+| Éliminés Manche 2 | 8 | Bons premium + expériences partenaires |
+| Finaliste 4e place | 1 | Récompense de participation finaliste |
+| Podium — 3e / 2e | 2 | Récompenses exclusives (podium) |
+| 🏆 Grand Vainqueur | 1 | Vitrine finale exceptionnelle |
+
+### Vision & pérennité
+Master Clash a vocation à devenir un rendez-vous régulier de la vie culturelle et sociale de Los Santos. Chaque édition peut évoluer dans ses thématiques, ses partenariats et son format, offrant une dynamique durable et renouvelée.
+
+- Événement déclinable en éditions thématiques saisonnières.
+- Format évolutif selon les retours de la communauté.
+- Possibilité d'intégrer des catégories spéciales ou tournois par équipes.
+
+---
+
+## 5. Section 2 — Règlement Officiel
+
+### Article 1 — Participation
+- L'événement est ouvert à tout citoyen en règle.
+- L'inscription préalable est obligatoire pour participer.
+- Un comportement exemplaire et respectueux est exigé tout au long de l'événement.
 
-<div class="q"><div class="qh"><span class="qid">F02</span><span class="qcat">[Mathématiques]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien font 7 × 8 ?</p><div class="ans">56</div></div>
+### Article 2 — Déroulement général
+- L'événement se déroule en trois manches progressives.
+- Chaque participant s'engage à respecter les règles spécifiques à chaque manche.
+- Les décisions prises par l'animateur sont **définitives et sans appel.**
+- L'organisateur se réserve le droit d'adapter les règles en cas de force majeure.
+
+### Article 3 — Manche 1 : Qualification (42 → 12)
+Les 42 participants sont répartis en 3 groupes de 14. Les 4 premiers à atteindre **12 points** dans chaque groupe accèdent à la manche suivante.
+- Questions posées à l'ensemble du groupe via un système de buzzer.
+- Chaque question rapporte entre 1 et 3 points selon son niveau de difficulté.
+- Thèmes : culture générale, mathématiques, histoire, géographie, cinéma, musique, questions partenaires.
+- Seule la première réponse donnée après activation du buzzer est prise en compte.
+- Couper volontairement la réponse d'un adversaire est **strictement interdit.**
+- La manche continue jusqu'à ce que 4 qualifiés soient désignés par groupe.
+- Les participants éliminés repartent avec des bons d'achat partenaires.
+
+### Article 4 — Manche 2 : Sélection (12 → 4)
+Les 12 qualifiés passent un par un, avec un maximum de **4 questions** par participant pour atteindre 12 points.
 
-<div class="q"><div class="qh"><span class="qid">F03</span><span class="qcat">[Culture générale]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel animal est le roi de la jungle ?</p><ul class="choices"><li class="ok">A. Lion ✓</li><li>B. Tigre</li><li>C. Éléphant</li><li>D. Gorille</li></ul></div>
+| Format | Points | Description |
+|---|---|---|
+| Réponse directe | +3 pts | Le joueur répond sans aide. |
+| QCM (4 choix) | +1 pt | 4 choix proposés à l'écran. |
+| Blind Test (Q4) | Variable | Extrait sonore — 15 secondes. S'applique uniquement à la 4e question. |
+
+**Égalité :**
+- Duel rapide entre les ex-aequo : 3 questions, 1 point par bonne réponse.
+- Le premier à atteindre 2 points est qualifié.
 
-<div class="q"><div class="qh"><span class="qid">F04</span><span class="qcat">[Mathématiques]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien de côtés a un hexagone ?</p><div class="ans">6</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F05</span><span class="qcat">[Sciences]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle planète est la plus proche du Soleil ?</p><ul class="choices"><li>A. Vénus</li><li class="ok">B. Mercure ✓</li><li>C. Mars</li><li>D. Terre</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F06</span><span class="qcat">[Culture générale]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle couleur obtient-on en mélangeant bleu et jaune ?</p><div class="ans">Vert</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F07</span><span class="qcat">[Sport]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien de joueurs dans une équipe de foot ?</p><ul class="choices"><li>A. 9</li><li>B. 10</li><li class="ok">C. 11 ✓</li><li>D. 12</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F08</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Dans quelle ville se trouve la Tour Eiffel ?</p><div class="ans">Paris</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F09</span><span class="qcat">[Art]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Qui a peint la Joconde ?</p><ul class="choices"><li>A. Van Gogh</li><li>B. Picasso</li><li>C. Michel-Ange</li><li class="ok">D. Léonard de Vinci ✓</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F10</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le plus grand océan du monde ?</p><div class="ans">Pacifique</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F11</span><span class="qcat">[Géographie]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le pays le plus grand du monde ?</p><ul class="choices"><li>A. Canada</li><li>B. USA</li><li>C. Chine</li><li class="ok">D. Russie ✓</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F12</span><span class="qcat">[Mathématiques]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien de secondes dans une minute ?</p><div class="ans">60</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F13</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Dans quel film trouve-t-on Simba ?</p><ul class="choices"><li>A. Bambi</li><li class="ok">B. Le Roi Lion ✓</li><li>C. Tarzan</li><li>D. Dumbo</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F14</span><span class="qcat">[Cinéma]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel super-héros porte une armure rouge et or ?</p><div class="ans">Iron Man</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F15</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Qui joue Jack dans Titanic ?</p><ul class="choices"><li>A. Brad Pitt</li><li>B. Tom Hanks</li><li class="ok">C. Leonardo DiCaprio ✓</li><li>D. Johnny Depp</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F16</span><span class="qcat">[Cinéma]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Comment s'appelle le robot de WALL-E ?</p><div class="ans">WALL-E</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F17</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Dans quelle saga trouve-t-on 'La Force' ?</p><ul class="choices"><li>A. Harry Potter</li><li class="ok">B. Star Wars ✓</li><li>C. LOTR</li><li>D. Matrix</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F18</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le nom du plombier de Nintendo ?</p><div class="ans">Mario</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F19</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Dans Minecraft, quel ennemi vert explose ?</p><ul class="choices"><li>A. Zombie</li><li>B. Squelette</li><li class="ok">C. Creeper ✓</li><li>D. Enderman</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F20</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Dans quel jeu incarne-t-on Geralt de Riv ?</p><div class="ans">The Witcher</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F21</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien de vies au départ dans Super Mario Bros ?</p><ul class="choices"><li>A. 2</li><li class="ok">B. 3 ✓</li><li>C. 4</li><li>D. 5</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F22</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle console a lancé les manettes DualShock ?</p><div class="ans">PlayStation</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F23</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle franchise propose des 'Chicken Dinner' ?</p><ul class="choices"><li>A. CoD</li><li class="ok">B. PUBG ✓</li><li>C. Rust</li><li>D. Fortnite</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F24</span><span class="qcat">[Sport]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel sport se joue avec une raquette et un volant ?</p><div class="ans">Badminton</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F25</span><span class="qcat">[Sport]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien de points vaut un panier à 3 points ?</p><ul class="choices"><li>A. 1</li><li>B. 2</li><li class="ok">C. 3 ✓</li><li>D. 4</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F26</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Dans quelle ville se trouve Big Ben ?</p><div class="ans">Londres</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F27</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Qui a sorti 'Thriller' ?</p><ul class="choices"><li>A. Madonna</li><li>B. Janet Jackson</li><li>C. Whitney Houston</li><li class="ok">D. Michael Jackson ✓</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F28</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien de cordes a une guitare standard ?</p><div class="ans">6</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F29</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel genre musical est né à NY dans les années 70 ?</p><ul class="choices"><li>A. Rock</li><li>B. Jazz</li><li class="ok">C. Hip-hop ✓</li><li>D. Reggae</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F30</span><span class="qcat">[Sciences]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle est la formule chimique de l'eau ?</p><div class="ans">H2O</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F31</span><span class="qcat">[Sciences]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le plus grand os du corps humain ?</p><ul class="choices"><li>A. Humérus</li><li>B. Tibia</li><li>C. Radius</li><li class="ok">D. Fémur ✓</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F32</span><span class="qcat">[Sciences]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle planète est surnommée 'la planète rouge' ?</p><div class="ans">Mars</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F33</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel film met en scène des jouets qui s'animent ?</p><ul class="choices"><li>A. Shrek</li><li class="ok">B. Toy Story ✓</li><li>C. Monstres &amp; Cie</li><li>D. Cars</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F34</span><span class="qcat">[Culture générale]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien de cases compte un échiquier ?</p><div class="ans">64</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F35</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Dans Harry Potter, quelle est la maison de Harry ?</p><ul class="choices"><li>A. Serpentard</li><li>B. Poufsouffle</li><li>C. Serdaigle</li><li class="ok">D. Gryffondor ✓</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F36</span><span class="qcat">[Cinéma]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel ennemi iconique dit 'Je suis ton père' ?</p><div class="ans">Dark Vador</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F37</span><span class="qcat">[Sport]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel pays a remporté la Coupe du Monde 2018 ?</p><ul class="choices"><li>A. Brésil</li><li>B. Allemagne</li><li class="ok">C. France ✓</li><li>D. Argentine</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F38</span><span class="qcat">[Sport]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien de joueurs dans une équipe de basket ?</p><ul class="choices"><li>A. 4</li><li class="ok">B. 5 ✓</li><li>C. 6</li><li>D. 7</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F39</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel rappeur est surnommé 'Slim Shady' ?</p><div class="ans">Eminem</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F40</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel acteur joue Thor dans le MCU ?</p><ul class="choices"><li>A. Chris Evans</li><li class="ok">B. Chris Hemsworth ✓</li><li>C. Chris Pratt</li><li>D. RDJ</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F41</span><span class="qcat">[Sciences]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est l'animal le plus rapide du monde ?</p><div class="ans">Le guépard</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F42</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel jeu est le plus vendu de l'histoire ?</p><ul class="choices"><li>A. Tetris</li><li>B. GTA V</li><li class="ok">C. Minecraft ✓</li><li>D. CoD</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F43</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Dans quel jeu trouve-t-on des 'Champions' avant chaque partie ?</p><div class="ans">League of Legends</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F44</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel personnage crie 'Hadouken !' ?</p><ul class="choices"><li class="ok">A. Ryu ✓</li><li>B. Ken</li><li>C. Guile</li><li>D. Blanka</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F45</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le nom de l'épée de Link dans Zelda ?</p><div class="ans">Master Sword</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F46</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle franchise est développée par Rockstar Games ?</p><ul class="choices"><li>A. AC</li><li class="ok">B. GTA ✓</li><li>C. Far Cry</li><li>D. Watch Dogs</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F47</span><span class="qcat">[Cinéma]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">De quelle couleur est Hulk ?</p><div class="ans">Vert</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F48</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Qui joue James Bond dans Casino Royale (2006) ?</p><ul class="choices"><li>A. Pierce Brosnan</li><li>B. Roger Moore</li><li class="ok">C. Daniel Craig ✓</li><li>D. Sean Connery</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F49</span><span class="qcat">[Mathématiques]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien de zéros dans un million ?</p><div class="ans">6</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F50</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel film de Pixar met en scène un poisson clown ?</p><ul class="choices"><li>A. Shark Tale</li><li class="ok">B. Nemo ✓</li><li>C. Aquaman</li><li>D. Splash</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F51</span><span class="qcat">[Histoire]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel pays a inventé les Jeux Olympiques ?</p><div class="ans">Grèce</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F52</span><span class="qcat">[Culture générale]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel pays est connu pour la pizza et les pâtes ?</p><ul class="choices"><li>A. France</li><li>B. Grèce</li><li>C. Espagne</li><li class="ok">D. Italie ✓</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F53</span><span class="qcat">[Manga]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le nom du personnage principal de Naruto ?</p><div class="ans">Naruto Uzumaki</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F54</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel acteur joue Ethan Hunt dans Mission Impossible ?</p><ul class="choices"><li>A. Matt Damon</li><li class="ok">B. Tom Cruise ✓</li><li>C. Will Smith</li><li>D. Stallone</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F55</span><span class="qcat">[Culture générale]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est l'animal symbole de la paix ?</p><div class="ans">La colombe</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F56</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel rappeur s'appelle Aubrey Drake Graham ?</p><ul class="choices"><li>A. Kendrick</li><li class="ok">B. Drake ✓</li><li>C. J. Cole</li><li>D. Travis</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F57</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel instrument jouait Beethoven ?</p><div class="ans">Piano</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F58</span><span class="qcat">[Géographie]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Combien de continents sur Terre ?</p><ul class="choices"><li>A. 5</li><li>B. 6</li><li class="ok">C. 7 ✓</li><li>D. 8</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F59</span><span class="qcat">[Sciences]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle est la vitesse de la lumière (en km/s) ?</p><div class="ans">300 000 km/s</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F60</span><span class="qcat">[Littérature]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Qui est l'auteur de Harry Potter ?</p><ul class="choices"><li>A. Tolkien</li><li>B. C.S. Lewis</li><li class="ok">C. J.K. Rowling ✓</li><li>D. Roald Dahl</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F61</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le pays le plus froid du monde ?</p><div class="ans">Antarctique</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F62</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle franchise de JV propose des 'Master Chief' ?</p><ul class="choices"><li>A. Destiny</li><li>B. Warframe</li><li class="ok">C. Halo ✓</li><li>D. Anthem</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F63</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel jeu propose de construire et survivre avec des blocs ?</p><div class="ans">Minecraft</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F64</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel film raconte l'histoire d'un homme seul sur une île déserte avec un ballon ?</p><ul class="choices"><li class="ok">A. Seul au monde ✓</li><li>B. The Beach</li><li>C. Robinson</li><li>D. Survivant</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F65</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel chanteur est connu pour 'Thriller' et 'Billie Jean' ?</p><div class="ans">Michael Jackson</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F66</span><span class="qcat">[Culture générale]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle couleur représente le danger sur un feu tricolore ?</p><ul class="choices"><li>A. Vert</li><li>B. Orange</li><li class="ok">C. Rouge ✓</li><li>D. Blanc</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F67</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le nom de la franchise Nintendo avec karts et champignons ?</p><div class="ans">Mario Kart</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F68</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le sport principal de NBA 2K ?</p><ul class="choices"><li>A. Football</li><li>B. Tennis</li><li class="ok">C. Basketball ✓</li><li>D. Baseball</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F69</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel personnage principal incarne-t-on dans les jeux Zelda ?</p><div class="ans">Link</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F70</span><span class="qcat">[Géographie]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle est la capitale de l'Australie ?</p><ul class="choices"><li>A. Sydney</li><li>B. Melbourne</li><li class="ok">C. Canberra ✓</li><li>D. Brisbane</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F71</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Sur quel continent se trouve l'Égypte ?</p><div class="ans">Afrique</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F72</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel groupe est derrière l'album 'Abbey Road' ?</p><ul class="choices"><li>A. Rolling Stones</li><li class="ok">B. The Beatles ✓</li><li>C. Led Zeppelin</li><li>D. The Who</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F73</span><span class="qcat">[Cinéma]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le prénom du célèbre détective à la pipe et au manteau ?</p><div class="ans">Sherlock (Holmes)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F74</span><span class="qcat">[Série]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle série Netflix parle de fabrication de drogue à Los Alamos ?</p><ul class="choices"><li>A. Narcos</li><li>B. Ozark</li><li class="ok">C. Breaking Bad ✓</li><li>D. Better Call Saul</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F75</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est l'ennemi principal de Mario ?</p><div class="ans">Bowser</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F76</span><span class="qcat">[Sciences]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quelle planète a des anneaux visibles ?</p><ul class="choices"><li>A. Jupiter</li><li>B. Neptune</li><li class="ok">C. Saturne ✓</li><li>D. Uranus</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">F77</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel est le nom du jeu de sport Riot Games avec des agents ?</p><div class="ans">Valorant</div></div>
-
-<div class="q"><div class="qh"><span class="qid">F78</span><span class="qcat">[Littérature]</span><span class="qt qcm">QCM</span><span class="qpts fa">1 pt</span></div><p class="qq">Quel écrivain français a écrit Les Misérables ?</p><ul class="choices"><li>A. Voltaire</li><li class="ok">B. Victor Hugo ✓</li><li>C. Balzac</li><li>D. Zola</li></ul></div>
-
-<!-- MOYENNES -->
-<div id="qmoyen" class="qst mo">Questions Moyennes — 2 points</div>
-
-<div class="q"><div class="qh"><span class="qid">M01</span><span class="qcat">[Histoire]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quelle année a vu la chute du mur de Berlin ?</p><ul class="choices"><li>A. 1987</li><li class="ok">B. 1989 ✓</li><li>C. 1991</li><li>D. 1993</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M02</span><span class="qcat">[Mathématiques]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quelle est la racine carrée de 196 ?</p><div class="ans">14</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M03</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel réalisateur est derrière la trilogie Dark Knight ?</p><ul class="choices"><li>A. Tim Burton</li><li>B. Zack Snyder</li><li class="ok">C. Christopher Nolan ✓</li><li>D. Fincher</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M04</span><span class="qcat">[Sciences]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel élément chimique a pour symbole 'Fe' ?</p><div class="ans">Fer</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M05</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quel jeu incarne-t-on un 'Vault Dweller' post-nucléaire ?</p><ul class="choices"><li>A. Metro</li><li class="ok">B. Fallout ✓</li><li>C. STALKER</li><li>D. Wasteland</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M06</span><span class="qcat">[Histoire]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">En quelle année a eu lieu la Révolution française ?</p><div class="ans">1789</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M07</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel acteur joue John Wick ?</p><ul class="choices"><li>A. Statham</li><li class="ok">B. Keanu Reeves ✓</li><li>C. The Rock</li><li>D. Tom Hardy</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M08</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le vrai nom de Lady Gaga ?</p><div class="ans">Stefani Germanotta</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M09</span><span class="qcat">[Sciences]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel organe produit l'insuline ?</p><ul class="choices"><li>A. Foie</li><li>B. Rate</li><li class="ok">C. Pancréas ✓</li><li>D. Rein</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M10</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quel jeu incarne-t-on Joel et Ellie dans un monde post-apo ?</p><div class="ans">The Last of Us</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M11</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le vrai nom de Stromae ?</p><ul class="choices"><li class="ok">A. Paul Van Haver ✓</li><li>B. Pierre Servais</li><li>C. Arnaud Delafont</li><li>D. Louis Bertrand</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M12</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel groupe est derrière Nevermind et In Utero ?</p><div class="ans">Nirvana</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M13</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quelle saga de jeux propose 'Kratos' ?</p><ul class="choices"><li class="ok">A. God of War ✓</li><li>B. Devil May Cry</li><li>C. Bayonetta</li><li>D. DMC</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M14</span><span class="qcat">[Cinéma]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel film a remporté l'Oscar du meilleur film en 2020 ?</p><div class="ans">Parasite</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M15</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel film contient un robot nommé TARS ?</p><ul class="choices"><li>A. Ex Machina</li><li class="ok">B. Interstellar ✓</li><li>C. Her</li><li>D. AI</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M16</span><span class="qcat">[Série]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quelle ville se situe la série Narcos ?</p><div class="ans">Medellín (Colombie)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M17</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel jeu met en scène Arthur Morgan et le gang Van der Linde ?</p><ul class="choices"><li>A. GTA V</li><li class="ok">B. RDR2 ✓</li><li>C. Outlaws</li><li>D. Desperados</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M18</span><span class="qcat">[Art]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel peintre a coupé son oreille ?</p><div class="ans">Van Gogh</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M19</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Qui a réalisé Pulp Fiction ?</p><ul class="choices"><li>A. Scorsese</li><li>B. Lynch</li><li class="ok">C. Tarantino ✓</li><li>D. Coens</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M20</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le seul pays traversé par l'équateur et le tropique du Capricorne ?</p><div class="ans">Brésil</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M21</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Qui a composé la bande-son de Star Wars ?</p><ul class="choices"><li>A. Hans Zimmer</li><li class="ok">B. John Williams ✓</li><li>C. Morricone</li><li>D. Howard Shore</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M22</span><span class="qcat">[Sciences]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est l'os le plus petit du corps humain ?</p><div class="ans">L'étrier (oreille)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M23</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quelle année est sortie la première PlayStation ?</p><ul class="choices"><li>A. 1992</li><li>B. 1993</li><li class="ok">C. 1994 ✓</li><li>D. 1995</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M24</span><span class="qcat">[Sciences]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel élément chimique a pour symbole 'Au' ?</p><div class="ans">Or</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M25</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel rappeur a sorti l'album 'DAMN.' ?</p><ul class="choices"><li>A. Drake</li><li>B. J. Cole</li><li class="ok">C. Kendrick Lamar ✓</li><li>D. Kanye</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M26</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel jeu compétitif de Blizzard met en scène des 'héros' en 5v5 ?</p><div class="ans">Overwatch</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M27</span><span class="qcat">[Série]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Combien de saisons compte Game of Thrones ?</p><div class="ans">8</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M28</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel acteur joue Tony Montana dans Scarface ?</p><ul class="choices"><li>A. De Niro</li><li class="ok">B. Al Pacino ✓</li><li>C. Nicholson</li><li>D. Brando</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M29</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quel jeu chasse-t-on des monstres géants avec des armes variées ?</p><div class="ans">Monster Hunter</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M30</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel titre original porte le premier épisode de Star Wars (Ep. IV) ?</p><ul class="choices"><li>A. The Force Awakens</li><li class="ok">B. A New Hope ✓</li><li>C. Return of the Jedi</li><li>D. The Phantom Menace</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M31</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Combien de pays composent l'Union Européenne ?</p><div class="ans">27</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M32</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel jeu de rôle propose des 'Champions' à Los Santos virtuels ?</p><ul class="choices"><li>A. GTA RP</li><li class="ok">B. Disco Elysium ✓</li><li>C. Cyberpunk</li><li>D. Sleeping Dogs</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M33</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel rappeur français s'appelle Aurélien Cotentin ?</p><div class="ans">Ninho</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M34</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quelle franchise jouent des 'Operators' dans un FPS tactique ?</p><ul class="choices"><li>A. CS:GO</li><li class="ok">B. Valorant ✓</li><li>C. R6</li><li>D. Overwatch</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M35</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quel pays est né Freddie Mercury ?</p><div class="ans">Tanzanie</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M36</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel groupe de rock est derrière 'OK Computer' et 'The Bends' ?</p><ul class="choices"><li>A. Oasis</li><li class="ok">B. Radiohead ✓</li><li>C. Muse</li><li>D. Blur</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M37</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quelle est la capitale du Canada ?</p><div class="ans">Ottawa</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M38</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quel film Matt Damon survit-il seul sur Mars ?</p><ul class="choices"><li>A. Gravity</li><li class="ok">B. The Martian ✓</li><li>C. Europa</li><li>D. Ad Astra</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M39</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Combien de personnes jouent dans un match CS:GO standard ?</p><div class="ans">10 (5v5)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M40</span><span class="qcat">[Sciences]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le signe chimique de l'argent ?</p><ul class="choices"><li class="ok">A. Ag ✓</li><li>B. Al</li><li>C. Sb</li><li>D. Ar</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M41</span><span class="qcat">[Manga]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le pays d'origine de l'anime Attack on Titan ?</p><div class="ans">Japon</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M42</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Qui est l'antagoniste principal de Matrix ?</p><ul class="choices"><li>A. Neo</li><li>B. Morpheus</li><li class="ok">C. Agent Smith ✓</li><li>D. Le Mérovingien</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M43</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel jeu Riot oppose des voitures rocket dans des matchs de foot ?</p><div class="ans">Rocket League</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M44</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le nom du personnage principal de Cyberpunk 2077 ?</p><div class="ans">V</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M45</span><span class="qcat">[Série]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quel pays se déroule Squid Game ?</p><ul class="choices"><li>A. Japon</li><li>B. Chine</li><li class="ok">C. Corée du Sud ✓</li><li>D. Thaïlande</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M46</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le nom du studio derrière Dark Souls et Elden Ring ?</p><div class="ans">FromSoftware</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M47</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel rappeur français a sorti l'album 'Trône' ?</p><ul class="choices"><li>A. Nekfeu</li><li class="ok">B. Booba ✓</li><li>C. Jul</li><li>D. SCH</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M48</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quelle est la langue officielle du Brésil ?</p><div class="ans">Portugais</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M49</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel film de Denis Villeneuve adapte le roman de Frank Herbert ?</p><ul class="choices"><li>A. Arrival</li><li>B. Sicario</li><li class="ok">C. Dune ✓</li><li>D. Blade Runner 2049</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M50</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel rappeur s'appelle Calvin Cordozar Broadus Jr. ?</p><div class="ans">Snoop Dogg</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M51</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quel jeu gère-t-on un parc avec des dinosaures ?</p><ul class="choices"><li>A. Wildlife Park</li><li>B. Zoo Tycoon</li><li class="ok">C. Jurassic World Evolution ✓</li><li>D. Planet Zoo</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M52</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le nom du moteur de jeu créé par Epic Games ?</p><div class="ans">Unreal Engine</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M53</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel groupe de K-Pop est le plus vendu de l'histoire ?</p><ul class="choices"><li>A. EXO</li><li>B. BLACKPINK</li><li class="ok">C. BTS ✓</li><li>D. TWICE</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M54</span><span class="qcat">[Culture générale]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">En quelle année a été lancé YouTube ?</p><div class="ans">2005</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M55</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel jeu de stratégie a popularisé 'rush' et 'build order' ?</p><ul class="choices"><li>A. WarCraft</li><li>B. Age of Empires</li><li class="ok">C. StarCraft ✓</li><li>D. C&amp;C</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M56</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le vrai nom de l'artiste The Weeknd ?</p><div class="ans">Abel Tesfaye</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M57</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel acteur joue l'agent 007 dans Casino Royale 2006 ?</p><ul class="choices"><li>A. Brosnan</li><li>B. Moore</li><li class="ok">C. Daniel Craig ✓</li><li>D. Connery</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M58</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le type de jeu où chaque mort est permanente ?</p><div class="ans">Roguelike (ou roguelite)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M59</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel instrument joue Travis Scott sur scène ?</p><ul class="choices"><li>A. Guitare</li><li>B. Platines</li><li>C. Basse</li><li class="ok">D. Aucun (rappeur) ✓</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M60</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel jeu de survie solo met en scène deux personnages dont un enfant portant des cornes ?</p><div class="ans">Ico (ou Shadow of the Colossus)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M61</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel réalisateur est derrière Inception, Tenet et Oppenheimer ?</p><ul class="choices"><li>A. Villeneuve</li><li class="ok">B. Christopher Nolan ✓</li><li>C. Ridley Scott</li><li>D. Cameron</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M62</span><span class="qcat">[Culture générale]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le nom de la théorie d'Adam Smith sur l'économie ?</p><div class="ans">La main invisible du marché</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M63</span><span class="qcat">[Série]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quelle série policière danoise a inspiré la série The Killing ?</p><ul class="choices"><li class="ok">A. Forbrydelsen ✓</li><li>B. Borgen</li><li>C. The Bridge</li><li>D. Dicte</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M64</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel est le titre de l'album le plus vendu de tous les temps ?</p><div class="ans">Thriller (Michael Jackson)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M65</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quel jeu explorer une Angleterre médiévale en tant que Viking ?</p><ul class="choices"><li>A. Kingdom Come</li><li>B. Dying Light 2</li><li class="ok">C. Valhalla ✓</li><li>D. For Honor</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M66</span><span class="qcat">[Cinéma]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel pays abrite le studio de cinéma universel Hollywood ?</p><div class="ans">États-Unis (Los Angeles)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M67</span><span class="qcat">[Culture générale]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel philosophe a dit 'Je pense donc je suis' ?</p><ul class="choices"><li>A. Platon</li><li>B. Aristote</li><li class="ok">C. Descartes ✓</li><li>D. Nietzsche</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M68</span><span class="qcat">[Culture générale]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel constructeur automobile produit la Lamborghini ?</p><div class="ans">Volkswagen Group</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M69</span><span class="qcat">[Sciences]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quelle couleur n'est PAS dans l'arc-en-ciel classique ?</p><ul class="choices"><li>A. Violet</li><li>B. Indigo</li><li class="ok">C. Rose ✓</li><li>D. Vert</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M70</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Dans quelle franchise de JV les joueurs affrontent-ils des 'Titans' ?</p><div class="ans">Attack on Titan / Wings of Freedom</div></div>
-
-<div class="q"><div class="qh"><span class="qid">M71</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel rappeur a sorti 'God's Plan' et 'One Dance' ?</p><ul class="choices"><li>A. Travis Scott</li><li>B. J.Cole</li><li class="ok">C. Drake ✓</li><li>D. Cardi B</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">M72</span><span class="qcat">[Cinéma]</span><span class="qt lib">Libre</span><span class="qpts mo">2 pts</span></div><p class="qq">Quel personnage de DC Comics est surnommé 'The Caped Crusader' ?</p><div class="ans">Batman</div></div>
-
-<!-- DIFFICILES -->
-<div id="qdifficile" class="qst di">Questions Difficiles — 3 points</div>
-
-<div class="q"><div class="qh"><span class="qid">D01</span><span class="qcat">[Sciences]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel théorème affirme qu'il existe des vérités indémontrables ?</p><ul class="choices"><li>A. Théorème de Bayes</li><li class="ok">B. Théorème de Gödel ✓</li><li>C. Théorème de Pythagore</li><li>D. Paradoxe de Russell</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D02</span><span class="qcat">[Mathématiques]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quelle est la racine cubique de 512 ?</p><div class="ans">8</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D03</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Dans quel jeu 'Handsome Jack' est l'antagoniste principal ?</p><ul class="choices"><li class="ok">A. Borderlands 2 ✓</li><li>B. Borderlands 3</li><li>C. BioShock Infinite</li><li>D. Dishonored</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D04</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel pays est constitué de 7 000 îles et a Manille pour capitale ?</p><div class="ans">Philippines</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D05</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel réalisateur a mis en scène Parasite (2019) ?</p><ul class="choices"><li>A. Park Chan-wook</li><li>B. Kim Ki-duk</li><li class="ok">C. Bong Joon-ho ✓</li><li>D. Lee Chang-dong</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D06</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel est le nom du studio qui a développé Sekiro: Shadows Die Twice ?</p><div class="ans">FromSoftware</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D07</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Dans Dune, quelle est la substance la plus précieuse de l'univers ?</p><ul class="choices"><li>A. L'Aqua Vitae</li><li>B. La Mélanine</li><li class="ok">C. L'Épice ✓</li><li>D. Le Duranium</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D08</span><span class="qcat">[Sport]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel pays a remporté le plus de Coupes du Monde de football ?</p><div class="ans">Brésil (5 titres)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D09</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel compositeur sourd a composé sa 9e symphonie ?</p><ul class="choices"><li>A. Bach</li><li>B. Schubert</li><li class="ok">C. Beethoven ✓</li><li>D. Brahms</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D10</span><span class="qcat">[Cinéma]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">En cinéma, que signifie l'acronyme IMAX ?</p><div class="ans">Image Maximum</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D11</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel jeu a créé le sous-genre 'Soulslike' ?</p><ul class="choices"><li>A. Dark Souls</li><li class="ok">B. Demon's Souls ✓</li><li>C. Bloodborne</li><li>D. Sekiro</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D12</span><span class="qcat">[Histoire]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">En quelle année Neil Armstrong a-t-il marché sur la Lune ?</p><div class="ans">1969</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D13</span><span class="qcat">[Cinéma]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel réalisateur est derrière Blade Runner 2049 ?</p><ul class="choices"><li>A. Ridley Scott</li><li>B. Christopher Nolan</li><li class="ok">C. Denis Villeneuve ✓</li><li>D. Alex Garland</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D14</span><span class="qcat">[Sciences]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel est le signe chimique de l'argent ?</p><div class="ans">Ag</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D15</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Dans quel jeu incarne-t-on un détective dans une ville de fantasy existentielle ?</p><ul class="choices"><li>A. Shadowrun</li><li class="ok">B. Disco Elysium ✓</li><li>C. Planescape Torment</li><li>D. Vampire Bloodlines</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D16</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quelle est la fréquence standard d'un écran 'compétitif' gaming ?</p><div class="ans">144 Hz</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D17</span><span class="qcat">[Culture générale]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel terme désigne une position de marché avec un seul acheteur ?</p><ul class="choices"><li>A. Oligopole</li><li>B. Monopole</li><li class="ok">C. Monopsone ✓</li><li>D. Duopole</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D18</span><span class="qcat">[Gaming]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Dans quel jeu le terme 'Tetrominoes' est fondamental ?</p><div class="ans">Tetris</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D19</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel est le terme pour le délai entre une action joueur et sa réponse à l'écran ?</p><ul class="choices"><li>A. Framerate</li><li class="ok">B. Input lag ✓</li><li>C. Refresh rate</li><li>D. V-Sync</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D20</span><span class="qcat">[Littérature]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel écrivain américain a créé Jay Gatsby ?</p><div class="ans">F. Scott Fitzgerald</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D21</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Qui a sorti 'Back to Black' en hommage à Nina Simone ?</p><ul class="choices"><li>A. Duffy</li><li>B. Adele</li><li class="ok">C. Amy Winehouse ✓</li><li>D. Paloma Faith</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D22</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel compositeur a écrit les Quatre Saisons ?</p><div class="ans">Antonio Vivaldi</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D23</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel JRPG a introduit l'Active Time Battle (ATB) ?</p><ul class="choices"><li>A. Dragon Quest</li><li class="ok">B. Final Fantasy IV ✓</li><li>C. Chrono Trigger</li><li>D. Xenogears</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D24</span><span class="qcat">[Sciences]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel est le nom de la loi physique F = ma ?</p><div class="ans">Deuxième loi de Newton</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D25</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel terme désigne un jeu généré procéduralement avec mort permanente ?</p><ul class="choices"><li>A. Sandbox</li><li>B. Roguelite</li><li class="ok">C. Roguelike ✓</li><li>D. Metroidvania</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D26</span><span class="qcat">[Géographie]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Dans quel pays se trouve la ville de Bruges ?</p><div class="ans">Belgique</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D27</span><span class="qcat">[Sport]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel pays a remporté le plus de médailles d'or aux JO d'été ?</p><ul class="choices"><li>A. URSS</li><li>B. Chine</li><li>C. Russie</li><li class="ok">D. USA ✓</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D28</span><span class="qcat">[Sciences]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel est le nom du mécanisme qui permet à un transistor de fonctionner ?</p><div class="ans">L'effet de champ (FET)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D29</span><span class="qcat">[Géographie]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quelle est la capitale de la Nouvelle-Zélande ?</p><ul class="choices"><li>A. Auckland</li><li class="ok">B. Wellington ✓</li><li>C. Christchurch</li><li>D. Hamilton</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D30</span><span class="qcat">[Histoire]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Dans quel pays est né Nikola Tesla ?</p><div class="ans">Serbie</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D31</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel terme désigne le mélange exploration et progression de compétences dans des maps liées ?</p><ul class="choices"><li>A. Roguelike</li><li class="ok">B. Metroidvania ✓</li><li>C. Open World</li><li>D. Soulslike</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D32</span><span class="qcat">[Cinéma]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel film de Kubrick met en scène Jack Nicholson dans un hôtel hanté ?</p><div class="ans">The Shining</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D33</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel jeu de stratégie créé par Sid Meier propose de construire une civilisation ?</p><ul class="choices"><li>A. Age of Empires</li><li class="ok">B. Civilization ✓</li><li>C. Total War</li><li>D. Anno</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D34</span><span class="qcat">[Culture]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel est le terme japonais pour 'animation' ?</p><div class="ans">Anime</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D35</span><span class="qcat">[Musique]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel est le vrai nom de l'artiste Stromae ?</p><ul class="choices"><li class="ok">A. Paul Van Haver ✓</li><li>B. Pierre Servais</li><li>C. Arnaud Delafont</li><li>D. Louis Bertrand</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D36</span><span class="qcat">[Culture générale]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel pays possède le plus grand nombre de langues officielles ?</p><div class="ans">Zimbabwe (16 langues officielles)</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D37</span><span class="qcat">[Série]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quelle série policière danoise a inspiré The Killing ?</p><ul class="choices"><li class="ok">A. Forbrydelsen ✓</li><li>B. Borgen</li><li>C. The Bridge</li><li>D. Dicte</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D38</span><span class="qcat">[Musique]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">Quel est le nom du système de notation musicale Do-Ré-Mi ?</p><div class="ans">Le solfège</div></div>
-
-<div class="q"><div class="qh"><span class="qid">D39</span><span class="qcat">[Gaming]</span><span class="qt qcm">QCM</span><span class="qpts di">3 pts</span></div><p class="qq">Quel moteur graphique utilise Epic Games pour Fortnite et des AAA ?</p><ul class="choices"><li>A. Unity</li><li>B. CryEngine</li><li class="ok">C. Unreal Engine ✓</li><li>D. Source</li></ul></div>
-
-<div class="q"><div class="qh"><span class="qid">D40</span><span class="qcat">[Culture générale]</span><span class="qt lib">Libre</span><span class="qpts di">3 pts</span></div><p class="qq">En quelle année a été fondé Google ?</p><div class="ans">1998</div></div>
-
-<!-- BLIND TESTS -->
-<div id="qblind" class="qst bl">Blind Tests — Manche 2, Q4 — 15 secondes</div>
-
-<div class="card" style="border-left-color:#b39ddb;margin-bottom:.5rem">
-  <p style="color:#b39ddb;font-size:.8rem;font-weight:600;margin-bottom:.6rem;">⚠️ Les réponses aux Blind Tests dépendent de la playlist de l'animateur. Préparez votre sélection musicale à l'avance.</p>
-  <div style="display:grid;gap:.4rem;">
-    <div class="q" style="margin:0"><div class="qh"><span class="qid">B01</span><span class="qcat">[Musique]</span><span class="qt blt">Blind</span><span class="qpts bl">15s</span></div><p class="qq">Identifiez le titre et l'artiste de cet extrait.</p><div class="ans" style="border-color:#b39ddb;color:#b39ddb">Playlist animateur</div></div>
-    <div class="q" style="margin:0"><div class="qh"><span class="qid">B02</span><span class="qcat">[Musique]</span><span class="qt blt">Blind</span><span class="qpts bl">15s</span></div><p class="qq">De quelle année date ce titre ? Soyez précis.</p><div class="ans" style="border-color:#b39ddb;color:#b39ddb">Playlist animateur</div></div>
-    <div class="q" style="margin:0"><div class="qh"><span class="qid">B03</span><span class="qcat">[Gaming]</span><span class="qt blt">Blind</span><span class="qpts bl">15s</span></div><p class="qq">Identifiez ce son iconique de jeu vidéo.</p><div class="ans" style="border-color:#b39ddb;color:#b39ddb">Playlist animateur</div></div>
-    <div class="q" style="margin:0"><div class="qh"><span class="qid">B04</span><span class="qcat">[Cinéma]</span><span class="qt blt">Blind</span><span class="qpts bl">15s</span></div><p class="qq">De quel film est issue cette bande-son ?</p><div class="ans" style="border-color:#b39ddb;color:#b39ddb">Playlist animateur</div></div>
-    <div class="q" style="margin:0"><div class="qh"><span class="qid">B05</span><span class="qcat">[Série]</span><span class="qt blt">Blind</span><span class="qpts bl">15s</span></div><p class="qq">Identifiez le générique de cette série.</p><div class="ans" style="border-color:#b39ddb;color:#b39ddb">Playlist animateur</div></div>
-    <div class="q" style="margin:0"><div class="qh"><span class="qid">B06</span><span class="qcat">[Musique]</span><span class="qt blt">Blind</span><span class="qpts bl">15s</span></div><p class="qq">Quel est le genre musical de cet extrait ?</p><div class="ans" style="border-color:#b39ddb;color:#b39ddb">Playlist animateur</div></div>
-    <div class="q" style="margin:0"><div class="qh"><span class="qid">B07</span><span class="qcat">[Gaming/Cinéma]</span><span class="qt blt">Blind</span><span class="qpts bl">15s</span></div><p class="qq">Ce son provient d'un jeu ou d'un film. Lequel ?</p><div class="ans" style="border-color:#b39ddb;color:#b39ddb">Playlist animateur</div></div>
-    <div class="q" style="margin:0"><div class="qh"><span class="qid">B08</span><span class="qcat">[Musique]</span><span class="qt blt">Blind</span><span class="qpts bl">15s</span></div><p class="qq">Identifiez le rappeur ou la rappeuse.</p><div class="ans" style="border-color:#b39ddb;color:#b39ddb">Playlist animateur</div></div>
-    <div class="q" style="margin:0"><div class="qh"><span class="qid">B09</span><span class="qcat">[Musique]</span><span class="qt blt">Blind</span><span class="qpts bl">15s</span></div><p class="qq">Quelle est la nationalité de l'artiste ?</p><div class="ans" style="border-color:#b39ddb;color:#b39ddb">Playlist animateur</div></div>
-    <div class="q" style="margin:0"><div class="qh"><span class="qid">B10</span><span class="qcat">[Gaming]</span><span class="qt blt">Blind</span><span class="qpts bl">15s</span></div><p class="qq">Identifiez ce thème musical de jeu vidéo.</p><div class="ans" style="border-color:#b39ddb;color:#b39ddb">Playlist animateur</div></div>
-  </div>
-</div>
-
-</section>
-
-<footer>MASTER CLASH — Document officiel — Réservé à l'animateur — État de San Andreas</footer>
-</div>
-</body>
-</html>
+### Article 5 — Manche 3 : La Grande Finale (4 → 1)
+Les 4 finalistes s'affrontent avec un capital de temps individuel. Le dernier à conserver du temps remporte la finale.
+- Chaque finaliste dispose d'un capital de **90 secondes.**
+- Les questions sont posées à tour de rôle.
+- Le chrono démarre dès la fin de l'énoncé de la question.
+- Le chrono s'arrête **uniquement** lors d'une bonne réponse.
+- Toute mauvaise réponse ou absence de réponse : le chrono continue (perte de temps).
+- Le dernier joueur conservant du temps est déclaré vainqueur.
+
+| Rang | Récompense |
+|---|---|
+| 🏆 1er — Grand Vainqueur | Vitrine finale exceptionnelle |
+| 2e place | Récompense intermédiaire premium |
+| 3e place | Récompense secondaire |
+| 4e place | Récompense de participation |
+
+### Article 6 — Buzzer
+- Une seule réponse est acceptée par activation du buzzer.
+- Il est formellement interdit d'activer le buzzer pour bloquer un adversaire.
+- Tout abus peut entraîner une **pénalité ou une disqualification.**
+
+### Article 7 — Triche et comportement déloyal
+Est considéré comme triche : toute aide extérieure (téléphone, oreillette, document), communication entre joueurs, ou utilisation d'un outil quelconque.
+**Sanction : exclusion immédiate et définitive, sans compensation.**
+
+### Article 8 — Litiges
+- Tout litige est tranché par l'organisateur ou l'animateur.
+- Aucune contestation ne peut interrompre le cours d'une manche active.
+- Une procédure d'arbitrage peut être mise en place si le litige l'exige.
+
+### Article 9 — Récompenses
+- Tous les participants reçoivent a minima des bons d'achat partenaires.
+- Les récompenses sont non échangeables contre de l'argent (sauf accord partenaire).
+- Les récompenses sont remises après validation par l'organisateur.
+- Tout comportement irrespectueux peut entraîner la **perte des récompenses.**
+
+### Article 10 — Comportement général
+- Le respect mutuel entre participants est obligatoire.
+- Tout comportement toxique ou agressif entraîne une **exclusion immédiate.**
+- Le cadre de l'événement et ses règles doivent être respectés en toutes circonstances.
+
+> En participant à MASTER CLASH, chaque joueur reconnaît avoir lu et accepté l'intégralité du présent règlement.
+
+---
+
+## 6. Section 3 — Dossier Partenaires
+
+### Qu'est-ce que Master Clash ?
+Master Clash est un événement compétitif alliant culture générale, rapidité et stratégie. 42 participants s'affrontent en trois manches progressives devant un public engagé. L'événement génère une forte interaction entre participants, public et partenaires, dans une atmosphère dynamique et professionnelle.
+
+### Pourquoi devenir partenaire ? (3 colonnes)
+
+| Visibilité | Interaction | Image |
+|---|---|---|
+| Votre nom mentionné pendant les questions, sur les supports visuels et lors de chaque remise de lot. | Contact direct avec les participants via vos récompenses, remises en mains propres lors de l'événement. | Association à un événement de qualité, dynamique et ancré dans la vie de la communauté. |
+
+### Niveaux de partenariat (grille 2×2)
+
+**Partenaire Récompenses** : Fournissez des bons d'achat ou services pour les participants éliminés. Votre nom est associé à chaque remise de lot.
+
+**Partenaire Questions** : Une ou plusieurs questions sponsorisées intégrées dans le jeu. Mention explicite de votre enseigne pendant la manche.
+
+**Partenaire Expériences** : Proposez une expérience exclusive (VIP, activité, accès privilégié) pour les finalistes. Visibilité maximale en finale.
+
+**Partenaire Visuel** : Votre logo sur tous les supports de communication officiels : affiches, écrans, documents distribués.
+
+### Exemples de récompenses par secteur (tableau)
+
+| Secteur | Exemples de récompenses |
+|---|---|
+| 🍔 Alimentation | Bons repas, bons drive, paniers garnis, livraison à domicile |
+| 🚗 Automobile / Garage | Bons entretien, réparation, lavage, tuning |
+| 💆 Esthétique / Bien-être | Soins, coiffure, produits de beauté, spa |
+| 🎟️ Événementiel / VIP | Accès exclusifs, expériences privées, places événements |
+| ⚽ Sport / Loisirs | Stage pilotage, séances sportives, activités exclusives |
+| 🛍️ Commerce général | Bons d'achat polyvalents, remises, offres exclusives partenaires |
+
+### Engagement et conditions
+- Les récompenses sont remises directement aux participants lors de l'événement.
+- Votre nom et/ou logo sont mentionnés conformément à l'offre choisie.
+- Un bilan de visibilité post-événement peut être fourni sur demande.
+- Les termes du partenariat font l'objet d'un accord préalable entre les parties.
+
+**Pour toute demande de partenariat : contactez directement l'équipe organisatrice de MASTER CLASH.**
+
+---
+
+## 7. Section 4 — Banque de Questions
+
+Navigation par onglets/ancres : Faciles (78) | Moyennes (72) | Difficiles (40) | Blind Tests (10)
+
+Style des cartes de questions :
+- En-tête : numéro, catégorie en italique, badge type (QCM / Libre / Blind), badge points
+- Corps : question en gras
+- Pour QCM : liste des choix avec la bonne réponse mise en valeur (couleur jaune + ✓)
+- Réponse libre : encadré cyan avec la réponse
+
+### Questions Faciles — 1 point (78 questions)
+
+F01 [Culture générale] QCM — Quelle est la capitale de la France ? | A.Lyon B.Marseille **C.Paris✓** D.Nice
+F02 [Mathématiques] Libre — Combien font 7 × 8 ? | **56**
+F03 [Culture générale] QCM — Quel animal est le roi de la jungle ? | **A.Lion✓** B.Tigre C.Éléphant D.Gorille
+F04 [Mathématiques] Libre — Combien de côtés a un hexagone ? | **6**
+F05 [Sciences] QCM — Quelle planète est la plus proche du Soleil ? | A.Vénus **B.Mercure✓** C.Mars D.Terre
+F06 [Culture générale] Libre — Quelle couleur obtient-on en mélangeant bleu et jaune ? | **Vert**
+F07 [Sport] QCM — Combien de joueurs dans une équipe de foot ? | A.9 B.10 **C.11✓** D.12
+F08 [Géographie] Libre — Dans quelle ville se trouve la Tour Eiffel ? | **Paris**
+F09 [Art] QCM — Qui a peint la Joconde ? | A.Van Gogh B.Picasso C.Michel-Ange **D.Léonard de Vinci✓**
+F10 [Géographie] Libre — Quel est le plus grand océan du monde ? | **Pacifique**
+F11 [Géographie] QCM — Quel est le pays le plus grand du monde ? | A.Canada B.USA C.Chine **D.Russie✓**
+F12 [Mathématiques] Libre — Combien de secondes dans une minute ? | **60**
+F13 [Cinéma] QCM — Dans quel film trouve-t-on Simba ? | A.Bambi **B.Le Roi Lion✓** C.Tarzan D.Dumbo
+F14 [Cinéma] Libre — Quel super-héros porte une armure rouge et or ? | **Iron Man**
+F15 [Cinéma] QCM — Qui joue Jack dans Titanic ? | A.Brad Pitt B.Tom Hanks **C.Leonardo DiCaprio✓** D.Johnny Depp
+F16 [Cinéma] Libre — Comment s'appelle le robot de WALL-E ? | **WALL-E**
+F17 [Cinéma] QCM — Dans quelle saga trouve-t-on 'La Force' ? | A.Harry Potter **B.Star Wars✓** C.LOTR D.Matrix
+F18 [Gaming] Libre — Quel est le nom du plombier de Nintendo ? | **Mario**
+F19 [Gaming] QCM — Dans Minecraft, quel ennemi vert explose ? | A.Zombie B.Squelette **C.Creeper✓** D.Enderman
+F20 [Gaming] Libre — Dans quel jeu incarne-t-on Geralt de Riv ? | **The Witcher**
+F21 [Gaming] QCM — Combien de vies au départ dans Super Mario Bros ? | A.2 **B.3✓** C.4 D.5
+F22 [Gaming] Libre — Quelle console a lancé les manettes DualShock ? | **PlayStation**
+F23 [Gaming] QCM — Quelle franchise propose des 'Chicken Dinner' ? | A.CoD **B.PUBG✓** C.Rust D.Fortnite
+F24 [Sport] Libre — Quel sport se joue avec une raquette et un volant ? | **Badminton**
+F25 [Sport] QCM — Combien de points vaut un panier à 3 points ? | A.1 B.2 **C.3✓** D.4
+F26 [Géographie] Libre — Dans quelle ville se trouve Big Ben ? | **Londres**
+F27 [Musique] QCM — Qui a sorti 'Thriller' ? | A.Madonna B.Janet Jackson C.Whitney Houston **D.Michael Jackson✓**
+F28 [Musique] Libre — Combien de cordes a une guitare standard ? | **6**
+F29 [Musique] QCM — Quel genre musical est né à NY dans les années 70 ? | A.Rock B.Jazz **C.Hip-hop✓** D.Reggae
+F30 [Sciences] Libre — Quelle est la formule chimique de l'eau ? | **H2O**
+F31 [Sciences] QCM — Quel est le plus grand os du corps humain ? | A.Humérus B.Tibia C.Radius **D.Fémur✓**
+F32 [Sciences] Libre — Quelle planète est surnommée 'la planète rouge' ? | **Mars**
+F33 [Cinéma] QCM — Quel film met en scène des jouets qui s'animent ? | A.Shrek **B.Toy Story✓** C.Monstres & Cie D.Cars
+F34 [Culture générale] Libre — Combien de cases compte un échiquier ? | **64**
+F35 [Cinéma] QCM — Dans Harry Potter, quelle est la maison de Harry ? | A.Serpentard B.Poufsouffle C.Serdaigle **D.Gryffondor✓**
+F36 [Cinéma] Libre — Quel ennemi iconique dit 'Je suis ton père' ? | **Dark Vador**
+F37 [Sport] QCM — Quel pays a remporté la Coupe du Monde 2018 ? | A.Brésil B.Allemagne **C.France✓** D.Argentine
+F38 [Sport] QCM — Combien de joueurs dans une équipe de basket ? | A.4 **B.5✓** C.6 D.7
+F39 [Musique] Libre — Quel rappeur est surnommé 'Slim Shady' ? | **Eminem**
+F40 [Cinéma] QCM — Quel acteur joue Thor dans le MCU ? | A.Chris Evans **B.Chris Hemsworth✓** C.Chris Pratt D.RDJ
+F41 [Sciences] Libre — Quel est l'animal le plus rapide du monde ? | **Le guépard**
+F42 [Gaming] QCM — Quel jeu est le plus vendu de l'histoire ? | A.Tetris B.GTA V **C.Minecraft✓** D.CoD
+F43 [Gaming] Libre — Dans quel jeu trouve-t-on des 'Champions' avant chaque partie ? | **League of Legends**
+F44 [Gaming] QCM — Quel personnage crie 'Hadouken !' ? | **A.Ryu✓** B.Ken C.Guile D.Blanka
+F45 [Gaming] Libre — Quel est le nom de l'épée de Link dans Zelda ? | **Master Sword**
+F46 [Gaming] QCM — Quelle franchise est développée par Rockstar Games ? | A.AC **B.GTA✓** C.Far Cry D.Watch Dogs
+F47 [Cinéma] Libre — De quelle couleur est Hulk ? | **Vert**
+F48 [Cinéma] QCM — Qui joue James Bond dans Casino Royale (2006) ? | A.Pierce Brosnan B.Roger Moore **C.Daniel Craig✓** D.Sean Connery
+F49 [Mathématiques] Libre — Combien de zéros dans un million ? | **6**
+F50 [Cinéma] QCM — Quel film de Pixar met en scène un poisson clown ? | A.Shark Tale **B.Nemo✓** C.Aquaman D.Splash
+F51 [Histoire] Libre — Quel pays a inventé les Jeux Olympiques ? | **Grèce**
+F52 [Culture générale] QCM — Quel pays est connu pour la pizza et les pâtes ? | A.France B.Grèce C.Espagne **D.Italie✓**
+F53 [Manga] Libre — Quel est le nom du personnage principal de Naruto ? | **Naruto Uzumaki**
+F54 [Cinéma] QCM — Quel acteur joue Ethan Hunt dans Mission Impossible ? | A.Matt Damon **B.Tom Cruise✓** C.Will Smith D.Stallone
+F55 [Culture générale] Libre — Quel est l'animal symbole de la paix ? | **La colombe**
+F56 [Musique] QCM — Quel rappeur s'appelle Aubrey Drake Graham ? | A.Kendrick **B.Drake✓** C.J. Cole D.Travis
+F57 [Musique] Libre — Quel instrument jouait Beethoven ? | **Piano**
+F58 [Géographie] QCM — Combien de continents sur Terre ? | A.5 B.6 **C.7✓** D.8
+F59 [Sciences] Libre — Quelle est la vitesse de la lumière (en km/s) ? | **300 000 km/s**
+F60 [Littérature] QCM — Qui est l'auteur de Harry Potter ? | A.Tolkien B.C.S. Lewis **C.J.K. Rowling✓** D.Roald Dahl
+F61 [Géographie] Libre — Quel est le pays le plus froid du monde ? | **Antarctique**
+F62 [Gaming] QCM — Quelle franchise de JV propose des 'Master Chief' ? | A.Destiny B.Warframe **C.Halo✓** D.Anthem
+F63 [Gaming] Libre — Quel jeu propose de construire et survivre avec des blocs ? | **Minecraft**
+F64 [Cinéma] QCM — Quel film raconte l'histoire d'un homme seul sur une île déserte avec un ballon ? | **A.Seul au monde✓** B.The Beach C.Robinson D.Survivant
+F65 [Musique] Libre — Quel chanteur est connu pour 'Thriller' et 'Billie Jean' ? | **Michael Jackson**
+F66 [Culture générale] QCM — Quelle couleur représente le danger sur un feu tricolore ? | A.Vert B.Orange **C.Rouge✓** D.Blanc
+F67 [Gaming] Libre — Quel est le nom de la franchise Nintendo avec karts et champignons ? | **Mario Kart**
+F68 [Gaming] QCM — Quel est le sport principal de NBA 2K ? | A.Football B.Tennis **C.Basketball✓** D.Baseball
+F69 [Gaming] Libre — Quel personnage principal incarne-t-on dans les jeux Zelda ? | **Link**
+F70 [Géographie] QCM — Quelle est la capitale de l'Australie ? | A.Sydney B.Melbourne **C.Canberra✓** D.Brisbane
+F71 [Géographie] Libre — Sur quel continent se trouve l'Égypte ? | **Afrique**
+F72 [Musique] QCM — Quel groupe est derrière l'album 'Abbey Road' ? | A.Rolling Stones **B.The Beatles✓** C.Led Zeppelin D.The Who
+F73 [Cinéma] Libre — Quel est le prénom du célèbre détective à la pipe et au manteau ? | **Sherlock (Holmes)**
+F74 [Série] QCM — Quelle série Netflix parle de fabrication de drogue à Los Alamos ? | A.Narcos B.Ozark **C.Breaking Bad✓** D.Better Call Saul
+F75 [Gaming] Libre — Quel est l'ennemi principal de Mario ? | **Bowser**
+F76 [Sciences] QCM — Quelle planète a des anneaux visibles ? | A.Jupiter B.Neptune **C.Saturne✓** D.Uranus
+F77 [Gaming] Libre — Quel est le nom du jeu de sport Riot Games avec des agents ? | **Valorant**
+F78 [Littérature] QCM — Quel écrivain français a écrit Les Misérables ? | A.Voltaire **B.Victor Hugo✓** C.Balzac D.Zola
+
+### Questions Moyennes — 2 points (72 questions)
+
+M01 [Histoire] QCM — Quelle année a vu la chute du mur de Berlin ? | A.1987 **B.1989✓** C.1991 D.1993
+M02 [Mathématiques] Libre — Quelle est la racine carrée de 196 ? | **14**
+M03 [Cinéma] QCM — Quel réalisateur est derrière la trilogie Dark Knight ? | A.Tim Burton B.Zack Snyder **C.Christopher Nolan✓** D.Fincher
+M04 [Sciences] Libre — Quel élément chimique a pour symbole 'Fe' ? | **Fer**
+M05 [Gaming] QCM — Dans quel jeu incarne-t-on un 'Vault Dweller' post-nucléaire ? | A.Metro **B.Fallout✓** C.STALKER D.Wasteland
+M06 [Histoire] Libre — En quelle année a eu lieu la Révolution française ? | **1789**
+M07 [Cinéma] QCM — Quel acteur joue John Wick ? | A.Statham **B.Keanu Reeves✓** C.The Rock D.Tom Hardy
+M08 [Musique] Libre — Quel est le vrai nom de Lady Gaga ? | **Stefani Germanotta**
+M09 [Sciences] QCM — Quel organe produit l'insuline ? | A.Foie B.Rate **C.Pancréas✓** D.Rein
+M10 [Gaming] Libre — Dans quel jeu incarne-t-on Joel et Ellie dans un monde post-apo ? | **The Last of Us**
+M11 [Musique] QCM — Quel est le vrai nom de Stromae ? | **A.Paul Van Haver✓** B.Pierre Servais C.Arnaud Delafont D.Louis Bertrand
+M12 [Musique] Libre — Quel groupe est derrière Nevermind et In Utero ? | **Nirvana**
+M13 [Gaming] QCM — Quelle saga de jeux propose 'Kratos' ? | **A.God of War✓** B.Devil May Cry C.Bayonetta D.DMC
+M14 [Cinéma] Libre — Quel film a remporté l'Oscar du meilleur film en 2020 ? | **Parasite**
+M15 [Cinéma] QCM — Quel film contient un robot nommé TARS ? | A.Ex Machina **B.Interstellar✓** C.Her D.AI
+M16 [Série] Libre — Dans quelle ville se situe la série Narcos ? | **Medellín (Colombie)**
+M17 [Gaming] QCM — Quel jeu met en scène Arthur Morgan et le gang Van der Linde ? | A.GTA V **B.RDR2✓** C.Outlaws D.Desperados
+M18 [Art] Libre — Quel peintre a coupé son oreille ? | **Van Gogh**
+M19 [Cinéma] QCM — Qui a réalisé Pulp Fiction ? | A.Scorsese B.Lynch **C.Tarantino✓** D.Coens
+M20 [Géographie] Libre — Quel est le seul pays traversé par l'équateur et le tropique du Capricorne ? | **Brésil**
+M21 [Musique] QCM — Qui a composé la bande-son de Star Wars ? | A.Hans Zimmer **B.John Williams✓** C.Morricone D.Howard Shore
+M22 [Sciences] Libre — Quel est l'os le plus petit du corps humain ? | **L'étrier (oreille)**
+M23 [Gaming] QCM — Quelle année est sortie la première PlayStation ? | A.1992 B.1993 **C.1994✓** D.1995
+M24 [Sciences] Libre — Quel élément chimique a pour symbole 'Au' ? | **Or**
+M25 [Musique] QCM — Quel rappeur a sorti l'album 'DAMN.' ? | A.Drake B.J. Cole **C.Kendrick Lamar✓** D.Kanye
+M26 [Gaming] Libre — Quel jeu compétitif de Blizzard met en scène des 'héros' en 5v5 ? | **Overwatch**
+M27 [Série] Libre — Combien de saisons compte Game of Thrones ? | **8**
+M28 [Cinéma] QCM — Quel acteur joue Tony Montana dans Scarface ? | A.De Niro **B.Al Pacino✓** C.Nicholson D.Brando
+M29 [Gaming] Libre — Dans quel jeu chasse-t-on des monstres géants avec des armes variées ? | **Monster Hunter**
+M30 [Cinéma] QCM — Quel titre original porte le premier épisode de Star Wars (Ep. IV) ? | A.The Force Awakens **B.A New Hope✓** C.Return of the Jedi D.The Phantom Menace
+M31 [Géographie] Libre — Combien de pays composent l'Union Européenne ? | **27**
+M32 [Gaming] QCM — Quel jeu de rôle propose des 'Champions' à Los Santos virtuels ? | A.GTA RP **B.Disco Elysium✓** C.Cyberpunk D.Sleeping Dogs
+M33 [Musique] Libre — Quel rappeur français s'appelle Aurélien Cotentin ? | **Ninho**
+M34 [Gaming] QCM — Dans quelle franchise jouent des 'Operators' dans un FPS tactique ? | A.CS:GO **B.Valorant✓** C.R6 D.Overwatch
+M35 [Musique] Libre — Dans quel pays est né Freddie Mercury ? | **Tanzanie**
+M36 [Musique] QCM — Quel groupe de rock est derrière 'OK Computer' et 'The Bends' ? | A.Oasis **B.Radiohead✓** C.Muse D.Blur
+M37 [Géographie] Libre — Quelle est la capitale du Canada ? | **Ottawa**
+M38 [Cinéma] QCM — Dans quel film Matt Damon survit-il seul sur Mars ? | A.Gravity **B.The Martian✓** C.Europa D.Ad Astra
+M39 [Gaming] Libre — Combien de personnes jouent dans un match CS:GO standard ? | **10 (5v5)**
+M40 [Sciences] QCM — Quel est le signe chimique de l'argent ? | **A.Ag✓** B.Al C.Sb D.Ar
+M41 [Manga] Libre — Quel est le pays d'origine de l'anime Attack on Titan ? | **Japon**
+M42 [Cinéma] QCM — Qui est l'antagoniste principal de Matrix ? | A.Neo B.Morpheus **C.Agent Smith✓** D.Le Mérovingien
+M43 [Gaming] Libre — Quel jeu Riot oppose des voitures rocket dans des matchs de foot ? | **Rocket League**
+M44 [Gaming] Libre — Quel est le nom du personnage principal de Cyberpunk 2077 ? | **V**
+M45 [Série] QCM — Dans quel pays se déroule Squid Game ? | A.Japon B.Chine **C.Corée du Sud✓** D.Thaïlande
+M46 [Gaming] Libre — Quel est le nom du studio derrière Dark Souls et Elden Ring ? | **FromSoftware**
+M47 [Musique] QCM — Quel rappeur français a sorti l'album 'Trône' ? | A.Nekfeu **B.Booba✓** C.Jul D.SCH
+M48 [Géographie] Libre — Quelle est la langue officielle du Brésil ? | **Portugais**
+M49 [Cinéma] QCM — Quel film de Denis Villeneuve adapte le roman de Frank Herbert ? | A.Arrival B.Sicario **C.Dune✓** D.Blade Runner 2049
+M50 [Musique] Libre — Quel rappeur s'appelle Calvin Cordozar Broadus Jr. ? | **Snoop Dogg**
+M51 [Gaming] QCM — Dans quel jeu gère-t-on un parc avec des dinosaures ? | A.Wildlife Park B.Zoo Tycoon **C.Jurassic World Evolution✓** D.Planet Zoo
+M52 [Gaming] Libre — Quel est le nom du moteur de jeu créé par Epic Games ? | **Unreal Engine**
+M53 [Musique] QCM — Quel groupe de K-Pop est le plus vendu de l'histoire ? | A.EXO B.BLACKPINK **C.BTS✓** D.TWICE
+M54 [Culture générale] Libre — En quelle année a été lancé YouTube ? | **2005**
+M55 [Gaming] QCM — Quel jeu de stratégie a popularisé 'rush' et 'build order' ? | A.WarCraft B.Age of Empires **C.StarCraft✓** D.C&C
+M56 [Musique] Libre — Quel est le vrai nom de l'artiste The Weeknd ? | **Abel Tesfaye**
+M57 [Cinéma] QCM — Quel acteur joue l'agent 007 dans Casino Royale 2006 ? | A.Brosnan B.Moore **C.Daniel Craig✓** D.Connery
+M58 [Gaming] Libre — Quel est le type de jeu où chaque mort est permanente ? | **Roguelike (ou roguelite)**
+M59 [Musique] QCM — Quel instrument joue Travis Scott sur scène ? | A.Guitare B.Platines C.Basse **D.Aucun (rappeur)✓**
+M60 [Gaming] Libre — Quel jeu de survie solo met en scène deux personnages dont un enfant portant des cornes ? | **Ico (ou Shadow of the Colossus)**
+M61 [Cinéma] QCM — Quel réalisateur est derrière Inception, Tenet et Oppenheimer ? | A.Villeneuve **B.Christopher Nolan✓** C.Ridley Scott D.Cameron
+M62 [Culture générale] Libre — Quel est le nom de la théorie d'Adam Smith sur l'économie ? | **La main invisible du marché**
+M63 [Série] QCM — Quelle série policière danoise a inspiré la série The Killing ? | **A.Forbrydelsen✓** B.Borgen C.The Bridge D.Dicte
+M64 [Musique] Libre — Quel est le titre de l'album le plus vendu de tous les temps ? | **Thriller (Michael Jackson)**
+M65 [Gaming] QCM — Dans quel jeu explorer une Angleterre médiévale en tant que Viking ? | A.Kingdom Come B.Dying Light 2 **C.Valhalla✓** D.For Honor
+M66 [Cinéma] Libre — Quel pays abrite le studio de cinéma universel Hollywood ? | **États-Unis (Los Angeles)**
+M67 [Culture générale] QCM — Quel philosophe a dit 'Je pense donc je suis' ? | A.Platon B.Aristote **C.Descartes✓** D.Nietzsche
+M68 [Culture générale] Libre — Quel constructeur automobile produit la Lamborghini ? | **Volkswagen Group**
+M69 [Sciences] QCM — Quelle couleur n'est PAS dans l'arc-en-ciel classique ? | A.Violet B.Indigo **C.Rose✓** D.Vert
+M70 [Gaming] Libre — Dans quelle franchise de JV les joueurs affrontent-ils des 'Titans' ? | **Attack on Titan / Wings of Freedom**
+M71 [Musique] QCM — Quel rappeur a sorti 'God's Plan' et 'One Dance' ? | A.Travis Scott B.J.Cole **C.Drake✓** D.Cardi B
+M72 [Cinéma] Libre — Quel personnage de DC Comics est surnommé 'The Caped Crusader' ? | **Batman**
+
+### Questions Difficiles — 3 points (40 questions)
+
+D01 [Sciences] QCM — Quel théorème affirme qu'il existe des vérités indémontrables ? | A.Bayes **B.Gödel✓** C.Pythagore D.Russell
+D02 [Mathématiques] Libre — Quelle est la racine cubique de 512 ? | **8**
+D03 [Gaming] QCM — Dans quel jeu 'Handsome Jack' est l'antagoniste principal ? | **A.Borderlands 2✓** B.Borderlands 3 C.BioShock Infinite D.Dishonored
+D04 [Géographie] Libre — Quel pays est constitué de 7 000 îles et a Manille pour capitale ? | **Philippines**
+D05 [Cinéma] QCM — Quel réalisateur a mis en scène Parasite (2019) ? | A.Park Chan-wook B.Kim Ki-duk **C.Bong Joon-ho✓** D.Lee Chang-dong
+D06 [Gaming] Libre — Quel est le nom du studio qui a développé Sekiro: Shadows Die Twice ? | **FromSoftware**
+D07 [Cinéma] QCM — Dans Dune, quelle est la substance la plus précieuse de l'univers ? | A.L'Aqua Vitae B.La Mélanine **C.L'Épice✓** D.Le Duranium
+D08 [Sport] Libre — Quel pays a remporté le plus de Coupes du Monde de football ? | **Brésil (5 titres)**
+D09 [Musique] QCM — Quel compositeur sourd a composé sa 9e symphonie ? | A.Bach B.Schubert **C.Beethoven✓** D.Brahms
+D10 [Cinéma] Libre — En cinéma, que signifie l'acronyme IMAX ? | **Image Maximum**
+D11 [Gaming] QCM — Quel jeu a créé le sous-genre 'Soulslike' ? | A.Dark Souls **B.Demon's Souls✓** C.Bloodborne D.Sekiro
+D12 [Histoire] Libre — En quelle année Neil Armstrong a-t-il marché sur la Lune ? | **1969**
+D13 [Cinéma] QCM — Quel réalisateur est derrière Blade Runner 2049 ? | A.Ridley Scott B.Christopher Nolan **C.Denis Villeneuve✓** D.Alex Garland
+D14 [Sciences] Libre — Quel est le signe chimique de l'argent ? | **Ag**
+D15 [Gaming] QCM — Dans quel jeu incarne-t-on un détective dans une ville de fantasy existentielle ? | A.Shadowrun **B.Disco Elysium✓** C.Planescape Torment D.Vampire Bloodlines
+D16 [Gaming] Libre — Quelle est la fréquence standard d'un écran 'compétitif' gaming ? | **144 Hz**
+D17 [Culture générale] QCM — Quel terme désigne une position de marché avec un seul acheteur ? | A.Oligopole B.Monopole **C.Monopsone✓** D.Duopole
+D18 [Gaming] Libre — Dans quel jeu le terme 'Tetrominoes' est fondamental ? | **Tetris**
+D19 [Gaming] QCM — Quel est le terme pour le délai entre une action joueur et sa réponse à l'écran ? | A.Framerate **B.Input lag✓** C.Refresh rate D.V-Sync
+D20 [Littérature] Libre — Quel écrivain américain a créé Jay Gatsby ? | **F. Scott Fitzgerald**
+D21 [Musique] QCM — Qui a sorti 'Back to Black' en hommage à Nina Simone ? | A.Duffy B.Adele **C.Amy Winehouse✓** D.Paloma Faith
+D22 [Musique] Libre — Quel compositeur a écrit les Quatre Saisons ? | **Antonio Vivaldi**
+D23 [Gaming] QCM — Quel JRPG a introduit l'Active Time Battle (ATB) ? | A.Dragon Quest **B.Final Fantasy IV✓** C.Chrono Trigger D.Xenogears
+D24 [Sciences] Libre — Quel est le nom de la loi physique F = ma ? | **Deuxième loi de Newton**
+D25 [Gaming] QCM — Quel terme désigne un jeu généré procéduralement avec mort permanente ? | A.Sandbox B.Roguelite **C.Roguelike✓** D.Metroidvania
+D26 [Géographie] Libre — Dans quel pays se trouve la ville de Bruges ? | **Belgique**
+D27 [Sport] QCM — Quel pays a remporté le plus de médailles d'or aux JO d'été ? | A.URSS B.Chine C.Russie **D.USA✓**
+D28 [Sciences] Libre — Quel est le nom du mécanisme qui permet à un transistor de fonctionner ? | **L'effet de champ (FET)**
+D29 [Géographie] QCM — Quelle est la capitale de la Nouvelle-Zélande ? | A.Auckland **B.Wellington✓** C.Christchurch D.Hamilton
+D30 [Histoire] Libre — Dans quel pays est né Nikola Tesla ? | **Serbie**
+D31 [Gaming] QCM — Quel terme désigne le mélange exploration et progression de compétences dans des maps liées ? | A.Roguelike **B.Metroidvania✓** C.Open World D.Soulslike
+D32 [Cinéma] Libre — Quel film de Kubrick met en scène Jack Nicholson dans un hôtel hanté ? | **The Shining**
+D33 [Gaming] QCM — Quel jeu de stratégie créé par Sid Meier propose de construire une civilisation ? | A.Age of Empires **B.Civilization✓** C.Total War D.Anno
+D34 [Culture] Libre — Quel est le terme japonais pour 'animation' ? | **Anime**
+D35 [Musique] QCM — Quel est le vrai nom de l'artiste Stromae ? | **A.Paul Van Haver✓** B.Pierre Servais C.Arnaud Delafont D.Louis Bertrand
+D36 [Culture générale] Libre — Quel pays possède le plus grand nombre de langues officielles ? | **Zimbabwe (16 langues officielles)**
+D37 [Série] QCM — Quelle série policière danoise a inspiré The Killing ? | **A.Forbrydelsen✓** B.Borgen C.The Bridge D.Dicte
+D38 [Musique] Libre — Quel est le nom du système de notation musicale Do-Ré-Mi ? | **Le solfège**
+D39 [Gaming] QCM — Quel moteur graphique utilise Epic Games pour Fortnite et des AAA ? | A.Unity B.CryEngine **C.Unreal Engine✓** D.Source
+D40 [Culture générale] Libre — En quelle année a été fondé Google ? | **1998**
+
+### Blind Tests — Manche 2, Q4 — 15 secondes (10 questions)
+
+> Réponses dépendent de la playlist de l'animateur — afficher "Playlist animateur" comme réponse
+
+B01 [Musique] Blind — Identifiez le titre et l'artiste de cet extrait.
+B02 [Musique] Blind — De quelle année date ce titre ? Soyez précis.
+B03 [Gaming] Blind — Identifiez ce son iconique de jeu vidéo.
+B04 [Cinéma] Blind — De quel film est issue cette bande-son ?
+B05 [Série] Blind — Identifiez le générique de cette série.
+B06 [Musique] Blind — Quel est le genre musical de cet extrait ?
+B07 [Gaming/Cinéma] Blind — Ce son provient d'un jeu ou d'un film. Lequel ?
+B08 [Musique] Blind — Identifiez le rappeur ou la rappeuse.
+B09 [Musique] Blind — Quelle est la nationalité de l'artiste ?
+B10 [Gaming] Blind — Identifiez ce thème musical de jeu vidéo.
+
+---
+
+## 8. Section 5 — Estimation Budget (NOUVELLE SECTION)
+
+> Afficher un tableau de chiffrage clair, style même palette dark que le reste de la page. Titre de section : "Estimation Budget — À financer"
+
+### Données budget réelles
+
+#### Manche 1 — 30 éliminés (chacun reçoit les 3 bons)
+
+| Bon | Prix unitaire | × 30 | Total |
+|---|---|---|---|
+| Bon coiffure | 300 $ | × 30 | 9 000 $ |
+| Bon réparation | 650 $ | × 30 | 19 500 $ |
+| Bon repas (10 menus) | 1 100 $ | × 30 | 33 000 $ |
+| **Sous-total par personne** | **2 050 $** | | **61 500 $** |
+
+#### Manche 2 — 8 éliminés (chacun reçoit les 4 bons)
+
+| Bon | Prix unitaire | × 8 | Total |
+|---|---|---|---|
+| Bon repas (10 menus) | 1 100 $ | × 8 | 8 800 $ |
+| Bon réparation | 650 $ | × 8 | 5 200 $ |
+| Bon esthétique (coiffure 300 $ + tatouage ~500 $) | ~800 $ | × 8 | ~6 400 $ |
+| Bon stage pilotage MFA (15 min) | 1 000 $ | × 8 | 8 000 $ |
+| **Sous-total par personne** | **~3 550 $** | | **~28 400 $** |
+
+#### Manche 3 — 4 finalistes
+
+Base commune à tous : Package M2 (3 550 $) + Pass VIP GP4 (0 $ — écurie organisateur) + Baptême hélicoptère Maze Event (2 000 $) = **5 550 $ par finaliste**
+
+| Rang | Détail | Total |
+|---|---|---|
+| 4e place | Base 5 550 $ | 5 550 $ |
+| 3e place | Base + prime 10 000 $ | 15 550 $ |
+| 2e place | Base + prime 20 000 $ | 25 550 $ |
+| 🏆 1er — Grand Vainqueur | Base + prime 40 000 $ + voiture PDM (à négocier) | 45 550 $ + voiture |
+| **Total manche 3 (hors voiture)** | | **92 200 $** |
+
+#### Frais production & événement
+
+| Poste | Montant |
+|---|---|
+| Location studio | 15 000 $ |
+| Réalisation & production | 100 000 $ |
+| Frais annexes (logistique, communication, imprévus) | ~20 000 $ |
+| **Total frais** | **135 000 $** |
+
+#### Récapitulatif général
+
+| Poste | Montant |
+|---|---|
+| Manche 1 — 30 × 3 bons | 61 500 $ |
+| Manche 2 — 8 × 4 bons | ~28 400 $ |
+| Manche 3 — 4 finalistes + primes cash | 92 200 $ |
+| Frais production & événement | 135 000 $ |
+| **TOTAL À FINANCER (hors voiture PDM)** | **~317 100 $** |
+| Pass VIP GP4 | Gratuit (écurie organisateur) |
+| Voiture PDM | Selon accord partenaire |
+| Primes cash (3e + 2e + 1er) | 70 000 $ (inclus dans M3) |
+| Lots & bons à demarcher partenaires | 182 100 $ (inclus dans M1+M2+M3) |
+
+> Note : le financement est prévu via partenaires privés (bons en nature) + potentiel sponsoring État / Ville de Los Santos pour les frais de production et primes cash.
+
+---
+
+## 9. Footer
+
+`MASTER CLASH — Document officiel — Réservé à l'animateur — État de San Andreas`
+
+---
+
+## 10. Instructions techniques pour Claude Code
+
+1. **Un seul fichier `index.html`** — tout CSS et JS inline, aucune dépendance externe.
+2. **Navigation fixe** en haut avec 5 liens : Gouverneur | Règlement | Partenaires | Questions | Budget
+3. **Scroll fluide** entre sections via ancres `#gouv #regl #part #ques #budget`
+4. **Section Questions** : prévoir un sous-menu d'ancres (Faciles / Moyennes / Difficiles / Blind Tests) scrollable horizontalement si besoin.
+5. **Section Budget** : afficher les tableaux avec le même style dark que le reste — cartes avec bordure gauche colorée, tableaux avec en-têtes cyan, totaux mis en évidence en jaune.
+6. **Optimisé mobile/tablette** : padding généreux, font-size minimum 13px, pas de layout qui déborde.
+7. **Pas de JavaScript complexe** — uniquement du CSS et des ancres HTML natives (le navigateur CEF FiveM est limité).
+8. **Le fichier final doit s'appeler `index.html`** et être uploadé directement à la racine du dépôt GitHub `lahagragaming93-debug/MASTER-CLASH`.
