@@ -123,13 +123,19 @@ body{font-size:14px}
 th,td{padding:8px 10px;font-size:12px}
 }
 
-/* ========== LOCKED SECTIONS ========== */
+/* ========== LOCKED SECTIONS (compatible CEF FiveM : pas de blur, masquage total) ========== */
 .lock-icon{margin-right:3px;font-size:11px}
 .locked-wrap{position:relative}
-.locked-content{position:relative;transition:filter .3s}
-.locked-content.locked{filter:blur(8px);pointer-events:none;user-select:none}
-.lock-overlay{display:none;position:absolute;inset:0;background:rgba(10,14,26,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:50;align-items:center;justify-content:center;flex-direction:column;gap:14px;border-radius:10px;text-align:center;padding:20px;pointer-events:auto;cursor:pointer}
+.locked-content{position:relative}
+.locked-content.locked{display:none!important}
+.lock-overlay{display:none;background:#0f1420;border:1px dashed rgba(0,212,255,.35);border-radius:12px;padding:60px 30px;min-height:240px;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;cursor:pointer;transition:all .2s}
+.lock-overlay:hover{background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.55)}
 .locked-content.locked + .lock-overlay,.locked-content.locked ~ .lock-overlay{display:flex}
+
+/* Tactile / CEF : permettre la sélection et la saisie sur tablette */
+input,textarea,select{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important;touch-action:manipulation}
+input:not([disabled]):not([readonly]),textarea:not([disabled]):not([readonly]){cursor:text}
+button{touch-action:manipulation}
 .lock-overlay .lock-big{font-size:48px}
 .lock-overlay .lock-msg{color:#f5c518;font-weight:700;font-size:18px;letter-spacing:1px;text-transform:uppercase}
 .lock-overlay .lock-sub{color:#aabbc8;font-size:13px}
@@ -1623,6 +1629,21 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
   </div>
 </div>
 
+<!-- ===== MODAL DIALOGUE UNIVERSEL (alert/confirm/prompt custom) ===== -->
+<div class="modal-overlay" id="dlg-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-logo" id="dlg-icon">⚡ MASTER CLASH</div>
+    <div class="modal-sub" id="dlg-title">Information</div>
+    <p id="dlg-msg" style="white-space:pre-wrap"></p>
+    <input type="text" id="dlg-input" style="display:none;width:100%;padding:12px 14px;background:#141926;border:1px solid rgba(0,212,255,.3);border-radius:8px;color:#dce4f0;font-size:16px;font-family:inherit;letter-spacing:1.5px;text-align:center;outline:none;margin-bottom:6px" autocomplete="off">
+    <div class="modal-error" id="dlg-error"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-secondary" id="dlg-cancel">Annuler</button>
+      <button type="button" class="modal-btn modal-btn-primary" id="dlg-ok">Valider</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== MODAL CODE ===== -->
 <div class="modal-overlay" id="mc-modal">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mc-modal-title">
@@ -1651,6 +1672,85 @@ var MC_SECRET_KEY = 'mc_secret_v1';
 var MC_UNLOCK_KEY = 'mc_unlocked_v1';
 var MC_ARCHIVE_KEY = 'mc_archives_v1';
 var MC_SECRET = localStorage.getItem(MC_SECRET_KEY) || MC_DEFAULT_SECRET;
+
+// ===========================================================
+// DIALOGUE CUSTOM (remplace alert/confirm/prompt — compatible CEF FiveM)
+// ===========================================================
+function _dlgEls(){
+  return {
+    modal: document.getElementById('dlg-modal'),
+    icon: document.getElementById('dlg-icon'),
+    title: document.getElementById('dlg-title'),
+    msg: document.getElementById('dlg-msg'),
+    input: document.getElementById('dlg-input'),
+    error: document.getElementById('dlg-error'),
+    ok: document.getElementById('dlg-ok'),
+    cancel: document.getElementById('dlg-cancel')
+  };
+}
+function _dlgClose(){ _dlgEls().modal.classList.remove('active'); }
+function _dlgOpen(opts){
+  return new Promise(function(resolve){
+    var e = _dlgEls();
+    e.icon.textContent = opts.icon || '⚡ MASTER CLASH';
+    e.title.textContent = opts.title || 'Information';
+    e.msg.innerHTML = String(opts.message || '').replace(/\n/g, '<br>');
+    e.error.textContent = '';
+    if (opts.showInput){
+      e.input.style.display = '';
+      e.input.type = opts.inputType || 'text';
+      e.input.value = opts.defaultValue || '';
+      e.input.placeholder = opts.placeholder || '';
+    } else {
+      e.input.style.display = 'none';
+    }
+    if (opts.showCancel){
+      e.cancel.style.display = '';
+      e.cancel.textContent = opts.cancelText || 'Annuler';
+    } else {
+      e.cancel.style.display = 'none';
+    }
+    e.ok.textContent = opts.okText || 'Valider';
+    var doOk = function(){
+      var v = opts.showInput ? e.input.value : true;
+      if (opts.validate){
+        var err = opts.validate(v);
+        if (err){ e.error.textContent = err; return; }
+      }
+      _dlgClose();
+      resolve(opts.showInput ? v : true);
+    };
+    var doCancel = function(){ _dlgClose(); resolve(opts.showInput ? null : false); };
+    e.ok.onclick = doOk;
+    e.cancel.onclick = doCancel;
+    e.input.onkeydown = function(ev){ if (ev.key === 'Enter'){ ev.preventDefault(); doOk(); } };
+    e.modal.classList.add('active');
+    if (opts.showInput) setTimeout(function(){ e.input.focus(); }, 60);
+  });
+}
+function mcAlert(message, opts){
+  opts = opts || {};
+  return _dlgOpen({ icon: opts.icon || '⚡ MASTER CLASH', title: opts.title || 'Information', message: message, okText: opts.okText || 'OK' });
+}
+function mcConfirm(message, opts){
+  opts = opts || {};
+  return _dlgOpen({ icon: opts.icon || '⚡ MASTER CLASH', title: opts.title || 'Confirmation', message: message, showCancel: true, okText: opts.okText || 'Confirmer' });
+}
+function mcPrompt(message, opts){
+  opts = opts || {};
+  return _dlgOpen({
+    icon: opts.icon || '⚡ MASTER CLASH',
+    title: opts.title || 'Saisie',
+    message: message,
+    showInput: true,
+    showCancel: true,
+    inputType: opts.inputType || 'text',
+    placeholder: opts.placeholder || '',
+    defaultValue: opts.defaultValue || '',
+    okText: opts.okText || 'Valider',
+    validate: opts.validate
+  });
+}
 
 var CONTRACT_LABELS = {
   est:  { label: 'Contrat Esthétique',     icon: '💆', ref: 'MC-EST-2026'  },
@@ -1877,14 +1977,14 @@ function validateContract(type){
   });
 
   if (missing.length){
-    alert('⚠ Veuillez remplir tous les champs obligatoires (en rouge) avant de soumettre.\n' + missing.length + ' champ(s) manquant(s).');
     if (missing[0]) missing[0].scrollIntoView({behavior:'smooth', block:'center'});
+    mcAlert('⚠ Veuillez remplir tous les champs obligatoires (en rouge) avant de soumettre.\n\n' + missing.length + ' champ(s) manquant(s).', { title: 'Champs manquants' });
     return;
   }
 
   // Convention : index 0 = Organisateur, index 1 = Partenaire
   if (canvases.length < 2 || isCanvasBlank(canvases[1])){
-    alert('⚠ Veuillez signer la zone « Pour le Partenaire » avant de soumettre le contrat.');
+    mcAlert('⚠ Veuillez signer la zone « Pour le Partenaire » avant de soumettre le contrat.', { title: 'Signature manquante' });
     return;
   }
 
@@ -1930,7 +2030,7 @@ function validateContract(type){
   // Réinitialiser le formulaire pour ne pas garder l'ancienne signature
   canvases.forEach(function(c){ c.getContext('2d').clearRect(0, 0, c.width, c.height); });
 
-  alert('✓ Contrat soumis !\n\nIl est désormais EN ATTENTE de validation par l\'organisateur.\nRetrouvez-le dans l\'onglet « 📁 Contrats ».');
+  mcAlert('✓ Contrat soumis !\n\nIl est désormais EN ATTENTE de validation par l\'organisateur.\n\nRetrouvez-le dans l\'onglet « 📁 Contrats ».', { title: 'Soumission réussie' });
   var archTab = document.querySelector('.contract-tab[data-tab="archives"]');
   if (archTab) archTab.click();
 }
@@ -1955,16 +2055,16 @@ function organizerSignAndValidate(id){
     }
   });
   if (missing.length){
-    alert('⚠ Veuillez remplir vos champs Organisateur (en rouge) avant de confirmer.\n' + missing.length + ' champ(s) manquant(s).');
     if (missing[0]) missing[0].scrollIntoView({behavior:'smooth', block:'center'});
+    mcAlert('⚠ Veuillez remplir vos champs Organisateur (en rouge) avant de confirmer.\n\n' + missing.length + ' champ(s) manquant(s).', { title: 'Champs manquants' });
     return;
   }
 
   // Vérifier la signature organisateur
   var orgCanvas = docClone.querySelector('canvas.sig-canvas[data-role="org"]');
-  if (!orgCanvas){ alert('Erreur : zone de signature organisateur introuvable.'); return; }
+  if (!orgCanvas){ mcAlert('Erreur : zone de signature organisateur introuvable.'); return; }
   if (isCanvasBlank(orgCanvas)){
-    alert('⚠ Veuillez signer en tant qu\'organisateur avant de confirmer.');
+    mcAlert('⚠ Veuillez signer en tant qu\'organisateur avant de confirmer.', { title: 'Signature manquante' });
     return;
   }
 
@@ -1985,7 +2085,7 @@ function organizerSignAndValidate(id){
   saveArchives(list);
   closeViewModal();
   renderArchivesList();
-  alert('✓ Contrat validé et archivé définitivement.\nIl est maintenant non-éditable et imprimable.');
+  mcAlert('✓ Contrat validé et archivé définitivement.\n\nIl est maintenant non-éditable et imprimable.', { title: 'Validation réussie' });
 }
 
 function escHtml(s){
@@ -2126,7 +2226,16 @@ function viewArchive(id){
   if (!rec) return;
   var isPending = rec.status === 'pending';
   // Pour les contrats en attente, demander le code organisateur AVANT d'ouvrir
-  if (isPending && !requireOrgCode()) return;
+  if (isPending){
+    requireOrgCode('Code requis pour valider ce contrat en attente.').then(function(ok){
+      if (ok) _openArchiveView(rec, true);
+    });
+    return;
+  }
+  _openArchiveView(rec, false);
+}
+function _openArchiveView(rec, isPending){
+  if (!rec) return;
   var meta = CONTRACT_LABELS[rec.type] || { label: rec.type };
   var titleSuffix = isPending ? '  ⏳ En attente de validation' : '  ✓ Validé';
   document.getElementById('view-modal-title').textContent = meta.label + ' — ' + rec.partnerName + titleSuffix;
@@ -2166,7 +2275,9 @@ function closeViewModal(){
   document.getElementById('view-modal-content').innerHTML = '';
 }
 function printValidated(){
-  if (!requireOrgCode()) return;
+  requireOrgCode().then(function(ok){ if (!ok) return; _printValidatedConfirmed(); });
+}
+function _printValidatedConfirmed(){
   var content = document.getElementById('view-modal-content');
   var clone = content.firstElementChild;
   if (!clone) return;
@@ -2183,7 +2294,9 @@ function printValidated(){
   }, 80);
 }
 function printArchive(id){
-  if (!requireOrgCode()) return;
+  requireOrgCode().then(function(ok){ if (!ok) return; _printArchiveConfirmed(id); });
+}
+function _printArchiveConfirmed(id){
   var rec = getArchives().find(function(r){ return r.id === id; });
   if (!rec) return;
   var clone = buildArchiveDoc(rec);
@@ -2200,31 +2313,40 @@ function printArchive(id){
   }, 80);
 }
 function deleteArchive(id){
-  if (!requireOrgCode()) return;
-  if (!confirm('Supprimer définitivement ce contrat ?')) return;
-  var list = getArchives().filter(function(r){ return r.id !== id; });
-  saveArchives(list);
-  renderArchivesList();
-  alert('✓ Contrat supprimé.');
+  requireOrgCode('Code requis pour supprimer ce contrat.').then(function(ok){
+    if (!ok) return;
+    return mcConfirm('Supprimer définitivement ce contrat ?\n\nCette action est irréversible.', { okText: '🗑 Supprimer' });
+  }).then(function(ok){
+    if (!ok) return;
+    var list = getArchives().filter(function(r){ return r.id !== id; });
+    saveArchives(list);
+    renderArchivesList();
+    return mcAlert('✓ Contrat supprimé.', { title: 'Suppression réussie' });
+  });
 }
 
 function printActive(){ window.print(); }
 
-// Demande le code organisateur pour les actions sensibles (impression / téléchargement de contrats finalisés)
-function requireOrgCode(){
-  var code = window.prompt('🔒 Code organisateur requis pour cette action :');
-  if (code === null) return false;
-  if ((code || '').trim().toUpperCase() !== MC_SECRET){
-    alert('⚠ Code incorrect. Action annulée.');
-    return false;
-  }
-  return true;
+// Demande le code organisateur via modale custom (compatible CEF FiveM)
+function requireOrgCode(titleMsg){
+  return mcPrompt(titleMsg || 'Cette action requiert le code organisateur.', {
+    title: '🔒 Code requis',
+    inputType: 'password',
+    placeholder: '••••••••',
+    okText: 'Valider'
+  }).then(function(code){
+    if (code === null) return false;
+    if ((code || '').trim().toUpperCase() !== MC_SECRET){
+      return mcAlert('⚠ Code incorrect.\nAction annulée.', { title: 'Erreur' }).then(function(){ return false; });
+    }
+    return true;
+  });
 }
 
 // ===== EXPORT PNG (html2canvas) =====
 function ensureH2C(){
   if (typeof html2canvas === 'undefined'){
-    alert('⚠ Module d\'export PNG non chargé.\nVérifiez votre connexion internet.');
+    mcAlert('⚠ Module d\'export PNG non chargé.\nVérifiez votre connexion internet.', { title: 'Erreur' });
     return false;
   }
   return true;
@@ -2245,7 +2367,7 @@ function snapToPng(element, filename){
     link.click();
     document.body.removeChild(link);
   }).catch(function(err){
-    alert('Erreur lors de la génération du PNG : ' + err);
+    mcAlert('Erreur lors de la génération du PNG : ' + err, { title: 'Erreur' });
   });
 }
 
@@ -2312,7 +2434,9 @@ function downloadActiveContractPng(btn){
   }, 60);
 }
 function downloadContractPng(id){
-  if (!requireOrgCode()) return;
+  requireOrgCode().then(function(ok){ if (!ok) return; _downloadContractPngConfirmed(id); });
+}
+function _downloadContractPngConfirmed(id){
   var rec = getArchives().find(function(r){ return r.id === id; });
   if (!rec) return;
   var doc = buildArchiveDoc(rec);
@@ -2379,62 +2503,90 @@ function toggleShowCode(){
   if (btn) btn.textContent = _showCode ? '🙈 Masquer' : '👁 Afficher';
 }
 function changeSecret(){
-  var oldCode = window.prompt('🔑 Étape 1/3 — Saisissez le code actuel :');
-  if (oldCode === null) return;
-  if ((oldCode || '').trim().toUpperCase() !== MC_SECRET){
-    alert('⚠ Code actuel incorrect.');
-    return;
-  }
-  var newCode = window.prompt('🔑 Étape 2/3 — Saisissez le NOUVEAU code (4 caractères minimum, lettres/chiffres) :');
-  if (newCode === null) return;
-  newCode = (newCode || '').trim().toUpperCase();
-  if (newCode.length < 4){
-    alert('⚠ Le code doit faire au moins 4 caractères.');
-    return;
-  }
-  if (!/^[A-Z0-9]+$/.test(newCode)){
-    alert('⚠ Le code ne doit contenir que des lettres et chiffres (sans espaces ni accents).');
-    return;
-  }
-  var confirmCode = window.prompt('🔑 Étape 3/3 — Confirmez le nouveau code :');
-  if (confirmCode === null) return;
-  if ((confirmCode || '').trim().toUpperCase() !== newCode){
-    alert('⚠ Les codes ne correspondent pas. Annulé.');
-    return;
-  }
-  MC_SECRET = newCode;
-  try { localStorage.setItem(MC_SECRET_KEY, newCode); } catch(e){}
-  if (_showCode){
-    var el = document.getElementById('admin-current-code');
-    if (el) el.textContent = MC_SECRET;
-  }
-  alert('✓ Code modifié avec succès.\nNouveau code : ' + newCode);
+  mcPrompt('Étape 1/3 — Saisissez le code actuel :', { title: '🔑 Changer le code', inputType: 'password', placeholder: 'Code actuel' })
+    .then(function(oldCode){
+      if (oldCode === null) return null;
+      if ((oldCode || '').trim().toUpperCase() !== MC_SECRET){
+        return mcAlert('⚠ Code actuel incorrect.', { title: 'Erreur' }).then(function(){ return null; });
+      }
+      return mcPrompt('Étape 2/3 — Saisissez le NOUVEAU code\n(4 caractères minimum, lettres/chiffres uniquement) :', {
+        title: '🔑 Nouveau code',
+        inputType: 'text',
+        placeholder: 'NOUVEAU-CODE',
+        validate: function(v){
+          v = (v || '').trim().toUpperCase();
+          if (v.length < 4) return 'Minimum 4 caractères.';
+          if (!/^[A-Z0-9]+$/.test(v)) return 'Lettres et chiffres uniquement.';
+          return null;
+        }
+      });
+    })
+    .then(function(newCode){
+      if (newCode === null || newCode === undefined) return null;
+      newCode = (newCode || '').trim().toUpperCase();
+      return mcPrompt('Étape 3/3 — Confirmez le nouveau code :', {
+        title: '🔑 Confirmation',
+        inputType: 'password',
+        placeholder: 'Re-saisissez le code'
+      }).then(function(confirmCode){
+        if (confirmCode === null) return null;
+        if ((confirmCode || '').trim().toUpperCase() !== newCode){
+          return mcAlert('⚠ Les codes ne correspondent pas.\nModification annulée.', { title: 'Erreur' }).then(function(){ return null; });
+        }
+        return newCode;
+      });
+    })
+    .then(function(newCode){
+      if (!newCode) return;
+      MC_SECRET = newCode;
+      try { localStorage.setItem(MC_SECRET_KEY, newCode); } catch(e){}
+      if (_showCode){
+        var el = document.getElementById('admin-current-code');
+        if (el) el.textContent = MC_SECRET;
+      }
+      mcAlert('✓ Code modifié avec succès.\n\nNouveau code : ' + newCode, { title: 'Succès' });
+    });
 }
 function resetSecret(){
-  if (!confirm('Restaurer le code par défaut (' + MC_DEFAULT_SECRET + ') ?')) return;
-  if (!requireOrgCode()) return;
-  MC_SECRET = MC_DEFAULT_SECRET;
-  try { localStorage.removeItem(MC_SECRET_KEY); } catch(e){}
-  if (_showCode){
-    var el = document.getElementById('admin-current-code');
-    if (el) el.textContent = MC_SECRET;
-  }
-  alert('✓ Code restauré au défaut : ' + MC_DEFAULT_SECRET);
+  mcConfirm('Restaurer le code par défaut (' + MC_DEFAULT_SECRET + ') ?', { title: '↺ Réinitialiser', okText: 'Restaurer' })
+    .then(function(ok){
+      if (!ok) return false;
+      return requireOrgCode('Saisissez le code actuel pour confirmer.');
+    })
+    .then(function(ok){
+      if (!ok) return;
+      MC_SECRET = MC_DEFAULT_SECRET;
+      try { localStorage.removeItem(MC_SECRET_KEY); } catch(e){}
+      if (_showCode){
+        var el = document.getElementById('admin-current-code');
+        if (el) el.textContent = MC_SECRET;
+      }
+      mcAlert('✓ Code restauré au défaut : ' + MC_DEFAULT_SECRET, { title: 'Succès' });
+    });
 }
 function lockAllSections(){
-  if (!confirm('Re-verrouiller toutes les sections ? Le code devra être ressaisi.')) return;
-  try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
-  alert('✓ Sections re-verrouillées. La page va se recharger.');
-  setTimeout(function(){ location.reload(); }, 200);
+  mcConfirm('Re-verrouiller toutes les sections ?\n\nLe code devra être ressaisi pour accéder aux sections protégées.', { title: '🔒 Re-verrouillage', okText: 'Re-verrouiller' })
+    .then(function(ok){
+      if (!ok) return;
+      try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+      return mcAlert('✓ Sections re-verrouillées.\nLa page va se recharger.', { title: 'Succès' });
+    })
+    .then(function(){ if (arguments[0] !== undefined) setTimeout(function(){ location.reload(); }, 200); });
 }
 function clearAllArchives(){
-  if (!confirm('⚠ ATTENTION\n\nVous êtes sur le point d\'effacer TOUS les contrats archivés (en attente + validés).\n\nCette action est IRRÉVERSIBLE.\n\nContinuer ?')) return;
-  if (!requireOrgCode()) return;
-  try { localStorage.removeItem(MC_ARCHIVE_KEY); } catch(e){}
-  updateArchivesCount();
-  refreshAdminStats();
-  if (document.getElementById('panel-archives').classList.contains('active')) renderArchivesList();
-  alert('✓ Toutes les archives ont été effacées.');
+  mcConfirm('⚠ ATTENTION\n\nVous êtes sur le point d\'effacer TOUS les contrats archivés (en attente + validés).\n\nCette action est IRRÉVERSIBLE.\n\nContinuer ?', { title: '🗑 Effacer les archives', okText: 'Effacer' })
+    .then(function(ok){
+      if (!ok) return false;
+      return requireOrgCode('Saisissez le code pour confirmer la suppression totale.');
+    })
+    .then(function(ok){
+      if (!ok) return;
+      try { localStorage.removeItem(MC_ARCHIVE_KEY); } catch(e){}
+      updateArchivesCount();
+      refreshAdminStats();
+      if (document.getElementById('panel-archives').classList.contains('active')) renderArchivesList();
+      mcAlert('✓ Toutes les archives ont été effacées.', { title: 'Succès' });
+    });
 }
 function refreshAdminStats(){
   var c = document.getElementById('admin-stats');
