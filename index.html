@@ -348,9 +348,11 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
 .modal-view-content[data-mode="pending"] .signature-col:first-child .sig-canvas{border:2px solid #ffab40!important;background:#fff8e8!important;cursor:crosshair!important;box-shadow:0 0 0 3px rgba(255,171,64,.15)!important;pointer-events:auto!important}
 .modal-view-content[data-mode="pending"] .signature-col:first-child .sig-clear{display:inline-block!important;pointer-events:auto!important}
 .modal-view-content[data-mode="pending"] .signature-col:first-child input,
-.modal-view-content[data-mode="pending"] .signature-col:first-child textarea{pointer-events:auto!important;background:#fff8e8!important;cursor:text!important;border-bottom:1px dashed #c8a44a!important;color:#1a1612!important}
+.modal-view-content[data-mode="pending"] .signature-col:first-child textarea,
+.modal-view-content .org-editable{pointer-events:auto!important;background:#fff8e8!important;cursor:text!important;border-bottom:1px dashed #c8a44a!important;color:#1a1612!important;opacity:1!important}
 .modal-view-content[data-mode="pending"] .signature-col:first-child input:focus,
-.modal-view-content[data-mode="pending"] .signature-col:first-child textarea:focus{background:rgba(255,171,64,.2)!important;border-bottom-color:#1a1612!important;outline:none}
+.modal-view-content[data-mode="pending"] .signature-col:first-child textarea:focus,
+.modal-view-content .org-editable:focus{background:rgba(255,171,64,.2)!important;border-bottom-color:#1a1612!important;outline:none}
 .modal-view-content[data-mode="pending"] .signature-col:first-child::before{content:"⚠ Zone de signature à compléter par l'organisateur";display:block;font-size:10px;color:#ffab40;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-family:'Montserrat',sans-serif}
 
 /* ========== MODAL VIEW (contrat validé) ========== */
@@ -2024,7 +2026,10 @@ function buildArchiveDoc(record, opts){
     if (keepEditable){
       el.removeAttribute('readonly');
       el.removeAttribute('disabled');
+      el.disabled = false;
+      el.readOnly = false;
       el.classList.remove('org-locked-input');
+      el.classList.add('org-editable');
     } else {
       el.setAttribute('readonly', 'readonly');
       el.setAttribute('disabled', 'disabled');
@@ -2065,8 +2070,10 @@ function buildArchiveDoc(record, opts){
 function viewArchive(id){
   var rec = getArchives().find(function(r){ return r.id === id; });
   if (!rec) return;
-  var meta = CONTRACT_LABELS[rec.type] || { label: rec.type };
   var isPending = rec.status === 'pending';
+  // Pour les contrats en attente, demander le code organisateur AVANT d'ouvrir
+  if (isPending && !requireOrgCode()) return;
+  var meta = CONTRACT_LABELS[rec.type] || { label: rec.type };
   var titleSuffix = isPending ? '  ⏳ En attente de validation' : '  ✓ Validé';
   document.getElementById('view-modal-title').textContent = meta.label + ' — ' + rec.partnerName + titleSuffix;
   var clone = buildArchiveDoc(rec, { editableOrgSignature: isPending });
