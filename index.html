@@ -305,6 +305,44 @@ th,td{padding:8px 10px;font-size:12px}
 .vi-btn-confirm:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,230,118,.35)}
 .sig-img-placeholder{display:flex;align-items:center;justify-content:center;color:#aaa;font-style:italic;font-size:12px;width:100%;height:120px;border:1.5px dashed #c4b99a;border-radius:4px;background:#fffefb;font-family:Georgia,serif}
 
+/* Zone Organisateur verrouillée dans les contrats actifs (côté partenaire) */
+.org-locked-msg{background:rgba(245,197,24,.15);border:1px dashed #c8a44a;border-radius:4px;padding:6px 10px;font-size:10px;color:#5a5048;font-style:italic;margin-bottom:8px;font-family:'Montserrat',sans-serif;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.org-locked-input{background:#ede5d0!important;color:#8a7a5a!important;cursor:not-allowed!important;border-bottom-color:#c4b99a!important}
+.org-locked-canvas{background:#ede5d0!important;cursor:not-allowed!important;pointer-events:none!important;opacity:.6}
+
+/* Champs manquants (validation requise) */
+.field-missing{background:rgba(255,71,87,.18)!important;border-color:#ff4757!important;border-bottom-color:#ff4757!important;box-shadow:0 0 0 2px rgba(255,71,87,.25);animation:shake .35s}
+textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+/* Mode export PNG : compactage A4 */
+.contract-png-export{font-size:9.5px!important;padding:14px 20px!important;line-height:1.38!important;width:794px!important;max-width:794px!important;box-sizing:border-box;box-shadow:none!important;border:1px solid #c4b99a!important}
+.contract-png-export h2{font-size:13px!important;letter-spacing:1px!important;margin-bottom:1px!important}
+.contract-png-export h3{font-size:10px!important;margin:9px 0 4px!important;padding-bottom:2px!important;letter-spacing:.5px!important}
+.contract-png-export h4{font-size:9px!important;margin:6px 0 3px!important}
+.contract-png-export p{margin-bottom:3px!important}
+.contract-png-export ul{margin:2px 0 4px 14px!important}
+.contract-png-export ul li{margin-bottom:2px!important}
+.contract-png-export .field-label{font-size:8px!important;margin-bottom:1px!important}
+.contract-png-export .contract-header{padding-bottom:8px!important;margin-bottom:9px!important;gap:14px!important}
+.contract-png-export .contract-logo-block{padding:7px 10px!important;min-width:120px!important}
+.contract-png-export .cl-line1,.contract-png-export .cl-line2{font-size:13px!important;letter-spacing:1.2px!important}
+.contract-png-export .cl-tag{font-size:6px!important;margin-top:3px!important}
+.contract-png-export .ct-title{font-size:10px!important;letter-spacing:1px!important}
+.contract-png-export .ct-sub{font-size:8px!important;margin-top:1px!important}
+.contract-png-export .ct-ref{font-size:8px!important;margin-top:4px!important}
+.contract-png-export .ct-ed{font-size:8px!important}
+.contract-png-export input,.contract-png-export textarea{font-size:9.5px!important;padding:1px 3px!important;min-height:auto!important}
+.contract-png-export textarea{min-height:24px!important;height:24px!important}
+.contract-png-export .field-row{gap:10px!important;margin:3px 0!important}
+.contract-png-export .signature-block{margin-top:10px!important;padding-top:7px!important;gap:18px!important}
+.contract-png-export .signature-col h4{font-size:8px!important;margin-bottom:4px!important}
+.contract-png-export .sig-img,.contract-png-export .sig-img-placeholder{height:50px!important}
+.contract-png-export .sig-canvas{height:50px!important}
+.contract-png-export .contract-footer{margin-top:9px!important;padding-top:5px!important;font-size:7px!important}
+.contract-png-export .org-locked-msg{display:none!important}
+.contract-png-export .checkbox-line{font-size:9px!important}
+
 /* Mode pending dans modal : signature org dessinable */
 .modal-view-content[data-mode="pending"] .signature-col:first-child .sig-canvas{border:2px solid #ffab40!important;background:#fff8e8!important;cursor:crosshair!important;box-shadow:0 0 0 3px rgba(255,171,64,.15)!important;pointer-events:auto!important}
 .modal-view-content[data-mode="pending"] .signature-col:first-child .sig-clear{display:inline-block!important}
@@ -657,11 +695,7 @@ th,td{padding:8px 10px;font-size:12px}
       <h3>Identification du partenaire</h3>
       <div class="field-row">
         <div><div class="field-label">Raison sociale</div><input type="text" placeholder="Nom de l'enseigne"></div>
-        <div><div class="field-label">Représentant légal</div><input type="text" placeholder="Nom &amp; prénom"></div>
-      </div>
-      <div class="field-row">
-        <div><div class="field-label">Adresse</div><input type="text" placeholder="Adresse complète"></div>
-        <div><div class="field-label">Contact</div><input type="text" placeholder="Téléphone / email"></div>
+        <div><div class="field-label">Téléphone</div><input type="text" placeholder="Numéro de téléphone"></div>
       </div>
 
       <h3>Article 1 — Engagements du Partenaire</h3>
@@ -674,7 +708,7 @@ th,td{padding:8px 10px;font-size:12px}
       <h4>1.3 Acceptation des bons officiels</h4>
       <p>Le Partenaire s'engage à <strong>accepter et détruire</strong> les bons officiels Master Clash après chaque utilisation, conformément à la planche officielle annexée.</p>
       <h4>1.4 Contribution financière (optionnelle)</h4>
-      <p>Contribution financière complémentaire à la production : <input type="number" placeholder="0"> $ — <input type="text" placeholder="Mode de versement"></p>
+      <p>Contribution financière complémentaire à la production : <input type="number" placeholder="0" data-optional="1"> $ — <input type="text" placeholder="Mode de versement" data-optional="1"></p>
 
       <h3>Article 2 — Contreparties offertes par l'Organisateur</h3>
       <ul>
@@ -737,11 +771,7 @@ th,td{padding:8px 10px;font-size:12px}
       <h3>Identification du partenaire</h3>
       <div class="field-row">
         <div><div class="field-label">Raison sociale</div><input type="text" placeholder="Nom du garage"></div>
-        <div><div class="field-label">Représentant légal</div><input type="text" placeholder="Nom &amp; prénom"></div>
-      </div>
-      <div class="field-row">
-        <div><div class="field-label">Adresse</div><input type="text" placeholder="Adresse complète"></div>
-        <div><div class="field-label">Contact</div><input type="text" placeholder="Téléphone / email"></div>
+        <div><div class="field-label">Téléphone</div><input type="text" placeholder="Numéro de téléphone"></div>
       </div>
 
       <h3>Article 1 — Engagements du Partenaire</h3>
@@ -755,14 +785,14 @@ th,td{padding:8px 10px;font-size:12px}
         <li>Tuning et personnalisation esthétique.</li>
       </ul>
       <p>Si la valeur de la prestation excède le montant du bon, la différence est à la charge du bénéficiaire.</p>
-      <h4>1.3 Contribution financière à la production</h4>
+      <h4>1.3 Contribution financière à la production (optionnelle)</h4>
       <div class="field-row">
-        <div><div class="field-label">Montant</div><input type="number" placeholder="$"> $</div>
-        <div><div class="field-label">Mode de versement</div><input type="text" placeholder="Virement / espèces"></div>
-        <div><div class="field-label">Date limite</div><input type="date"></div>
+        <div><div class="field-label">Montant</div><input type="number" placeholder="$" data-optional="1"> $</div>
+        <div><div class="field-label">Mode de versement</div><input type="text" placeholder="Virement / espèces" data-optional="1"></div>
+        <div><div class="field-label">Date limite</div><input type="date" data-optional="1"></div>
       </div>
       <h4>1.4 Don en cash brut (optionnel)</h4>
-      <p>Don en numéraire pour la dotation des finalistes : <input type="number" placeholder="$"> $</p>
+      <p>Don en numéraire pour la dotation des finalistes : <input type="number" placeholder="$" data-optional="1"> $</p>
 
       <h3>Article 2 — Contreparties offertes par l'Organisateur</h3>
       <ul>
@@ -825,11 +855,7 @@ th,td{padding:8px 10px;font-size:12px}
       <h3>Identification de l'établissement</h3>
       <div class="field-row">
         <div><div class="field-label">Raison sociale</div><input type="text" placeholder="Nom du restaurant"></div>
-        <div><div class="field-label">Représentant légal</div><input type="text" placeholder="Nom &amp; prénom"></div>
-      </div>
-      <div class="field-row">
-        <div><div class="field-label">Adresse</div><input type="text" placeholder="Adresse complète"></div>
-        <div><div class="field-label">Contact</div><input type="text" placeholder="Téléphone / email"></div>
+        <div><div class="field-label">Téléphone</div><input type="text" placeholder="Numéro de téléphone"></div>
       </div>
 
       <h3>Article 1 — Engagements de l'Établissement</h3>
@@ -914,11 +940,7 @@ th,td{padding:8px 10px;font-size:12px}
       <h3>Identification de Maze Event</h3>
       <div class="field-row">
         <div><div class="field-label">Raison sociale</div><input type="text" value="Maze Event"></div>
-        <div><div class="field-label">Représentant légal</div><input type="text" placeholder="Nom &amp; prénom"></div>
-      </div>
-      <div class="field-row">
-        <div><div class="field-label">Adresse</div><input type="text" placeholder="Adresse complète"></div>
-        <div><div class="field-label">Contact</div><input type="text" placeholder="Téléphone / email"></div>
+        <div><div class="field-label">Téléphone</div><input type="text" placeholder="Numéro de téléphone"></div>
       </div>
 
       <h3>Article 1 — Engagements de Maze Event</h3>
@@ -996,11 +1018,7 @@ th,td{padding:8px 10px;font-size:12px}
       <h3>Identification de la MFA</h3>
       <div class="field-row">
         <div><div class="field-label">Raison sociale</div><input type="text" value="MFA"></div>
-        <div><div class="field-label">Représentant légal</div><input type="text" placeholder="Nom &amp; prénom"></div>
-      </div>
-      <div class="field-row">
-        <div><div class="field-label">Adresse</div><input type="text" placeholder="Adresse complète"></div>
-        <div><div class="field-label">Contact</div><input type="text" placeholder="Téléphone / email"></div>
+        <div><div class="field-label">Téléphone</div><input type="text" placeholder="Numéro de téléphone"></div>
       </div>
 
       <h3>Article 1 — Engagements de la MFA</h3>
@@ -1695,6 +1713,35 @@ function initSigCanvas(canvas){
 }
 document.querySelectorAll('.sig-canvas').forEach(initSigCanvas);
 
+// Retirer le highlight rouge dès que l'utilisateur tape dans un champ marqué
+document.addEventListener('input', function(e){
+  if (e.target && e.target.classList && e.target.classList.contains('field-missing')){
+    if ((e.target.value || '').trim()) e.target.classList.remove('field-missing');
+  }
+});
+
+// Au chargement : verrouiller la zone Organisateur dans tous les contrats actifs
+// (le partenaire ne doit pas pouvoir y signer ni y écrire)
+document.querySelectorAll('.contract-panel:not(#panel-bons):not(#panel-archives) .contract-doc .signature-block .signature-col:first-child').forEach(function(col){
+  col.querySelectorAll('input, textarea').forEach(function(el){
+    el.setAttribute('disabled', 'disabled');
+    el.setAttribute('readonly', 'readonly');
+    el.classList.add('org-locked-input');
+  });
+  var canvas = col.querySelector('canvas.sig-canvas');
+  if (canvas){
+    canvas.classList.add('org-locked-canvas');
+  }
+  var clearBtn = col.querySelector('.sig-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  if (!col.querySelector('.org-locked-msg')){
+    var msg = document.createElement('div');
+    msg.className = 'org-locked-msg';
+    msg.textContent = '⚠ Zone réservée à l\'organisateur — sera complétée après réception';
+    col.insertBefore(msg, col.firstChild);
+  }
+});
+
 function clearSig(btn){
   var wrap = btn.closest('.sig-wrap');
   if (!wrap) return;
@@ -1738,8 +1785,33 @@ function validateContract(type){
   var inputs = Array.from(doc.querySelectorAll('input, textarea'));
   var canvases = Array.from(doc.querySelectorAll('canvas.sig-canvas'));
 
+  // Identifier les inputs de la zone Organisateur (à exclure de la validation côté partenaire)
+  var orgSigCol = doc.querySelector('.signature-block .signature-col:first-child');
+  var orgInputsSet = orgSigCol ? new Set(orgSigCol.querySelectorAll('input, textarea')) : new Set();
+
+  // Reset du highlight précédent
+  inputs.forEach(function(el){ el.classList.remove('field-missing'); });
+
+  // Vérifier les champs requis
+  var missing = [];
+  inputs.forEach(function(el){
+    if (el.type === 'checkbox') return;
+    if (el.dataset.optional === '1') return;
+    if (orgInputsSet.has(el)) return; // zone organisateur : non requise côté partenaire
+    var v = (el.value || '').trim();
+    if (!v){
+      el.classList.add('field-missing');
+      missing.push(el);
+    }
+  });
+
+  if (missing.length){
+    alert('⚠ Veuillez remplir tous les champs obligatoires (en rouge) avant de soumettre.\n' + missing.length + ' champ(s) manquant(s).');
+    if (missing[0]) missing[0].scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
   // Convention : index 0 = Organisateur, index 1 = Partenaire
-  // Le partenaire DOIT avoir signé (index 1) pour soumettre.
   if (canvases.length < 2 || isCanvasBlank(canvases[1])){
     alert('⚠ Veuillez signer la zone « Pour le Partenaire » avant de soumettre le contrat.');
     return;
@@ -1795,20 +1867,48 @@ function validateContract(type){
 // ===== ORGANISATEUR : SIGNATURE & VALIDATION FINALE =====
 function organizerSignAndValidate(id){
   var content = document.getElementById('view-modal-content');
-  var orgCanvas = content.querySelector('canvas.sig-canvas[data-role="org"]');
-  if (!orgCanvas){
-    alert('Erreur : zone de signature organisateur introuvable.');
+  var docClone = content.querySelector('.contract-doc');
+  if (!docClone){ alert('Erreur : contrat introuvable.'); return; }
+
+  // Vérifier les champs Organisateur (non readonly) : ils doivent être remplis
+  var orgSigCol = docClone.querySelector('.signature-block .signature-col:first-child');
+  var orgInputs = orgSigCol ? Array.from(orgSigCol.querySelectorAll('input, textarea')) : [];
+  orgInputs.forEach(function(el){ el.classList.remove('field-missing'); });
+  var missing = [];
+  orgInputs.forEach(function(el){
+    if (el.type === 'checkbox') return;
+    var v = (el.value || '').trim();
+    if (!v){
+      el.classList.add('field-missing');
+      missing.push(el);
+    }
+  });
+  if (missing.length){
+    alert('⚠ Veuillez remplir vos champs Organisateur (en rouge) avant de confirmer.\n' + missing.length + ' champ(s) manquant(s).');
+    if (missing[0]) missing[0].scrollIntoView({behavior:'smooth', block:'center'});
     return;
   }
+
+  // Vérifier la signature organisateur
+  var orgCanvas = docClone.querySelector('canvas.sig-canvas[data-role="org"]');
+  if (!orgCanvas){ alert('Erreur : zone de signature organisateur introuvable.'); return; }
   if (isCanvasBlank(orgCanvas)){
     alert('⚠ Veuillez signer en tant qu\'organisateur avant de confirmer.');
     return;
   }
-  var dataURL = orgCanvas.toDataURL('image/png');
+
+  // Récupérer toutes les valeurs (incluant celles modifiées par l'organisateur)
+  var allInputs = Array.from(docClone.querySelectorAll('input, textarea'));
+  var newFields = allInputs.map(function(el){
+    if (el.type === 'checkbox') return el.checked ? 1 : 0;
+    return el.value || '';
+  });
+
   var list = getArchives();
   var idx = list.findIndex(function(r){ return r.id === id; });
   if (idx === -1) return;
-  list[idx].signatures[0] = dataURL;
+  list[idx].fields = newFields;
+  list[idx].signatures[0] = orgCanvas.toDataURL('image/png');
   list[idx].status = 'validated';
   list[idx].validatedAt = new Date().toISOString();
   saveArchives(list);
@@ -1892,13 +1992,20 @@ function buildArchiveDoc(record, opts){
   if (!srcPanel) return null;
   var srcDoc = srcPanel.querySelector('.contract-doc');
   var clone = srcDoc.cloneNode(true);
+  // Identifier les inputs de la zone Organisateur (1ère signature-col)
+  var firstSigCol = clone.querySelector('.signature-block .signature-col:first-child');
+  var orgInputs = firstSigCol ? Array.from(firstSigCol.querySelectorAll('input, textarea')) : [];
+  var orgInputsSet = new Set(orgInputs);
   var inputs = Array.from(clone.querySelectorAll('input, textarea'));
   inputs.forEach(function(el, i){
     var v = record.fields[i];
     if (el.type === 'checkbox'){ el.checked = !!v; }
     else { el.value = v == null ? '' : v; }
-    el.setAttribute('readonly', 'readonly');
-    el.setAttribute('disabled', 'disabled');
+    var keepEditable = editableOrg && orgInputsSet.has(el);
+    if (!keepEditable){
+      el.setAttribute('readonly', 'readonly');
+      el.setAttribute('disabled', 'disabled');
+    }
   });
   var canvases = Array.from(clone.querySelectorAll('canvas.sig-canvas'));
   canvases.forEach(function(c, i){
@@ -2007,10 +2114,16 @@ function printArchive(id){
   }, 80);
 }
 function deleteArchive(id){
-  if (!confirm('Supprimer définitivement ce contrat validé ?')) return;
+  var code = window.prompt('🔒 Suppression protégée\n\nSaisissez le code organisateur pour confirmer la suppression de ce contrat :');
+  if (code === null) return; // Annulé
+  if ((code || '').trim().toUpperCase() !== MC_SECRET){
+    alert('⚠ Code incorrect. Suppression annulée.');
+    return;
+  }
   var list = getArchives().filter(function(r){ return r.id !== id; });
   saveArchives(list);
   renderArchivesList();
+  alert('✓ Contrat supprimé.');
 }
 
 function printActive(){ window.print(); }
@@ -2097,10 +2210,12 @@ function downloadActiveContractPng(btn){
   if (!panel) return;
   var doc = panel.querySelector('.contract-doc');
   if (!doc) return;
-  // Cloner et figer les inputs en text spans pour un meilleur rendu
   var clone = freezeContractClone(doc);
+  clone.classList.add('contract-png-export');
+  // Retirer le message "zone réservée organisateur" du PNG
+  Array.from(clone.querySelectorAll('.org-locked-msg')).forEach(function(el){ el.remove(); });
   var container = document.createElement('div');
-  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;background:#fdfaf4;padding:0';
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fdfaf4';
   container.appendChild(clone);
   document.body.appendChild(container);
   var type = panel.id.replace('panel-', '');
@@ -2115,8 +2230,10 @@ function downloadContractPng(id){
   var doc = buildArchiveDoc(rec);
   if (!doc) return;
   var clone = freezeContractClone(doc);
+  clone.classList.add('contract-png-export');
+  Array.from(clone.querySelectorAll('.org-locked-msg')).forEach(function(el){ el.remove(); });
   var container = document.createElement('div');
-  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;background:#fdfaf4;padding:0';
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fdfaf4';
   container.appendChild(clone);
   document.body.appendChild(container);
   var slug = rec.partnerName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 30);
