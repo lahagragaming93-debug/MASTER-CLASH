@@ -330,33 +330,40 @@ th,td{padding:8px 10px;font-size:12px}
 textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 
-/* Mode export PNG : compactage A4 */
-.contract-png-export{font-size:9.5px!important;padding:14px 20px!important;line-height:1.38!important;width:794px!important;max-width:794px!important;box-sizing:border-box;box-shadow:none!important;border:1px solid #c4b99a!important}
-.contract-png-export h2{font-size:13px!important;letter-spacing:1px!important;margin-bottom:1px!important}
-.contract-png-export h3{font-size:10px!important;margin:9px 0 4px!important;padding-bottom:2px!important;letter-spacing:.5px!important}
-.contract-png-export h4{font-size:9px!important;margin:6px 0 3px!important}
-.contract-png-export p{margin-bottom:3px!important}
-.contract-png-export ul{margin:2px 0 4px 14px!important}
-.contract-png-export ul li{margin-bottom:2px!important}
-.contract-png-export .field-label{font-size:8px!important;margin-bottom:1px!important}
-.contract-png-export .contract-header{padding-bottom:8px!important;margin-bottom:9px!important;gap:14px!important}
-.contract-png-export .contract-logo-block{padding:7px 10px!important;min-width:120px!important}
-.contract-png-export .cl-line1,.contract-png-export .cl-line2{font-size:13px!important;letter-spacing:1.2px!important}
-.contract-png-export .cl-tag{font-size:6px!important;margin-top:3px!important}
-.contract-png-export .ct-title{font-size:10px!important;letter-spacing:1px!important}
-.contract-png-export .ct-sub{font-size:8px!important;margin-top:1px!important}
-.contract-png-export .ct-ref{font-size:8px!important;margin-top:4px!important}
-.contract-png-export .ct-ed{font-size:8px!important}
-.contract-png-export input,.contract-png-export textarea{font-size:9.5px!important;padding:1px 3px!important;min-height:auto!important}
-.contract-png-export textarea{min-height:24px!important;height:24px!important}
-.contract-png-export .field-row{gap:10px!important;margin:3px 0!important}
-.contract-png-export .signature-block{margin-top:10px!important;padding-top:7px!important;gap:18px!important}
-.contract-png-export .signature-col h4{font-size:8px!important;margin-bottom:4px!important}
-.contract-png-export .sig-img,.contract-png-export .sig-img-placeholder{height:50px!important}
-.contract-png-export .sig-canvas{height:50px!important}
-.contract-png-export .contract-footer{margin-top:9px!important;padding-top:5px!important;font-size:7px!important}
+/* Éléments figés (texte) pour rendu PNG net */
+.frozen-input{display:inline-block;border-bottom:1px solid #1a1612;padding:1px 6px;min-width:120px;font-family:Georgia,serif;color:#1a1612;background:transparent;line-height:1.4;font-size:inherit}
+.frozen-input:empty::before{content:"_________________";color:#aaa;letter-spacing:.5px}
+.frozen-textarea{display:block;width:100%;min-height:36px;padding:7px 10px;border:1px solid #1a1612;background:#fffefb;font-family:Georgia,serif;color:#1a1612;border-radius:3px;white-space:pre-wrap;line-height:1.45;box-sizing:border-box;font-size:inherit}
+.frozen-textarea:empty::before{content:"—";color:#aaa}
+.frozen-checkbox{display:inline-block;font-size:1.15em;color:#1a1612;margin-right:5px;line-height:1;vertical-align:middle}
+
+/* Mode export PNG : grand format lisible (largeur 1000px) */
+.contract-png-export{font-size:13px!important;padding:30px 36px!important;line-height:1.55!important;width:1000px!important;max-width:1000px!important;box-sizing:border-box;box-shadow:none!important;border:2px solid #1a1612!important;background:#fdfaf4!important}
+.contract-png-export h2{font-size:20px!important;letter-spacing:1.5px!important;margin-bottom:2px!important}
+.contract-png-export h3{font-size:14px!important;margin:18px 0 8px!important;padding-bottom:5px!important;letter-spacing:1px!important;border-bottom:1px solid #c4b99a!important}
+.contract-png-export h4{font-size:12px!important;margin:11px 0 5px!important}
+.contract-png-export p{margin-bottom:7px!important}
+.contract-png-export ul{margin:5px 0 9px 22px!important}
+.contract-png-export ul li{margin-bottom:4px!important}
+.contract-png-export .field-label{font-size:10px!important;margin-bottom:3px!important;letter-spacing:.8px!important}
+.contract-png-export .contract-header{padding-bottom:14px!important;margin-bottom:18px!important;gap:22px!important;border-bottom:2px solid #1a1612!important}
+.contract-png-export .contract-logo-block{padding:12px 16px!important;min-width:170px!important}
+.contract-png-export .cl-line1,.contract-png-export .cl-line2{font-size:17px!important;letter-spacing:1.8px!important}
+.contract-png-export .cl-tag{font-size:8px!important;margin-top:5px!important}
+.contract-png-export .ct-title{font-size:13px!important;letter-spacing:1.5px!important}
+.contract-png-export .ct-sub{font-size:11px!important;margin-top:2px!important}
+.contract-png-export .ct-ref{font-size:11px!important;margin-top:7px!important;letter-spacing:1px!important}
+.contract-png-export .ct-ed{font-size:11px!important}
+.contract-png-export .frozen-input{font-size:13px!important;min-width:160px!important;padding:1px 8px!important}
+.contract-png-export .frozen-textarea{font-size:13px!important;min-height:50px!important;padding:9px 12px!important}
+.contract-png-export .field-row{gap:18px!important;margin:8px 0!important}
+.contract-png-export .signature-block{margin-top:22px!important;padding-top:14px!important;gap:30px!important}
+.contract-png-export .signature-col h4{font-size:11px!important;margin-bottom:8px!important;letter-spacing:1px!important}
+.contract-png-export .sig-img,.contract-png-export .sig-img-placeholder{height:90px!important;border:1.5px solid #c4b99a!important;border-radius:4px!important}
+.contract-png-export .sig-canvas{height:90px!important}
+.contract-png-export .contract-footer{margin-top:18px!important;padding-top:10px!important;font-size:10px!important;border-top:1px solid #c4b99a!important}
 .contract-png-export .org-locked-msg{display:none!important}
-.contract-png-export .checkbox-line{font-size:9px!important}
+.contract-png-export .checkbox-line{font-size:13px!important}
 
 /* Mode pending dans modal : zone Organisateur entièrement éditable */
 .modal-view-content[data-mode="pending"] .signature-col:first-child .sig-canvas{border:2px solid #ffab40!important;background:#fff8e8!important;cursor:crosshair!important;box-shadow:0 0 0 3px rgba(255,171,64,.15)!important;pointer-events:auto!important}
@@ -2316,7 +2323,7 @@ function downloadActiveContractPng(btn){
   // Retirer le message "zone réservée organisateur" du PNG
   Array.from(clone.querySelectorAll('.org-locked-msg')).forEach(function(el){ el.remove(); });
   var container = document.createElement('div');
-  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fdfaf4';
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1000px;background:#fdfaf4';
   container.appendChild(clone);
   document.body.appendChild(container);
   var type = panel.id.replace('panel-', '');
@@ -2335,7 +2342,7 @@ function downloadContractPng(id){
   clone.classList.add('contract-png-export');
   Array.from(clone.querySelectorAll('.org-locked-msg')).forEach(function(el){ el.remove(); });
   var container = document.createElement('div');
-  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fdfaf4';
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1000px;background:#fdfaf4';
   container.appendChild(clone);
   document.body.appendChild(container);
   var slug = rec.partnerName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 30);
@@ -2344,19 +2351,39 @@ function downloadContractPng(id){
     setTimeout(function(){ document.body.removeChild(container); }, 1500);
   }, 60);
 }
-// Convertit les <input> en spans pour un meilleur rendu PNG
+// Convertit les <input> et <textarea> en éléments texte pour un rendu PNG net & lisible
 function freezeContractClone(doc){
   var clone = doc.cloneNode(true);
-  // Recopier les valeurs des inputs (le clone ne capture pas la value tapée)
-  var srcInputs = doc.querySelectorAll('input, textarea');
-  var dstInputs = clone.querySelectorAll('input, textarea');
+  var srcInputs = Array.from(doc.querySelectorAll('input, textarea'));
+  var dstInputs = Array.from(clone.querySelectorAll('input, textarea'));
   srcInputs.forEach(function(s, i){
-    if (!dstInputs[i]) return;
-    if (s.type === 'checkbox') dstInputs[i].checked = s.checked;
-    else dstInputs[i].setAttribute('value', s.value || '');
-    if (dstInputs[i].tagName === 'TEXTAREA') dstInputs[i].textContent = s.value || '';
+    var d = dstInputs[i];
+    if (!d) return;
+    var newEl;
+    if (s.type === 'checkbox'){
+      newEl = document.createElement('span');
+      newEl.className = 'frozen-checkbox';
+      newEl.textContent = s.checked ? '☑' : '☐';
+    } else if (s.tagName === 'TEXTAREA'){
+      newEl = document.createElement('div');
+      newEl.className = 'frozen-textarea';
+      newEl.textContent = s.value || '';
+    } else {
+      newEl = document.createElement('span');
+      newEl.className = 'frozen-input';
+      var v = s.value || '';
+      // Format date FR
+      if (s.type === 'date' && v){
+        var parts = v.split('-');
+        if (parts.length === 3) v = parts[2] + '/' + parts[1] + '/' + parts[0];
+      }
+      newEl.textContent = v;
+      // Préserver le style inline (notamment width)
+      var style = s.getAttribute('style');
+      if (style) newEl.setAttribute('style', style);
+    }
+    d.replaceWith(newEl);
   });
-  // Retirer les boutons effacer
   Array.from(clone.querySelectorAll('.sig-clear')).forEach(function(b){ b.remove(); });
   return clone;
 }
