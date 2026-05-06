@@ -1648,11 +1648,14 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
     <button class="admin-btn admin-btn-secondary" onclick="lockAllSections()">🔒 Re-verrouiller toutes les sections</button>
   </div>
 
-  <div class="card">
-    <h3 style="margin-top:0">👥 Comptes utilisateurs</h3>
-    <p>Créez des comptes pour les partenaires/entreprises avec un avatar, un nom d'utilisateur et un mot de passe. Vous pouvez attribuer des droits d'accès personnalisés à chaque compte.</p>
-    <button class="admin-btn" onclick="openUserModal()">➕ Créer un utilisateur</button>
-    <div id="users-list" style="margin-top:14px"></div>
+  <div class="card card-yellow">
+    <h3 style="margin-top:0;color:#f5c518">👥 Comptes utilisateurs <span id="users-count-badge" style="background:rgba(0,212,255,.18);color:#00d4ff;padding:3px 10px;border-radius:14px;font-size:12px;margin-left:6px;font-weight:700">0</span></h3>
+    <p>Tous les comptes créés (manuellement ou par auto-inscription). Cliquez sur <strong>✎ Modifier</strong> pour changer les permissions, l'avatar ou le mot de passe d'un compte.</p>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="admin-btn" onclick="openUserModal()">➕ Créer un utilisateur</button>
+      <button class="admin-btn admin-btn-secondary" onclick="renderUsersList()">↻ Actualiser la liste</button>
+    </div>
+    <div id="users-list"></div>
   </div>
 
   <div class="card card-red">
@@ -2245,28 +2248,45 @@ function deleteUser(username){
     });
 }
 
+var PERM_LABELS = {
+  regl: 'Règlement', part: 'Partenaires', contrats: 'Contrats',
+  gouv: 'Gouverneur', ques: 'Questions', budget: 'Budget', bons: 'Bons',
+  validate: 'Validation', print: 'Impression/PNG'
+};
 function renderUsersList(){
   var c = document.getElementById('users-list');
   if (!c) return;
   var users = getUsers();
-  if (users.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px">Aucun utilisateur.</div>'; return; }
+  var badge = document.getElementById('users-count-badge');
+  if (badge) badge.textContent = users.length;
+  if (users.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucun utilisateur enregistré.</div>'; return; }
   c.innerHTML = '<div class="users-list">' + users.map(function(u){
-    var permsLabel = u.isAdmin ? '👑 ADMIN — tous les droits'
-      : ((u.perms || []).length ? (u.perms || []).join(', ') : 'Aucun droit');
+    var permsLabels = (u.perms || []).map(function(p){ return PERM_LABELS[p] || p; });
+    var permsLabel = u.isAdmin
+      ? '👑 ADMIN — tous les droits'
+      : (permsLabels.length ? permsLabels.join(' · ') : '⚠ Aucune permission');
+    var date = u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '';
     return '<div class="user-item' + (u.isAdmin ? ' admin-item' : '') + '">'
       + '<img class="user-item-avatar" src="' + (u.avatar || defaultAvatar(u.displayName || u.username)) + '" alt="">'
       + '<div class="user-item-info">'
-        + '<div class="user-item-name">' + escHtml(u.displayName || u.username) + '</div>'
+        + '<div class="user-item-name">' + escHtml(u.displayName || u.username) + (date ? ' <span style="color:#6a7a8a;font-size:10px;font-weight:400">— créé le ' + date + '</span>' : '') + '</div>'
         + '<div class="user-item-login">@' + escHtml(u.username) + '</div>'
         + '<div class="user-item-perms' + (u.isAdmin ? ' admin' : '') + '">' + escHtml(permsLabel) + '</div>'
       + '</div>'
       + '<div class="user-item-actions">'
         + '<button class="user-item-btn edit" onclick="openUserModal(\'' + u.username + '\')">✎ Modifier</button>'
-        + (u.username === 'BoulaTV' ? '' : '<button class="user-item-btn del" onclick="deleteUser(\'' + u.username + '\')">🗑</button>')
+        + (u.username === 'BoulaTV' ? '' : '<button class="user-item-btn del" onclick="deleteUser(\'' + u.username + '\')">🗑 Supprimer</button>')
       + '</div>'
     + '</div>';
   }).join('') + '</div>';
 }
+// Rafraîchir la liste à chaque clic sur l'onglet Admin
+(function(){
+  var adminLink = document.querySelector('.nav-links a[href="#admin"]');
+  if (adminLink) adminLink.addEventListener('click', function(){
+    setTimeout(function(){ if (userIsAdmin()) renderUsersList(); }, 80);
+  });
+})();
 
 // Init au chargement
 applyAuthState();
