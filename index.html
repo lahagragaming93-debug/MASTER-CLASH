@@ -1707,6 +1707,45 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
         <button type="submit" class="modal-btn modal-btn-primary" onclick="doLogin()">Se connecter</button>
       </div>
     </form>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(0,212,255,.15);text-align:center;color:#aabbc8;font-size:13px">
+      Pas encore inscrit ?
+      <a href="#" onclick="closeLoginModal();openRegisterModal();return false" style="color:#f5c518;font-weight:700;text-decoration:underline;margin-left:6px">Créer un compte</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL INSCRIPTION (auto-inscription partenaire) ===== -->
+<div class="modal-overlay" id="register-modal" style="align-items:flex-start;padding:30px 20px;overflow-y:auto">
+  <div class="modal" style="max-width:480px;text-align:left">
+    <div class="modal-logo" style="text-align:center">⚡ MASTER CLASH</div>
+    <div class="modal-sub" style="text-align:center">Inscription partenaire</div>
+    <h3 style="text-align:center">Créer mon compte</h3>
+    <p style="text-align:center;color:#aabbc8">Renseignez les infos de votre entreprise. Votre compte aura accès au Règlement, aux Partenaires et aux Contrats. Pour des droits supplémentaires, contactez l'organisateur.</p>
+    <form id="register-form" onsubmit="return false">
+      <label class="auth-label">Nom d'utilisateur (login)</label>
+      <input type="text" id="reg-username" placeholder="ex: vinewood" autocomplete="off" class="auth-input">
+      <label class="auth-label">Nom de l'entreprise / affiché</label>
+      <input type="text" id="reg-displayname" placeholder="ex: Vinewood Salon" autocomplete="off" class="auth-input">
+      <label class="auth-label">Mot de passe</label>
+      <input type="password" id="reg-password" placeholder="••••••••" autocomplete="off" class="auth-input">
+      <label class="auth-label">Confirmer le mot de passe</label>
+      <input type="password" id="reg-password2" placeholder="••••••••" autocomplete="off" class="auth-input">
+      <label class="auth-label">Avatar (logo entreprise — optionnel)</label>
+      <div class="avatar-row">
+        <img id="reg-avatar-preview" class="avatar-preview" src="" alt="">
+        <input type="file" id="reg-avatar-file" accept="image/*" style="display:none" onchange="handleRegAvatarUpload(event)">
+        <button type="button" class="modal-btn modal-btn-secondary" onclick="document.getElementById('reg-avatar-file').click()">📷 Choisir une image</button>
+      </div>
+      <div class="modal-error" id="register-error"></div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-secondary" onclick="closeRegisterModal()">Annuler</button>
+        <button type="submit" class="modal-btn modal-btn-primary" onclick="doRegister()">Créer le compte</button>
+      </div>
+    </form>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(0,212,255,.15);text-align:center;color:#aabbc8;font-size:12px">
+      Déjà inscrit ?
+      <a href="#" onclick="closeRegisterModal();openLoginModal();return false" style="color:#00d4ff;font-weight:700;text-decoration:underline;margin-left:6px">Se connecter</a>
+    </div>
   </div>
 </div>
 
@@ -1878,6 +1917,71 @@ function doLogout(){
     clearSession();
     applyAuthState();
   });
+}
+
+// ----- INSCRIPTION (auto-inscription partenaire) -----
+var _regAvatarDataURL = '';
+function openRegisterModal(){
+  _regAvatarDataURL = '';
+  document.getElementById('register-modal').classList.add('active');
+  document.getElementById('register-error').textContent = '';
+  document.getElementById('reg-username').value = '';
+  document.getElementById('reg-displayname').value = '';
+  document.getElementById('reg-password').value = '';
+  document.getElementById('reg-password2').value = '';
+  document.getElementById('reg-avatar-preview').src = defaultAvatar('?');
+  setTimeout(function(){ document.getElementById('reg-username').focus(); }, 60);
+}
+function closeRegisterModal(){ document.getElementById('register-modal').classList.remove('active'); }
+function handleRegAvatarUpload(ev){
+  var file = ev.target.files[0];
+  if (!file) return;
+  if (file.size > 800 * 1024){
+    mcAlert('⚠ L\'image est trop lourde (max 800 Ko).', { title: 'Erreur' });
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    _regAvatarDataURL = e.target.result;
+    document.getElementById('reg-avatar-preview').src = _regAvatarDataURL;
+  };
+  reader.readAsDataURL(file);
+}
+function doRegister(){
+  var u = (document.getElementById('reg-username').value || '').trim();
+  var dn = (document.getElementById('reg-displayname').value || '').trim();
+  var p1 = document.getElementById('reg-password').value || '';
+  var p2 = document.getElementById('reg-password2').value || '';
+  var err = document.getElementById('register-error');
+  err.textContent = '';
+
+  if (!u){ err.textContent = '⚠ Saisissez un nom d\'utilisateur.'; return; }
+  if (!/^[a-zA-Z0-9._-]+$/.test(u)){ err.textContent = '⚠ Login : lettres, chiffres, points, tirets seulement.'; return; }
+  if (u.length < 3){ err.textContent = '⚠ Le login doit faire au moins 3 caractères.'; return; }
+  if (!dn){ err.textContent = '⚠ Saisissez le nom de votre entreprise.'; return; }
+  if (!p1){ err.textContent = '⚠ Saisissez un mot de passe.'; return; }
+  if (p1.length < 4){ err.textContent = '⚠ Le mot de passe doit faire au moins 4 caractères.'; return; }
+  if (p1 !== p2){ err.textContent = '⚠ Les mots de passe ne correspondent pas.'; return; }
+
+  var users = getUsers();
+  if (users.find(function(x){ return x.username.toLowerCase() === u.toLowerCase(); })){
+    err.textContent = '⚠ Ce nom d\'utilisateur est déjà pris. Choisissez-en un autre.';
+    return;
+  }
+  users.push({
+    username: u,
+    password: p1,
+    displayName: dn,
+    avatar: _regAvatarDataURL || defaultAvatar(dn),
+    isAdmin: false,
+    perms: ['regl', 'part', 'contrats'],
+    createdAt: new Date().toISOString()
+  });
+  saveUsers(users);
+  setSession(u);
+  closeRegisterModal();
+  applyAuthState();
+  mcAlert('✓ Bienvenue ' + dn + ' !\n\nVotre compte a été créé et vous êtes connecté.\nVous avez accès au Règlement, aux Partenaires et aux Contrats.\n\nPour des accès supplémentaires (Bons, Budget...), contactez l\'organisateur.', { title: 'Compte créé' });
 }
 
 // ----- PERMISSIONS -----
