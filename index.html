@@ -441,6 +441,7 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
     <a href="#contrats">Contrats</a>
     <a href="#ques" class="locked-link" data-section="ques"><span class="lock-icon">🔒</span>Questions</a>
     <a href="#budget" class="locked-link" data-section="budget"><span class="lock-icon">🔒</span>Budget</a>
+    <a href="#profil" id="nav-profil-link" style="display:none">👤 Mon profil</a>
     <a href="#admin" class="locked-link" data-section="admin"><span class="lock-icon">🔧</span>Admin<span id="admin-notif-badge" class="admin-notif-badge" style="display:none">0</span></a>
   </div>
   <div class="nav-user" id="nav-user">
@@ -1621,6 +1622,67 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
 </div>
 </section>
 
+<!-- ===== SECTION MON PROFIL (utilisateur connecté) ===== -->
+<section id="profil" style="display:none">
+  <h2 class="section-title">👤 Mon profil</h2>
+  <div class="section-subtitle">Gérer mes informations</div>
+
+  <div class="card">
+    <h3 style="margin-top:0">📝 Mes informations</h3>
+    <div class="avatar-row" style="margin-bottom:14px">
+      <img id="profil-avatar-preview" class="avatar-preview" style="width:80px;height:80px" src="" alt="">
+      <input type="file" id="profil-avatar-file" accept="image/*" style="display:none" onchange="handleProfilAvatarUpload(event)">
+      <button type="button" class="admin-btn admin-btn-secondary" onclick="document.getElementById('profil-avatar-file').click()">📷 Changer mon avatar / logo</button>
+    </div>
+    <label class="auth-label">Nom d'utilisateur (login) — non modifiable</label>
+    <input type="text" id="profil-username" class="auth-input" disabled>
+    <label class="auth-label">Nom affiché (entreprise / personne)</label>
+    <input type="text" id="profil-displayname" class="auth-input">
+    <button class="admin-btn" onclick="saveMyProfile()" style="margin-top:14px">💾 Enregistrer mes informations</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">🔑 Changer mon mot de passe</h3>
+    <label class="auth-label">Mot de passe actuel</label>
+    <input type="password" id="profil-oldpwd" class="auth-input">
+    <label class="auth-label">Nouveau mot de passe</label>
+    <input type="password" id="profil-newpwd" class="auth-input">
+    <label class="auth-label">Confirmer le nouveau mot de passe</label>
+    <input type="password" id="profil-newpwd2" class="auth-input">
+    <button class="admin-btn" onclick="changeMyPassword()" style="margin-top:14px">🔑 Changer mon mot de passe</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">🔐 Question secrète</h3>
+    <p>Permet de récupérer votre mot de passe en cas d'oubli.</p>
+    <label class="auth-label">Question secrète</label>
+    <select id="profil-secret-question" class="auth-input">
+      <option value="">— Choisissez une question —</option>
+      <option value="pet">Quel est le nom de votre premier animal de compagnie ?</option>
+      <option value="mother">Quel est le nom de jeune fille de votre mère ?</option>
+      <option value="city">Dans quelle ville êtes-vous né(e) ?</option>
+      <option value="friend">Quel est le nom de votre meilleur ami d'enfance ?</option>
+      <option value="color">Quelle est votre couleur préférée ?</option>
+      <option value="car">Quel est le modèle de votre première voiture ?</option>
+      <option value="school">Quel était le nom de votre école primaire ?</option>
+    </select>
+    <label class="auth-label">Réponse</label>
+    <input type="text" id="profil-secret-answer" class="auth-input">
+    <button class="admin-btn" onclick="saveMySecret()" style="margin-top:14px">💾 Enregistrer ma question secrète</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">📋 Mes contrats</h3>
+    <div id="profil-mes-contrats"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">📜 Mon historique d'activité</h3>
+    <p style="color:#aabbc8;font-size:13px">Les 50 dernières actions de votre compte.</p>
+    <div id="profil-mes-logs"></div>
+  </div>
+</section>
+
 <!-- ===== SECTION ADMIN ===== -->
 <section id="admin">
   <h2 class="section-title">🔧 Administration</h2>
@@ -1658,6 +1720,16 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
       <button class="admin-btn admin-btn-secondary" onclick="renderUsersList()">↻ Actualiser la liste</button>
     </div>
     <div id="users-list"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">📜 Logs d'activité</h3>
+    <p>Historique complet des actions sur le site (connexions, modifications, validations…).</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="admin-btn admin-btn-secondary" onclick="renderAdminLogs()">↻ Actualiser</button>
+      <button class="admin-btn admin-btn-secondary" onclick="clearAllLogs()">🗑 Vider l'historique</button>
+    </div>
+    <div id="admin-logs-list"></div>
   </div>
 
   <div class="card">
@@ -1723,9 +1795,44 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
         <button type="submit" class="modal-btn modal-btn-primary" onclick="doLogin()">Se connecter</button>
       </div>
     </form>
-    <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(0,212,255,.15);text-align:center;color:#aabbc8;font-size:13px">
+    <div style="margin-top:14px;text-align:center">
+      <a href="#" onclick="closeLoginModal();openForgotModal();return false" style="color:#aabbc8;font-size:12px;text-decoration:underline">🔐 Mot de passe oublié ?</a>
+    </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(0,212,255,.15);text-align:center;color:#aabbc8;font-size:13px">
       Pas encore inscrit ?
       <a href="#" onclick="closeLoginModal();openRegisterModal();return false" style="color:#f5c518;font-weight:700;text-decoration:underline;margin-left:6px">Créer un compte</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL MOT DE PASSE OUBLIÉ ===== -->
+<div class="modal-overlay" id="forgot-modal">
+  <div class="modal" style="max-width:460px;text-align:left">
+    <div class="modal-logo" style="text-align:center">⚡ MASTER CLASH</div>
+    <div class="modal-sub" style="text-align:center">Mot de passe oublié</div>
+    <h3 style="text-align:center" id="forgot-title">Étape 1/3</h3>
+    <div id="forgot-step-1">
+      <p style="text-align:center;color:#aabbc8">Saisissez votre nom d'utilisateur pour récupérer votre mot de passe.</p>
+      <label class="auth-label">Nom d'utilisateur</label>
+      <input type="text" id="forgot-username" placeholder="ex: vinewood" autocomplete="off" class="auth-input">
+    </div>
+    <div id="forgot-step-2" style="display:none">
+      <p style="text-align:center;color:#aabbc8">Répondez à votre question secrète :</p>
+      <div id="forgot-question-display" style="background:#141926;padding:12px;border-radius:8px;border-left:3px solid #f5c518;color:#f5c518;font-style:italic;margin-bottom:12px"></div>
+      <label class="auth-label">Votre réponse</label>
+      <input type="text" id="forgot-answer" placeholder="Réponse à la question" autocomplete="off" class="auth-input">
+    </div>
+    <div id="forgot-step-3" style="display:none">
+      <p style="text-align:center;color:#00e676">✓ Question vérifiée. Définissez votre nouveau mot de passe :</p>
+      <label class="auth-label">Nouveau mot de passe</label>
+      <input type="password" id="forgot-newpwd" placeholder="••••••••" autocomplete="off" class="auth-input">
+      <label class="auth-label">Confirmer</label>
+      <input type="password" id="forgot-newpwd2" placeholder="••••••••" autocomplete="off" class="auth-input">
+    </div>
+    <div class="modal-error" id="forgot-error"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-secondary" onclick="closeForgotModal()">Annuler</button>
+      <button type="button" class="modal-btn modal-btn-primary" id="forgot-next-btn" onclick="forgotNext()">Continuer →</button>
     </div>
   </div>
 </div>
@@ -1752,6 +1859,19 @@ textarea.field-missing,input.field-missing{outline:1px solid #ff4757!important}
         <input type="file" id="reg-avatar-file" accept="image/*" style="display:none" onchange="handleRegAvatarUpload(event)">
         <button type="button" class="modal-btn modal-btn-secondary" onclick="document.getElementById('reg-avatar-file').click()">📷 Choisir une image</button>
       </div>
+      <label class="auth-label">🔐 Question secrète (pour récupérer votre mot de passe)</label>
+      <select id="reg-secret-question" class="auth-input">
+        <option value="">— Choisissez une question —</option>
+        <option value="pet">Quel est le nom de votre premier animal de compagnie ?</option>
+        <option value="mother">Quel est le nom de jeune fille de votre mère ?</option>
+        <option value="city">Dans quelle ville êtes-vous né(e) ?</option>
+        <option value="friend">Quel est le nom de votre meilleur ami d'enfance ?</option>
+        <option value="color">Quelle est votre couleur préférée ?</option>
+        <option value="car">Quel est le modèle de votre première voiture ?</option>
+        <option value="school">Quel était le nom de votre école primaire ?</option>
+      </select>
+      <label class="auth-label">Réponse (sensible à la casse)</label>
+      <input type="text" id="reg-secret-answer" placeholder="Votre réponse" autocomplete="off" class="auth-input">
       <div class="modal-error" id="register-error"></div>
       <div class="modal-actions">
         <button type="button" class="modal-btn modal-btn-secondary" onclick="closeRegisterModal()">Annuler</button>
@@ -1856,6 +1976,16 @@ var MC_UNLOCK_KEY = 'mc_unlocked_v1';
 var MC_ARCHIVE_KEY = 'mc_archives_v1';
 var MC_USERS_KEY = 'mc_users_v1';
 var MC_SESSION_KEY = 'mc_session_v1';
+var MC_LOGS_KEY = 'mc_logs_v1';
+var SECRET_QUESTIONS = {
+  pet: 'Quel est le nom de votre premier animal de compagnie ?',
+  mother: 'Quel est le nom de jeune fille de votre mère ?',
+  city: 'Dans quelle ville êtes-vous né(e) ?',
+  friend: 'Quel est le nom de votre meilleur ami d\'enfance ?',
+  color: 'Quelle est votre couleur préférée ?',
+  car: 'Quel est le modèle de votre première voiture ?',
+  school: 'Quel était le nom de votre école primaire ?'
+};
 var MC_SECRET = localStorage.getItem(MC_SECRET_KEY) || MC_DEFAULT_SECRET;
 
 // ===========================================================
@@ -1926,15 +2056,15 @@ function doLogin(){
     return;
   }
   setSession(user.username);
-  // Reset complet : on retire le déblocage par code et on recharge pour appliquer les perms du nouveau user
+  logAction('Connexion');
   try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
   location.reload();
 }
 function doLogout(){
   mcConfirm('Voulez-vous vous déconnecter ?', { okText: 'Déconnexion' }).then(function(ok){
     if (!ok) return;
+    logAction('Déconnexion');
     clearSession();
-    // Reset complet : retirer aussi le déblocage par code → repartir à l'état "nouvel utilisateur"
     try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
     location.reload();
   });
@@ -1973,6 +2103,8 @@ function doRegister(){
   var dn = (document.getElementById('reg-displayname').value || '').trim();
   var p1 = document.getElementById('reg-password').value || '';
   var p2 = document.getElementById('reg-password2').value || '';
+  var sq = document.getElementById('reg-secret-question').value || '';
+  var sa = (document.getElementById('reg-secret-answer').value || '').trim();
   var err = document.getElementById('register-error');
   err.textContent = '';
 
@@ -1983,6 +2115,8 @@ function doRegister(){
   if (!p1){ err.textContent = '⚠ Saisissez un mot de passe.'; return; }
   if (p1.length < 4){ err.textContent = '⚠ Le mot de passe doit faire au moins 4 caractères.'; return; }
   if (p1 !== p2){ err.textContent = '⚠ Les mots de passe ne correspondent pas.'; return; }
+  if (!sq){ err.textContent = '⚠ Choisissez une question secrète.'; return; }
+  if (!sa){ err.textContent = '⚠ Saisissez la réponse à votre question secrète.'; return; }
 
   var users = getUsers();
   if (users.find(function(x){ return x.username.toLowerCase() === u.toLowerCase(); })){
@@ -1996,12 +2130,14 @@ function doRegister(){
     avatar: _regAvatarDataURL || defaultAvatar(dn),
     isAdmin: false,
     perms: ['regl', 'part', 'contrats'],
+    secretQuestion: sq,
+    secretAnswer: sa,
     createdAt: new Date().toISOString()
   });
   saveUsers(users);
   setSession(u);
+  logAction('Inscription nouveau compte', dn);
   try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
-  // On stocke un flag temporaire pour afficher le message de bienvenue après le reload
   try { sessionStorage.setItem('mc_just_registered', dn); } catch(e){}
   location.reload();
 }
@@ -2044,6 +2180,15 @@ function applyAuthState(){
   var user = getCurrentUser();
   var loginBtn = document.getElementById('nav-login-btn');
   var userBox = document.getElementById('nav-user-box');
+  var profilLink = document.getElementById('nav-profil-link');
+  var profilSection = document.getElementById('profil');
+
+  // Onglet "Mon profil" visible uniquement si connecté
+  if (profilLink) profilLink.style.display = user ? '' : 'none';
+  if (profilSection){
+    if (user){ profilSection.style.display = ''; showProfilSection(); }
+    else { profilSection.style.display = 'none'; }
+  }
 
   if (user){
     loginBtn.style.display = 'none';
@@ -2296,11 +2441,16 @@ function renderUsersList(){
     + '</div>';
   }).join('') + '</div>';
 }
-// Rafraîchir la liste à chaque clic sur l'onglet Admin
+// Rafraîchir les listes à chaque clic sur l'onglet Admin
 (function(){
   var adminLink = document.querySelector('.nav-links a[href="#admin"]');
   if (adminLink) adminLink.addEventListener('click', function(){
-    setTimeout(function(){ if (userIsAdmin()) renderUsersList(); }, 80);
+    setTimeout(function(){
+      if (userIsAdmin()){
+        renderUsersList();
+        renderAdminLogs();
+      }
+    }, 80);
   });
 })();
 
@@ -2425,6 +2575,244 @@ function refreshAdminNotifications(){
     }
   });
 })();
+
+// ===========================================================
+// LOGS D'ACTIVITÉ
+// ===========================================================
+function getLogs(){
+  try { return JSON.parse(localStorage.getItem(MC_LOGS_KEY) || '[]'); } catch(e){ return []; }
+}
+function logAction(action, details){
+  var u = getCurrentUser();
+  var logs = getLogs();
+  logs.unshift({
+    at: new Date().toISOString(),
+    username: u ? u.username : '(anonyme)',
+    displayName: u ? (u.displayName || u.username) : '(anonyme)',
+    action: action,
+    details: details || ''
+  });
+  // Limite à 500 entrées pour ne pas saturer
+  if (logs.length > 500) logs = logs.slice(0, 500);
+  try { localStorage.setItem(MC_LOGS_KEY, JSON.stringify(logs)); } catch(e){}
+}
+function clearAllLogs(){
+  mcConfirm('Vider tout l\'historique d\'activité ?\n\nCette action est irréversible.', { title: '🗑 Vider les logs', okText: 'Vider' }).then(function(ok){
+    if (!ok) return;
+    localStorage.removeItem(MC_LOGS_KEY);
+    renderAdminLogs();
+    mcAlert('✓ Historique vidé.', { title: 'Succès' });
+  });
+}
+function renderAdminLogs(){
+  var c = document.getElementById('admin-logs-list');
+  if (!c) return;
+  var logs = getLogs();
+  if (logs.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucune activité enregistrée.</div>'; return; }
+  c.innerHTML = '<div style="max-height:400px;overflow-y:auto;background:#141926;border-radius:8px;padding:8px">'
+    + logs.slice(0, 100).map(function(l){
+      return '<div style="padding:8px 10px;border-bottom:1px solid rgba(0,212,255,.08);display:flex;gap:10px;align-items:center;font-size:12px">'
+        + '<span style="color:#6a7a8a;min-width:140px;font-family:monospace">' + new Date(l.at).toLocaleString('fr-FR') + '</span>'
+        + '<span style="color:#f5c518;font-weight:600;min-width:120px">' + escHtml(l.displayName) + '</span>'
+        + '<span style="color:#dce4f0;flex:1">' + escHtml(l.action) + '</span>'
+        + '<span style="color:#aabbc8;font-style:italic">' + escHtml(l.details) + '</span>'
+      + '</div>';
+    }).join('') + '</div>'
+    + '<div style="font-size:11px;color:#6a7a8a;margin-top:6px;text-align:center">Affichage des 100 dernières actions sur ' + logs.length + ' au total</div>';
+}
+
+// ===========================================================
+// MOT DE PASSE OUBLIÉ (via question secrète)
+// ===========================================================
+var _forgotStep = 1;
+var _forgotUser = null;
+function openForgotModal(){
+  _forgotStep = 1;
+  _forgotUser = null;
+  document.getElementById('forgot-modal').classList.add('active');
+  document.getElementById('forgot-error').textContent = '';
+  document.getElementById('forgot-username').value = '';
+  document.getElementById('forgot-answer').value = '';
+  document.getElementById('forgot-newpwd').value = '';
+  document.getElementById('forgot-newpwd2').value = '';
+  showForgotStep(1);
+  setTimeout(function(){ document.getElementById('forgot-username').focus(); }, 60);
+}
+function closeForgotModal(){ document.getElementById('forgot-modal').classList.remove('active'); }
+function showForgotStep(n){
+  _forgotStep = n;
+  document.getElementById('forgot-step-1').style.display = n === 1 ? '' : 'none';
+  document.getElementById('forgot-step-2').style.display = n === 2 ? '' : 'none';
+  document.getElementById('forgot-step-3').style.display = n === 3 ? '' : 'none';
+  document.getElementById('forgot-title').textContent = 'Étape ' + n + '/3';
+  document.getElementById('forgot-next-btn').textContent = n === 3 ? '🔑 Changer mon mot de passe' : 'Continuer →';
+}
+function forgotNext(){
+  var err = document.getElementById('forgot-error');
+  err.textContent = '';
+  if (_forgotStep === 1){
+    var u = (document.getElementById('forgot-username').value || '').trim();
+    if (!u){ err.textContent = '⚠ Saisissez votre nom d\'utilisateur.'; return; }
+    var users = getUsers();
+    var user = users.find(function(x){ return x.username.toLowerCase() === u.toLowerCase(); });
+    if (!user){ err.textContent = '⚠ Aucun compte trouvé avec ce nom.'; return; }
+    if (!user.secretQuestion || !user.secretAnswer){
+      err.textContent = '⚠ Ce compte n\'a pas de question secrète configurée.\nContactez l\'organisateur pour réinitialiser votre mot de passe.';
+      return;
+    }
+    _forgotUser = user;
+    document.getElementById('forgot-question-display').textContent = SECRET_QUESTIONS[user.secretQuestion] || user.secretQuestion;
+    showForgotStep(2);
+    setTimeout(function(){ document.getElementById('forgot-answer').focus(); }, 60);
+  } else if (_forgotStep === 2){
+    var ans = (document.getElementById('forgot-answer').value || '').trim();
+    if (!ans){ err.textContent = '⚠ Saisissez votre réponse.'; return; }
+    if (ans !== _forgotUser.secretAnswer){
+      err.textContent = '⚠ Réponse incorrecte.';
+      logAction('Tentative reset mdp échouée', _forgotUser.username);
+      return;
+    }
+    showForgotStep(3);
+    setTimeout(function(){ document.getElementById('forgot-newpwd').focus(); }, 60);
+  } else if (_forgotStep === 3){
+    var p1 = document.getElementById('forgot-newpwd').value || '';
+    var p2 = document.getElementById('forgot-newpwd2').value || '';
+    if (!p1){ err.textContent = '⚠ Saisissez un nouveau mot de passe.'; return; }
+    if (p1.length < 4){ err.textContent = '⚠ Minimum 4 caractères.'; return; }
+    if (p1 !== p2){ err.textContent = '⚠ Les mots de passe ne correspondent pas.'; return; }
+    var users = getUsers();
+    var idx = users.findIndex(function(x){ return x.username === _forgotUser.username; });
+    if (idx === -1) return;
+    users[idx].password = p1;
+    saveUsers(users);
+    logAction('Mot de passe réinitialisé via question secrète', _forgotUser.username);
+    closeForgotModal();
+    mcAlert('✓ Mot de passe réinitialisé avec succès.\nVous pouvez maintenant vous connecter.', { title: 'Succès' }).then(function(){
+      openLoginModal();
+      document.getElementById('login-username').value = _forgotUser.username;
+      document.getElementById('login-password').focus();
+    });
+  }
+}
+
+// ===========================================================
+// MON PROFIL (utilisateur connecté)
+// ===========================================================
+var _profilAvatarDataURL = '';
+function showProfilSection(){
+  var user = getCurrentUser();
+  if (!user) return;
+  document.getElementById('profil').style.display = '';
+  document.getElementById('profil-username').value = user.username;
+  document.getElementById('profil-displayname').value = user.displayName || '';
+  document.getElementById('profil-avatar-preview').src = user.avatar || defaultAvatar(user.displayName || user.username);
+  _profilAvatarDataURL = user.avatar || '';
+  document.getElementById('profil-secret-question').value = user.secretQuestion || '';
+  document.getElementById('profil-secret-answer').value = user.secretAnswer || '';
+  renderMyContrats();
+  renderMyLogs();
+}
+function handleProfilAvatarUpload(ev){
+  var file = ev.target.files[0];
+  if (!file) return;
+  if (file.size > 800 * 1024){ mcAlert('⚠ Image trop lourde (max 800 Ko).', { title: 'Erreur' }); return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    _profilAvatarDataURL = e.target.result;
+    document.getElementById('profil-avatar-preview').src = _profilAvatarDataURL;
+  };
+  reader.readAsDataURL(file);
+}
+function saveMyProfile(){
+  var user = getCurrentUser();
+  if (!user) return;
+  var dn = (document.getElementById('profil-displayname').value || '').trim();
+  if (!dn){ mcAlert('⚠ Le nom affiché ne peut pas être vide.', { title: 'Erreur' }); return; }
+  var users = getUsers();
+  var idx = users.findIndex(function(x){ return x.username === user.username; });
+  if (idx === -1) return;
+  users[idx].displayName = dn;
+  if (_profilAvatarDataURL) users[idx].avatar = _profilAvatarDataURL;
+  saveUsers(users);
+  logAction('Profil modifié', dn);
+  mcAlert('✓ Profil mis à jour.\nLa page va se recharger.', { title: 'Succès' }).then(function(){ location.reload(); });
+}
+function changeMyPassword(){
+  var user = getCurrentUser();
+  if (!user) return;
+  var oldP = document.getElementById('profil-oldpwd').value || '';
+  var p1 = document.getElementById('profil-newpwd').value || '';
+  var p2 = document.getElementById('profil-newpwd2').value || '';
+  if (oldP !== user.password){ mcAlert('⚠ Mot de passe actuel incorrect.', { title: 'Erreur' }); return; }
+  if (!p1 || p1.length < 4){ mcAlert('⚠ Le nouveau mot de passe doit faire au moins 4 caractères.', { title: 'Erreur' }); return; }
+  if (p1 !== p2){ mcAlert('⚠ Les nouveaux mots de passe ne correspondent pas.', { title: 'Erreur' }); return; }
+  var users = getUsers();
+  var idx = users.findIndex(function(x){ return x.username === user.username; });
+  if (idx === -1) return;
+  users[idx].password = p1;
+  saveUsers(users);
+  logAction('Mot de passe modifié');
+  document.getElementById('profil-oldpwd').value = '';
+  document.getElementById('profil-newpwd').value = '';
+  document.getElementById('profil-newpwd2').value = '';
+  mcAlert('✓ Mot de passe modifié avec succès.', { title: 'Succès' });
+}
+function saveMySecret(){
+  var user = getCurrentUser();
+  if (!user) return;
+  var q = document.getElementById('profil-secret-question').value;
+  var a = (document.getElementById('profil-secret-answer').value || '').trim();
+  if (!q){ mcAlert('⚠ Choisissez une question.', { title: 'Erreur' }); return; }
+  if (!a){ mcAlert('⚠ Saisissez une réponse.', { title: 'Erreur' }); return; }
+  var users = getUsers();
+  var idx = users.findIndex(function(x){ return x.username === user.username; });
+  if (idx === -1) return;
+  users[idx].secretQuestion = q;
+  users[idx].secretAnswer = a;
+  saveUsers(users);
+  logAction('Question secrète modifiée');
+  mcAlert('✓ Question secrète enregistrée.\nVous pourrez l\'utiliser pour récupérer votre mot de passe.', { title: 'Succès' });
+}
+function renderMyContrats(){
+  var c = document.getElementById('profil-mes-contrats');
+  if (!c) return;
+  var user = getCurrentUser();
+  if (!user) return;
+  var mine = getArchives().filter(function(r){
+    return (r.partnerName || '').toLowerCase().indexOf((user.displayName || '').toLowerCase()) !== -1
+        || (r.partnerName || '').toLowerCase().indexOf(user.username.toLowerCase()) !== -1;
+  });
+  if (mine.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucun contrat enregistré à votre nom.</div>'; return; }
+  c.innerHTML = '<div class="validated-list">' + mine.map(function(r){
+    var meta = CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄' };
+    var statusBadge = r.status === 'pending'
+      ? '<span class="status-badge status-pending">⏳ En attente</span>'
+      : '<span class="status-badge status-validated">✓ Validé</span>';
+    return '<div class="validated-item' + (r.status === 'pending' ? ' pending-item' : '') + '">'
+      + '<div class="vi-icon">' + meta.icon + '</div>'
+      + '<div class="vi-info">'
+        + '<div class="vi-title">' + escHtml(meta.label) + ' ' + statusBadge + '</div>'
+        + '<div class="vi-date">' + (r.validatedAt ? 'Validé le ' + fmtDate(r.validatedAt) : 'Soumis le ' + fmtDate(r.submittedAt || r.validatedAt)) + '</div>'
+      + '</div>'
+    + '</div>';
+  }).join('') + '</div>';
+}
+function renderMyLogs(){
+  var c = document.getElementById('profil-mes-logs');
+  if (!c) return;
+  var user = getCurrentUser();
+  if (!user) return;
+  var mine = getLogs().filter(function(l){ return l.username === user.username; }).slice(0, 50);
+  if (mine.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucune activité enregistrée.</div>'; return; }
+  c.innerHTML = '<div style="max-height:300px;overflow-y:auto;background:#141926;border-radius:8px;padding:6px">'
+    + mine.map(function(l){
+      return '<div style="padding:7px 10px;border-bottom:1px solid rgba(0,212,255,.08);font-size:12px">'
+        + '<span style="color:#6a7a8a;font-family:monospace">' + new Date(l.at).toLocaleString('fr-FR') + '</span> — '
+        + '<span style="color:#dce4f0">' + escHtml(l.action) + '</span>'
+        + (l.details ? ' <span style="color:#aabbc8;font-style:italic">(' + escHtml(l.details) + ')</span>' : '')
+      + '</div>';
+    }).join('') + '</div>';
+}
 
 // Init au chargement
 applyAuthState();
@@ -2778,6 +3166,7 @@ function validateContract(type){
   var list = getArchives();
   list.unshift(record);
   saveArchives(list);
+  logAction('Contrat soumis (en attente)', (CONTRACT_LABELS[type] || {label: type}).label + ' — ' + partnerName);
 
   // Réinitialiser le formulaire pour ne pas garder l'ancienne signature
   canvases.forEach(function(c){ c.getContext('2d').clearRect(0, 0, c.width, c.height); });
@@ -2835,6 +3224,7 @@ function organizerSignAndValidate(id){
   list[idx].status = 'validated';
   list[idx].validatedAt = new Date().toISOString();
   saveArchives(list);
+  logAction('Contrat validé', (CONTRACT_LABELS[list[idx].type] || {label: list[idx].type}).label + ' — ' + list[idx].partnerName);
   closeViewModal();
   renderArchivesList();
   mcAlert('✓ Contrat validé et archivé définitivement.\n\nIl est maintenant non-éditable et imprimable.', { title: 'Validation réussie' });
