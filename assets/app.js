@@ -2116,6 +2116,8 @@ function renderParticipantsList(){
   }).join('') + '</div>';
 }
 function renderGroupsDisplay(list){
+  if (!list && typeof getParticipants === 'function') list = getParticipants();
+  if (!list || !list.forEach) return;
   var groups = { A: [], B: [], C: [] };
   list.forEach(function(p){
     if (p.group && groups[p.group]) groups[p.group].push(p);
