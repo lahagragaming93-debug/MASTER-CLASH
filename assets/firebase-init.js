@@ -52,17 +52,27 @@
 
     // Sign-in anonyme : tous les visiteurs ont un UID Firebase, même sans compte.
     // Permet aux règles de sécurité de différencier "connecté" vs "non connecté".
+    // IMPORTANT : on attend d'abord de voir si une session nominale persiste
+    // (cas où l'utilisateur s'est connecté avant). Sinon, on bascule en anonyme.
     window.MC_FB.ready = new Promise(function(resolve){
+      var resolved = false;
       window.MC_FB.auth.onAuthStateChanged(function(user){
-        if (user){
+        if (user && !resolved){
+          resolved = true;
           console.log('[MC_FB] Auth prête, uid=', user.uid, user.isAnonymous ? '(anonyme)' : '(compte)');
           resolve(true);
         }
       });
-      window.MC_FB.auth.signInAnonymously().catch(function(err){
-        console.error('[MC_FB] Sign-in anonyme échoué :', err);
-        resolve(false);
-      });
+      // Laisse 600ms à Firebase pour restaurer une session persistée.
+      // Si rien n'est restauré, on lance le sign-in anonyme.
+      setTimeout(function(){
+        if (resolved) return;
+        if (window.MC_FB.auth.currentUser) return; // session restaurée pendant le wait
+        window.MC_FB.auth.signInAnonymously().catch(function(err){
+          console.error('[MC_FB] Sign-in anonyme échoué :', err);
+          if (!resolved){ resolved = true; resolve(false); }
+        });
+      }, 600);
     });
     console.log('[MC_FB] Firebase initialisé — projet master-clash-ad9ae');
   } catch(e){
