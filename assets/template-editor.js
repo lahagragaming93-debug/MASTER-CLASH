@@ -269,41 +269,58 @@
   }
 
   // ===== Sauvegarde =====
+  // Helper safe : utilise mcAlert si possible, sinon redirect/log silencieux
+  function safeAlert(msg, title){
+    try {
+      var ret = mcAlert(msg, { title: title });
+      if (ret && typeof ret.then === 'function') return ret;
+    } catch(e){ console.error('mcAlert failed:', e); }
+    // Fallback : Promise immédiate
+    return new Promise(function(resolve){ setTimeout(resolve, 50); });
+  }
+
   window.saveCurrentTemplate = function(){
+    // Récupérer les valeurs depuis le DOM (au cas où les listeners n'ont pas tout capté)
+    var elLabel = document.getElementById('meta-label');
+    var elRef = document.getElementById('meta-ref');
+    if (elLabel) current.label = elLabel.value || current.label;
+    if (elRef) current.ref = elRef.value || current.ref;
+
     if (!current.id || !current.id.match(/^[a-z0-9_-]+$/i)){
-      mcAlert('⚠ L\'identifiant doit contenir uniquement lettres, chiffres, tirets et underscores.', { title: 'Erreur' });
+      safeAlert('⚠ L\'identifiant doit contenir uniquement lettres, chiffres, tirets et underscores.', 'Erreur');
       return;
     }
-    if (!current.label){ mcAlert('⚠ Le titre est obligatoire.', { title: 'Erreur' }); return; }
-    if (!current.ref){ mcAlert('⚠ La référence est obligatoire.', { title: 'Erreur' }); return; }
+    if (!current.label){ safeAlert('⚠ Le titre est obligatoire.', 'Erreur'); return; }
+    if (!current.ref){ safeAlert('⚠ La référence est obligatoire.', 'Erreur'); return; }
     var list = getTemplates();
     if (isNew){
-      // Vérifier l'unicité de l'id
       if (list.find(function(t){ return t.id === current.id; })){
-        mcAlert('⚠ Cet identifiant existe déjà : choisissez-en un autre.', { title: 'Erreur' });
+        safeAlert('⚠ Cet identifiant existe déjà : choisissez-en un autre.', 'Erreur');
         return;
       }
       list.push(current);
     } else {
       var idx = list.findIndex(function(t){ return t.id === current.id; });
-      if (idx === -1){
-        list.push(current);
-      } else {
-        list[idx] = current;
-      }
+      if (idx === -1) list.push(current);
+      else list[idx] = current;
     }
     saveTemplates(list);
     if (typeof logAction === 'function') logAction(isNew ? 'Template créé' : 'Template modifié', current.label);
-    mcAlert('✓ Template sauvegardé.', { title: 'Succès' }).then(function(){
+    // Confirmation + redirection (toujours, même si la modale échoue)
+    safeAlert('✓ Template sauvegardé avec succès.', 'Succès').then(function(){
       location.href = 'admin.html';
     });
   };
 
   window.cancelTemplateEdit = function(){
-    mcConfirm('Annuler les modifications ?\nLes changements non sauvegardés seront perdus.', { okText: 'Annuler les modifs' }).then(function(ok){
-      if (!ok) return;
-      location.href = 'admin.html';
-    });
+    var go = function(){ location.href = 'admin.html'; };
+    try {
+      mcConfirm('Annuler les modifications ?\nLes changements non sauvegardés seront perdus.', { okText: 'Annuler les modifs' }).then(function(ok){
+        if (ok) go();
+      });
+    } catch(e){
+      go();
+    }
   };
 
   // ===== Init =====
