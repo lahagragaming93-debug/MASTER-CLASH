@@ -138,9 +138,36 @@ blockquote{background:rgba(245,197,24,.06);border-left:3px solid #f5c518;padding
 footer{padding:30px 20px;text-align:center;border-top:1px solid rgba(0,212,255,.18);margin-top:60px;color:#6a7a8a;font-size:12px;letter-spacing:1px;background:#0f1420}
 
 /* RESPONSIVE */
-/* === Nav icônes : par défaut on affiche texte, on cache l'icône === */
-.nav-icon{display:none;font-size:16px}
-.nav-text{display:inline}
+/* === Nav : icônes seules partout + tooltip custom stylé au survol === */
+.nav-icon{display:inline;font-size:20px;line-height:1}
+.nav-text{display:none}
+.nav-links a{display:inline-flex;align-items:center;gap:4px;padding:8px 10px;border-radius:6px;transition:background .15s;position:relative}
+.nav-links a:hover{background:rgba(0,212,255,.12)}
+.nav-links a .lock-icon{font-size:11px;opacity:.85}
+/* Tooltip custom — apparaît instantanément, joli style néon */
+.nav-links a::after{
+  content:attr(title);
+  position:absolute;
+  bottom:-36px;
+  left:50%;
+  transform:translateX(-50%) translateY(-6px);
+  background:#1a1f2e;
+  color:#00d4ff;
+  border:1px solid rgba(0,212,255,.4);
+  padding:5px 12px;
+  border-radius:6px;
+  white-space:nowrap;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .15s ease,transform .15s ease;
+  z-index:100;
+  box-shadow:0 4px 16px rgba(0,212,255,.25);
+}
+.nav-links a:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* === Tablette (incluant FiveM CEF en 1280x800) === */
 @media(max-width:1280px){
@@ -150,9 +177,6 @@ footer{padding:30px 20px;text-align:center;border-top:1px solid rgba(0,212,255,.
   .home-card-h .home-card-icon{font-size:24px}
   .home-card-h .home-card-title{font-size:12px}
   .home-card-h .home-card-desc{font-size:10px}
-  /* Sur tablette : on affiche icône + texte côte à côte (compact) */
-  .nav-icon{display:inline;margin-right:4px}
-  .nav-links a{padding:6px 8px;font-size:12px;display:inline-flex;align-items:center;gap:2px}
 }
 /* === Mobile / petite tablette === */
 @media(max-width:768px){
@@ -191,7 +215,7 @@ footer{padding:30px 20px;text-align:center;border-top:1px solid rgba(0,212,255,.
   /* Boutons admin : pleine largeur empilés */
   .admin-btn,.modal-btn{padding:10px 14px;font-size:12px}
   /* Tableaux scrollables horizontalement */
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .table-wrap{overflow-x:auto}
   /* Budget : grille en colonne unique */
   .budget-summary-grid{grid-template-columns:1fr 1fr}
 }
