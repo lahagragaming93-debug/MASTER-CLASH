@@ -366,18 +366,37 @@
   </div>
 </div>
 
-<!-- ===== MODAL VOIR MESSAGE (admin) ===== -->
-<div class="modal-overlay" id="msg-view-modal" style="align-items:flex-start;padding:30px 20px;overflow-y:auto">
-  <div class="modal" style="max-width:560px;text-align:left">
+<!-- ===== MODAL BOÎTE DE RÉCEPTION (liste threads) ===== -->
+<div class="modal-overlay" id="inbox-modal" style="align-items:flex-start;padding:30px 20px;overflow-y:auto">
+  <div class="modal" style="max-width:600px;text-align:left">
     <div class="modal-logo" style="text-align:center">⚡ MASTER CLASH</div>
-    <div class="modal-sub" style="text-align:center" id="msg-view-from">De : —</div>
-    <h3 style="text-align:center" id="msg-view-subject">Sujet</h3>
-    <p style="color:#6a7a8a;font-size:11px;text-align:center;letter-spacing:1px;margin-bottom:14px" id="msg-view-date"></p>
-    <div id="msg-view-body" style="background:#141926;padding:16px;border-radius:8px;border-left:3px solid #00d4ff;color:#dce4f0;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word"></div>
+    <div class="modal-sub" style="text-align:center">📬 Messagerie</div>
+    <h3 style="text-align:center">Mes conversations</h3>
+    <div id="inbox-list" style="max-height:50vh;overflow-y:auto;margin:14px 0"></div>
     <div class="modal-actions">
-      <button type="button" class="modal-btn modal-btn-secondary" onclick="closeMsgViewModal()">Fermer</button>
+      <button type="button" class="modal-btn modal-btn-secondary" onclick="closeInboxModal()">Fermer</button>
+      <button type="button" class="modal-btn modal-btn-primary" id="inbox-new-btn" onclick="closeInboxModal();openComposeModal()">📨 Nouveau message</button>
     </div>
   </div>
+</div>
+
+<!-- ===== MODAL CONVERSATION (thread bidirectionnel) ===== -->
+<div class="modal-overlay" id="msg-view-modal" style="align-items:flex-start;padding:30px 20px;overflow-y:auto">
+  <div class="modal" style="max-width:620px;text-align:left">
+    <div class="modal-logo" style="text-align:center">⚡ MASTER CLASH</div>
+    <div class="modal-sub" style="text-align:center" id="msg-view-from">Conversation</div>
+    <h3 style="text-align:center" id="msg-view-subject">Sujet</h3>
+    <p style="color:#6a7a8a;font-size:11px;text-align:center;letter-spacing:1px;margin-bottom:14px" id="msg-view-date"></p>
+    <div id="msg-view-body" style="background:#0f1420;padding:16px;border-radius:8px;border:1px solid rgba(0,212,255,.15);max-height:45vh;overflow-y:auto;margin-bottom:12px"></div>
+    <label class="auth-label">✍ Votre réponse</label>
+    <textarea id="msg-reply-body" class="auth-input" placeholder="Tapez votre réponse..." style="min-height:80px;resize:vertical;font-family:inherit"></textarea>
+    <div class="modal-error" id="msg-reply-error"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-secondary" onclick="closeMsgViewModal()">Fermer</button>
+      <button type="button" class="modal-btn modal-btn-primary" onclick="sendReply()">📨 Envoyer la réponse</button>
+    </div>
+  </div>
+</div>
 </div>
 
 <!-- ===== MODAL QR CODE ===== -->

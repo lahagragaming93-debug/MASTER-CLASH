@@ -899,15 +899,17 @@ function getNotifsList(){
       isNew: ts > lastSeen
     });
   });
-  // Messages non lus
-  getMessages().forEach(function(m){
-    if (m.isRead) return; // déjà lu
+  // Threads avec entries non lues par l'admin
+  getMessages().forEach(function(t){
+    var unread = threadUnreadCountFor(t, 'BoulaTV');
+    if (unread === 0) return;
+    var lastEntry = t.entries[t.entries.length - 1] || {};
     notifs.push({
       type: 'message',
       icon: '📨',
-      title: 'Message de ' + m.fromDisplay,
-      desc: m.subject,
-      at: m.sentAt,
+      title: (unread > 1 ? unread + ' messages — ' : 'Message de ') + (lastEntry.fromDisplay || lastEntry.from || '?'),
+      desc: t.subject,
+      at: t.lastActivityAt,
       target: 'admin.html#messages-list',
       isNew: true
     });
@@ -1260,22 +1262,97 @@ document.querySelectorAll('.home-card[data-perm]').forEach(function(card){
 // ===========================================================
 // MESSAGERIE PARTENAIRES → ADMIN
 // ===========================================================
+// ===========================================================
+// MESSAGERIE BIDIRECTIONNELLE — système de threads
+// ===========================================================
+// Structure thread : { id, participants:[u1,u2], subject, entries:[{from,fromDisplay,fromAvatar,body,at,readBy:[]}], lastActivityAt }
 function getMessages(){
-  try { return JSON.parse(localStorage.getItem(MC_MESSAGES_KEY) || '[]'); }
+  try {
+    var raw = JSON.parse(localStorage.getItem(MC_MESSAGES_KEY) || '[]');
+    // Migration des anciens messages plats vers structure thread
+    var migrated = false;
+    raw = raw.map(function(m){
+      if (m.entries) return m; // déjà migré
+      migrated = true;
+      var entry = {
+        from: m.from,
+        fromDisplay: m.fromDisplay || m.from,
+        fromAvatar: m.fromAvatar || defaultAvatar(m.fromDisplay || m.from),
+        body: m.body,
+        at: m.sentAt,
+        readBy: m.isRead ? ['BoulaTV'] : []
+      };
+      return {
+        id: m.id,
+        participants: [m.from, 'BoulaTV'],
+        subject: m.subject,
+        entries: [entry],
+        lastActivityAt: m.sentAt,
+        lastFrom: m.from
+      };
+    });
+    if (migrated) localStorage.setItem(MC_MESSAGES_KEY, JSON.stringify(raw));
+    return raw;
+  }
   catch(e){ return []; }
 }
 function saveMessages(list){
   localStorage.setItem(MC_MESSAGES_KEY, JSON.stringify(list));
   if (typeof refreshAdminNotifications === 'function') refreshAdminNotifications();
+  if (typeof refreshUserMsgBadge === 'function') refreshUserMsgBadge();
 }
+// Filtre les threads visibles par l'utilisateur courant
+function getVisibleThreads(){
+  var u = getCurrentUser();
+  if (!u) return [];
+  var all = getMessages();
+  if (u.username === 'BoulaTV' || userIsAdmin()) return all;
+  return all.filter(function(t){ return t.participants && t.participants.indexOf(u.username) !== -1; });
+}
+function threadUnreadCountFor(thread, username){
+  if (!thread || !thread.entries) return 0;
+  return thread.entries.filter(function(e){
+    return e.from !== username && (!e.readBy || e.readBy.indexOf(username) === -1);
+  }).length;
+}
+// Marquer toutes les entries d'un thread comme lues par le user
+function markThreadRead(threadId, username){
+  var list = getMessages();
+  var idx = list.findIndex(function(t){ return t.id === threadId; });
+  if (idx === -1) return;
+  var changed = false;
+  list[idx].entries.forEach(function(e){
+    if (!e.readBy) e.readBy = [];
+    if (e.from !== username && e.readBy.indexOf(username) === -1){
+      e.readBy.push(username);
+      changed = true;
+    }
+  });
+  if (changed) saveMessages(list);
+}
+// Modal "Nouveau message" (partenaires uniquement créent vers admin)
 function openMessageModal(){
   var u = getCurrentUser();
   if (!u){ mcAlert('Vous devez être connecté pour envoyer un message.', { title: 'Connexion requise' }); return; }
-  document.getElementById('msg-subject').value = '';
-  document.getElementById('msg-body').value = '';
-  document.getElementById('msg-error').textContent = '';
+  // Si le user a déjà des threads, on ouvre la boîte de réception. Sinon, le formulaire direct.
+  var isAdmin = userIsAdmin();
+  if (isAdmin){
+    openInboxModal();
+    return;
+  }
+  var threads = getVisibleThreads();
+  if (threads.length > 0){ openInboxModal(); return; }
+  openComposeModal();
+}
+function openComposeModal(){
+  var subj = document.getElementById('msg-subject');
+  var body = document.getElementById('msg-body');
+  var err = document.getElementById('msg-error');
+  if (subj) subj.value = '';
+  if (body) body.value = '';
+  if (err) err.textContent = '';
   document.getElementById('message-modal').classList.add('active');
-  setTimeout(function(){ document.getElementById('msg-subject').focus(); }, 60);
+  setTimeout(function(){ if (subj) subj.focus(); }, 60);
 }
 function closeMessageModal(){ document.getElementById('message-modal').classList.remove('active'); }
 function sendMessage(){
@@ -1287,75 +1364,242 @@ function sendMessage(){
   if (!subject){ err.textContent = '⚠ Saisissez un sujet.'; return; }
   if (!body){ err.textContent = '⚠ Saisissez un message.'; return; }
   var list = getMessages();
-  list.unshift({
-    id: 'M' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-    from: u.username,
-    fromDisplay: u.displayName || u.username,
-    fromAvatar: u.avatar || defaultAvatar(u.displayName || u.username),
+  var now = new Date().toISOString();
+  var thread = {
+    id: 'T' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    participants: [u.username, 'BoulaTV'],
     subject: subject,
-    body: body,
-    sentAt: new Date().toISOString(),
-    isRead: false
-  });
+    entries: [{
+      from: u.username,
+      fromDisplay: u.displayName || u.username,
+      fromAvatar: u.avatar || defaultAvatar(u.displayName || u.username),
+      body: body,
+      at: now,
+      readBy: [u.username]
+    }],
+    lastActivityAt: now,
+    lastFrom: u.username
+  };
+  list.unshift(thread);
   if (list.length > 200) list = list.slice(0, 200);
   saveMessages(list);
   logAction('Message envoyé à l\'organisateur', subject);
   closeMessageModal();
   mcAlert('✓ Message envoyé à l\'organisateur.\nIl recevra une notification.', { title: 'Message envoyé' });
 }
-function viewMessage(id){
-  var list = getMessages();
-  var idx = list.findIndex(function(m){ return m.id === id; });
-  if (idx === -1) return;
-  var m = list[idx];
-  if (!m.isRead){
-    list[idx].isRead = true;
-    saveMessages(list);
-    renderMessagesList();
+// === Boîte de réception (liste de threads) ===
+function openInboxModal(){
+  document.getElementById('inbox-modal').classList.add('active');
+  renderInbox();
+}
+function closeInboxModal(){ document.getElementById('inbox-modal').classList.remove('active'); }
+function renderInbox(){
+  var u = getCurrentUser();
+  var c = document.getElementById('inbox-list');
+  if (!c || !u) return;
+  var threads = getVisibleThreads();
+  threads.sort(function(a, b){ return new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0); });
+  if (threads.length === 0){
+    c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucun message pour le moment.</div>';
+    return;
   }
-  document.getElementById('msg-view-from').textContent = 'De : ' + m.fromDisplay + ' (@' + m.from + ')';
-  document.getElementById('msg-view-subject').textContent = m.subject;
-  document.getElementById('msg-view-date').textContent = 'Envoyé le ' + fmtDate(m.sentAt);
-  document.getElementById('msg-view-body').textContent = m.body;
+  c.innerHTML = threads.map(function(t){
+    var unread = threadUnreadCountFor(t, u.username);
+    var lastEntry = t.entries[t.entries.length - 1] || {};
+    var partnerName = (function(){
+      // pour admin : afficher le partenaire ; pour partenaire : afficher "Organisateur"
+      if (userIsAdmin()){
+        var partner = t.participants.find(function(p){ return p !== 'BoulaTV'; }) || t.participants[0];
+        var firstEntry = t.entries[0] || {};
+        return firstEntry.fromDisplay && firstEntry.from === partner ? firstEntry.fromDisplay : partner;
+      }
+      return '🎯 BoulaTV (Organisateur)';
+    })();
+    var avatar = (function(){
+      if (userIsAdmin()){
+        var firstEntry = t.entries[0] || {};
+        return firstEntry.fromAvatar || defaultAvatar(partnerName);
+      }
+      return defaultAvatar('BoulaTV');
+    })();
+    var preview = (lastEntry.body || '').slice(0, 70) + ((lastEntry.body || '').length > 70 ? '…' : '');
+    var prefix = lastEntry.from === u.username ? '✓ Vous : ' : '';
+    return '<div class="message-item' + (unread > 0 ? '' : ' is-read') + '" onclick="openThread(\'' + t.id + '\')">'
+      + '<img class="message-item-icon" src="' + avatar + '" style="border-radius:50%;width:36px;height:36px;object-fit:cover">'
+      + '<div class="message-item-info">'
+        + '<div class="message-item-from">' + escHtml(partnerName) + (unread > 0 ? ' <span style="background:#ff4757;color:#fff;border-radius:10px;padding:1px 8px;font-size:10px;margin-left:6px">' + unread + '</span>' : '') + '</div>'
+        + '<div class="message-item-subject">' + escHtml(t.subject) + '</div>'
+        + '<div class="message-item-preview">' + escHtml(prefix + preview) + '</div>'
+        + '<div class="message-item-date">' + fmtDate(t.lastActivityAt) + '</div>'
+      + '</div>'
+      + (userIsAdmin() ? '<div class="message-item-actions"><button class="user-item-btn del" onclick="deleteThread(\'' + t.id + '\', event)">🗑</button></div>' : '')
+    + '</div>';
+  }).join('');
+  // Bouton "nouveau" — seuls les non-admins peuvent créer un thread
+  var newBtn = document.getElementById('inbox-new-btn');
+  if (newBtn) newBtn.style.display = userIsAdmin() ? 'none' : '';
+}
+function deleteThread(id, ev){
+  if (ev) ev.stopPropagation();
+  if (!userIsAdmin()) return;
+  mcConfirm('Supprimer cette conversation ?\n\nElle disparaîtra aussi côté partenaire.', { okText: 'Supprimer' }).then(function(ok){
+    if (!ok) return;
+    var list = getMessages().filter(function(t){ return t.id !== id; });
+    saveMessages(list);
+    renderInbox();
+    if (typeof renderMessagesList === 'function') renderMessagesList();
+  });
+}
+// === Vue thread (modal conversation) ===
+var _currentThreadId = null;
+function openThread(id){
+  var u = getCurrentUser();
+  if (!u) return;
+  _currentThreadId = id;
+  markThreadRead(id, u.username);
+  renderThreadView();
   document.getElementById('msg-view-modal').classList.add('active');
+  if (typeof renderInbox === 'function') renderInbox();
+  if (typeof renderMessagesList === 'function') renderMessagesList();
+}
+function renderThreadView(){
+  var u = getCurrentUser();
+  if (!u) return;
+  var list = getMessages();
+  var t = list.find(function(x){ return x.id === _currentThreadId; });
+  if (!t) return;
+  // Header
+  var partner = userIsAdmin()
+    ? (t.participants.find(function(p){ return p !== 'BoulaTV'; }) || t.participants[0])
+    : 'BoulaTV';
+  var partnerDisplay = userIsAdmin()
+    ? ((t.entries[0] && t.entries[0].from === partner) ? t.entries[0].fromDisplay : partner)
+    : '🎯 BoulaTV (Organisateur)';
+  var fromEl = document.getElementById('msg-view-from');
+  if (fromEl) fromEl.textContent = userIsAdmin() ? ('Avec : ' + partnerDisplay + ' (@' + partner + ')') : ('Conversation avec : ' + partnerDisplay);
+  var subjEl = document.getElementById('msg-view-subject');
+  if (subjEl) subjEl.textContent = t.subject;
+  var dateEl = document.getElementById('msg-view-date');
+  if (dateEl) dateEl.textContent = 'Démarrée le ' + fmtDate(t.entries[0] ? t.entries[0].at : t.lastActivityAt);
+  // Body : bulles
+  var body = document.getElementById('msg-view-body');
+  if (body){
+    body.innerHTML = t.entries.map(function(e){
+      var mine = e.from === u.username;
+      var color = mine ? '#00e676' : '#00d4ff';
+      var bg = mine ? 'rgba(0,230,118,.10)' : 'rgba(0,212,255,.10)';
+      var border = mine ? 'rgba(0,230,118,.35)' : 'rgba(0,212,255,.35)';
+      var align = mine ? 'flex-end' : 'flex-start';
+      var label = mine ? 'Vous' : escHtml(e.fromDisplay || e.from);
+      return '<div style="display:flex;justify-content:' + align + ';margin-bottom:10px">'
+        + '<div style="max-width:78%;background:' + bg + ';border:1px solid ' + border + ';border-radius:10px;padding:10px 12px">'
+          + '<div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:4px;font-size:11px;color:' + color + ';font-weight:600">'
+            + '<span>' + label + '</span><span style="color:#6a7a8a;font-weight:400">' + fmtDate(e.at) + '</span>'
+          + '</div>'
+          + '<div style="color:#dce4f0;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word">' + escHtml(e.body) + '</div>'
+        + '</div>'
+      + '</div>';
+    }).join('');
+    body.scrollTop = body.scrollHeight;
+  }
+  var reply = document.getElementById('msg-reply-body');
+  if (reply) reply.value = '';
+  var err = document.getElementById('msg-reply-error');
+  if (err) err.textContent = '';
+}
+function sendReply(){
+  var u = getCurrentUser();
+  if (!u || !_currentThreadId) return;
+  var bodyEl = document.getElementById('msg-reply-body');
+  var err = document.getElementById('msg-reply-error');
+  var body = (bodyEl.value || '').trim();
+  if (!body){ err.textContent = '⚠ Saisissez un message.'; return; }
+  var list = getMessages();
+  var idx = list.findIndex(function(t){ return t.id === _currentThreadId; });
+  if (idx === -1) return;
+  var now = new Date().toISOString();
+  list[idx].entries.push({
+    from: u.username,
+    fromDisplay: u.displayName || u.username,
+    fromAvatar: u.avatar || defaultAvatar(u.displayName || u.username),
+    body: body,
+    at: now,
+    readBy: [u.username]
+  });
+  list[idx].lastActivityAt = now;
+  list[idx].lastFrom = u.username;
+  // Si l'admin répond et que le partenaire n'est pas dans participants (sécurité), l'ajouter
+  if (list[idx].participants.indexOf(u.username) === -1) list[idx].participants.push(u.username);
+  saveMessages(list);
+  logAction('Réponse envoyée', list[idx].subject);
+  renderThreadView();
+  if (typeof renderInbox === 'function') renderInbox();
+  if (typeof renderMessagesList === 'function') renderMessagesList();
 }
 function closeMsgViewModal(){
   document.getElementById('msg-view-modal').classList.remove('active');
+  _currentThreadId = null;
 }
-function deleteMessage(id, ev){
-  if (ev) ev.stopPropagation();
-  mcConfirm('Supprimer ce message ?', { okText: 'Supprimer' }).then(function(ok){
-    if (!ok) return;
-    var list = getMessages().filter(function(m){ return m.id !== id; });
-    saveMessages(list);
-    renderMessagesList();
-  });
-}
+// === Liste admin (dans admin.html) ===
 function renderMessagesList(){
   var c = document.getElementById('messages-list');
   if (!c) return;
+  var u = getCurrentUser();
+  if (!u) return;
   var list = getMessages();
-  var unread = list.filter(function(m){ return !m.isRead; }).length;
+  var unread = list.reduce(function(acc, t){ return acc + threadUnreadCountFor(t, u.username); }, 0);
   var badge = document.getElementById('msg-count-badge');
   if (badge){
     if (unread > 0){ badge.textContent = unread + ' non lu(s)'; badge.style.background = 'rgba(255,71,87,.18)'; badge.style.color = '#ff4757'; }
     else { badge.textContent = list.length; badge.style.background = 'rgba(0,212,255,.18)'; badge.style.color = '#00d4ff'; }
   }
-  if (list.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucun message reçu.</div>'; return; }
-  c.innerHTML = '<div class="messages-list">' + list.map(function(m){
-    return '<div class="message-item' + (m.isRead ? ' is-read' : '') + '" onclick="viewMessage(\'' + m.id + '\')">'
-      + '<img class="message-item-icon" src="' + m.fromAvatar + '" style="border-radius:50%;width:36px;height:36px;object-fit:cover">'
+  if (list.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucune conversation.</div>'; return; }
+  list.sort(function(a, b){ return new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0); });
+  c.innerHTML = '<div class="messages-list">' + list.map(function(t){
+    var unr = threadUnreadCountFor(t, u.username);
+    var partner = t.participants.find(function(p){ return p !== 'BoulaTV'; }) || t.participants[0];
+    var firstEntry = t.entries[0] || {};
+    var partnerName = (firstEntry.from === partner ? firstEntry.fromDisplay : partner) || partner;
+    var partnerAvatar = (firstEntry.from === partner ? firstEntry.fromAvatar : null) || defaultAvatar(partnerName);
+    var lastEntry = t.entries[t.entries.length - 1] || {};
+    var prefix = lastEntry.from === u.username ? '✓ Vous : ' : '';
+    return '<div class="message-item' + (unr > 0 ? '' : ' is-read') + '" onclick="openThread(\'' + t.id + '\')">'
+      + '<img class="message-item-icon" src="' + partnerAvatar + '" style="border-radius:50%;width:36px;height:36px;object-fit:cover">'
       + '<div class="message-item-info">'
-        + '<div class="message-item-from">' + escHtml(m.fromDisplay) + ' <span style="color:#6a7a8a;font-weight:400;font-size:11px">@' + escHtml(m.from) + '</span></div>'
-        + '<div class="message-item-subject">' + (m.isRead ? '' : '<strong style="color:#ff4757">● </strong>') + escHtml(m.subject) + '</div>'
-        + '<div class="message-item-preview">' + escHtml(m.body.slice(0, 80)) + (m.body.length > 80 ? '…' : '') + '</div>'
-        + '<div class="message-item-date">' + fmtDate(m.sentAt) + '</div>'
+        + '<div class="message-item-from">' + escHtml(partnerName) + ' <span style="color:#6a7a8a;font-weight:400;font-size:11px">@' + escHtml(partner) + '</span>' + (unr > 0 ? ' <span style="background:#ff4757;color:#fff;border-radius:10px;padding:1px 8px;font-size:10px;margin-left:6px">' + unr + '</span>' : '') + '</div>'
+        + '<div class="message-item-subject">' + escHtml(t.subject) + ' <span style="color:#6a7a8a;font-weight:400;font-size:11px">(' + t.entries.length + ' message' + (t.entries.length > 1 ? 's' : '') + ')</span></div>'
+        + '<div class="message-item-preview">' + escHtml(prefix + (lastEntry.body || '').slice(0, 80)) + ((lastEntry.body || '').length > 80 ? '…' : '') + '</div>'
+        + '<div class="message-item-date">' + fmtDate(t.lastActivityAt) + '</div>'
       + '</div>'
       + '<div class="message-item-actions">'
-        + '<button class="user-item-btn del" onclick="deleteMessage(\'' + m.id + '\', event)">🗑</button>'
+        + '<button class="user-item-btn del" onclick="deleteThread(\'' + t.id + '\', event)">🗑</button>'
       + '</div>'
     + '</div>';
   }).join('') + '</div>';
+}
+// Badge non lu sur le bouton 📨 du nav (pour partenaires)
+function refreshUserMsgBadge(){
+  var u = getCurrentUser();
+  var btn = document.getElementById('nav-msg-btn');
+  if (!btn || !u) return;
+  if (userIsAdmin()) return; // l'admin a déjà la cloche notifs
+  var threads = getVisibleThreads();
+  var unread = threads.reduce(function(acc, t){ return acc + threadUnreadCountFor(t, u.username); }, 0);
+  // Affichage badge
+  var existing = btn.querySelector('.msg-badge');
+  if (unread > 0){
+    if (!existing){
+      var b = document.createElement('span');
+      b.className = 'msg-badge';
+      btn.appendChild(b);
+      existing = b;
+    }
+    existing.textContent = unread > 99 ? '99+' : unread;
+    existing.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#ff4757;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;line-height:1.2';
+    btn.style.position = 'relative';
+  } else if (existing){
+    existing.remove();
+  }
 }
 
 // ===========================================================
@@ -1950,6 +2194,7 @@ checkPageAccess();
 applyAuthState();
 refreshAdminNotifications();
 updateMsgBtnVisibility();
+refreshUserMsgBadge();
 renderMessagesList();
 // Login modal : Enter = submit
 document.getElementById('login-password').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
