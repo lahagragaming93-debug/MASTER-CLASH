@@ -907,7 +907,7 @@ function getNotifsList(){
     notifs.push({
       type: 'message',
       icon: '📨',
-      title: (unread > 1 ? unread + ' messages — ' : 'Message de ') + (lastEntry.fromDisplay || lastEntry.from || '?'),
+      title: (unread > 1 ? unread + ' messages — ' : 'Message de ') + resolveUserDisplay(lastEntry.from || ''),
       desc: t.subject,
       at: t.lastActivityAt,
       target: 'admin.html#messages-list',
@@ -1266,32 +1266,59 @@ document.querySelectorAll('.home-card[data-perm]').forEach(function(card){
 // MESSAGERIE BIDIRECTIONNELLE — système de threads
 // ===========================================================
 // Structure thread : { id, participants:[u1,u2], subject, entries:[{from,fromDisplay,fromAvatar,body,at,readBy:[]}], lastActivityAt }
+// Résout l'avatar d'un username à la volée (évite de stocker du base64 volumineux dans chaque entry)
+function resolveUserAvatar(username){
+  if (!username) return defaultAvatar('?');
+  try {
+    var users = (typeof getUsers === 'function') ? getUsers() : [];
+    var u = users.find(function(x){ return x.username === username; });
+    if (u && u.avatar) return u.avatar;
+    return defaultAvatar((u && u.displayName) || username);
+  } catch(e){ return defaultAvatar(username); }
+}
+function resolveUserDisplay(username){
+  if (!username) return '?';
+  try {
+    var users = (typeof getUsers === 'function') ? getUsers() : [];
+    var u = users.find(function(x){ return x.username === username; });
+    return (u && u.displayName) || username;
+  } catch(e){ return username; }
+}
 function getMessages(){
   try {
     var raw = JSON.parse(localStorage.getItem(MC_MESSAGES_KEY) || '[]');
-    // Migration des anciens messages plats vers structure thread
+    // Migration : structure thread + purge des avatars stockés (saturent le quota)
     var migrated = false;
     raw = raw.map(function(m){
-      if (m.entries) return m; // déjà migré
+      if (m.entries){
+        // Purge les avatars base64 stockés dans les entries (gain de place massif)
+        var purged = false;
+        m.entries.forEach(function(e){
+          if (e.fromAvatar){ delete e.fromAvatar; purged = true; }
+          if (e.fromDisplay){ delete e.fromDisplay; purged = true; }
+        });
+        if (purged) migrated = true;
+        return m;
+      }
       migrated = true;
-      var entry = {
-        from: m.from,
-        fromDisplay: m.fromDisplay || m.from,
-        fromAvatar: m.fromAvatar || defaultAvatar(m.fromDisplay || m.from),
-        body: m.body,
-        at: m.sentAt,
-        readBy: m.isRead ? ['BoulaTV'] : []
-      };
       return {
         id: m.id,
         participants: [m.from, 'BoulaTV'],
         subject: m.subject,
-        entries: [entry],
+        entries: [{
+          from: m.from,
+          body: m.body,
+          at: m.sentAt,
+          readBy: m.isRead ? ['BoulaTV'] : []
+        }],
         lastActivityAt: m.sentAt,
         lastFrom: m.from
       };
     });
-    if (migrated) localStorage.setItem(MC_MESSAGES_KEY, JSON.stringify(raw));
+    if (migrated){
+      try { localStorage.setItem(MC_MESSAGES_KEY, JSON.stringify(raw)); }
+      catch(e){ console.warn('[MC] migration messages : storage saturé, pas de réécriture'); }
+    }
     return raw;
   }
   catch(e){ return []; }
@@ -1371,8 +1398,6 @@ function sendMessage(){
     subject: subject,
     entries: [{
       from: u.username,
-      fromDisplay: u.displayName || u.username,
-      fromAvatar: u.avatar || defaultAvatar(u.displayName || u.username),
       body: body,
       at: now,
       readBy: [u.username]
@@ -1406,22 +1431,11 @@ function renderInbox(){
   c.innerHTML = threads.map(function(t){
     var unread = threadUnreadCountFor(t, u.username);
     var lastEntry = t.entries[t.entries.length - 1] || {};
-    var partnerName = (function(){
-      // pour admin : afficher le partenaire ; pour partenaire : afficher "Organisateur"
-      if (userIsAdmin()){
-        var partner = t.participants.find(function(p){ return p !== 'BoulaTV'; }) || t.participants[0];
-        var firstEntry = t.entries[0] || {};
-        return firstEntry.fromDisplay && firstEntry.from === partner ? firstEntry.fromDisplay : partner;
-      }
-      return '🎯 BoulaTV (Organisateur)';
-    })();
-    var avatar = (function(){
-      if (userIsAdmin()){
-        var firstEntry = t.entries[0] || {};
-        return firstEntry.fromAvatar || defaultAvatar(partnerName);
-      }
-      return defaultAvatar('BoulaTV');
-    })();
+    var partner = userIsAdmin()
+      ? (t.participants.find(function(p){ return p !== 'BoulaTV'; }) || t.participants[0])
+      : 'BoulaTV';
+    var partnerName = userIsAdmin() ? resolveUserDisplay(partner) : '🎯 BoulaTV (Organisateur)';
+    var avatar = resolveUserAvatar(partner);
     var preview = (lastEntry.body || '').slice(0, 70) + ((lastEntry.body || '').length > 70 ? '…' : '');
     var prefix = lastEntry.from === u.username ? '✓ Vous : ' : '';
     return '<div class="message-item' + (unread > 0 ? '' : ' is-read') + '" onclick="openThread(\'' + t.id + '\')">'
@@ -1472,9 +1486,7 @@ function renderThreadView(){
   var partner = userIsAdmin()
     ? (t.participants.find(function(p){ return p !== 'BoulaTV'; }) || t.participants[0])
     : 'BoulaTV';
-  var partnerDisplay = userIsAdmin()
-    ? ((t.entries[0] && t.entries[0].from === partner) ? t.entries[0].fromDisplay : partner)
-    : '🎯 BoulaTV (Organisateur)';
+  var partnerDisplay = userIsAdmin() ? resolveUserDisplay(partner) : '🎯 BoulaTV (Organisateur)';
   var fromEl = document.getElementById('msg-view-from');
   if (fromEl) fromEl.textContent = userIsAdmin() ? ('Avec : ' + partnerDisplay + ' (@' + partner + ')') : ('Conversation avec : ' + partnerDisplay);
   var subjEl = document.getElementById('msg-view-subject');
@@ -1490,7 +1502,7 @@ function renderThreadView(){
       var bg = mine ? 'rgba(0,230,118,.10)' : 'rgba(0,212,255,.10)';
       var border = mine ? 'rgba(0,230,118,.35)' : 'rgba(0,212,255,.35)';
       var align = mine ? 'flex-end' : 'flex-start';
-      var label = mine ? 'Vous' : escHtml(e.fromDisplay || e.from);
+      var label = mine ? 'Vous' : escHtml(resolveUserDisplay(e.from));
       return '<div style="display:flex;justify-content:' + align + ';margin-bottom:10px">'
         + '<div style="max-width:78%;background:' + bg + ';border:1px solid ' + border + ';border-radius:10px;padding:10px 12px">'
           + '<div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:4px;font-size:11px;color:' + color + ';font-weight:600">'
@@ -1525,8 +1537,6 @@ function sendReply(){
     var subject = list[idx].subject;
     list[idx].entries.push({
       from: u.username,
-      fromDisplay: u.displayName || u.username,
-      fromAvatar: u.avatar || defaultAvatar(u.displayName || u.username),
       body: body,
       at: now,
       readBy: [u.username]
@@ -1573,9 +1583,8 @@ function renderMessagesList(){
   c.innerHTML = '<div class="messages-list">' + list.map(function(t){
     var unr = threadUnreadCountFor(t, u.username);
     var partner = t.participants.find(function(p){ return p !== 'BoulaTV'; }) || t.participants[0];
-    var firstEntry = t.entries[0] || {};
-    var partnerName = (firstEntry.from === partner ? firstEntry.fromDisplay : partner) || partner;
-    var partnerAvatar = (firstEntry.from === partner ? firstEntry.fromAvatar : null) || defaultAvatar(partnerName);
+    var partnerName = resolveUserDisplay(partner);
+    var partnerAvatar = resolveUserAvatar(partner);
     var lastEntry = t.entries[t.entries.length - 1] || {};
     var prefix = lastEntry.from === u.username ? '✓ Vous : ' : '';
     return '<div class="message-item' + (unr > 0 ? '' : ' is-read') + '" onclick="openThread(\'' + t.id + '\')">'
