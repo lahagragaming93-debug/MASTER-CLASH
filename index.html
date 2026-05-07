@@ -43,75 +43,91 @@
     </div>
   </div>
 </nav>
-<header class="hero" id="top">
-  <div class="hero-badge">Document officiel — État de San Andreas</div>
-  <h1 class="hero-wordmark"><img src="assets/logo-wordmark.png" alt="MASTER CLASH"></h1>
-  <div class="hero-tagline">« Le savoir ne suffit pas. Il faut vaincre. »</div>
-  <div class="hero-stats">
-    <div class="stat"><span class="stat-value">42</span><span class="stat-label">Participants</span></div>
-    <div class="stat"><span class="stat-value">3</span><span class="stat-label">Manches</span></div>
-    <div class="stat"><span class="stat-value">100%</span><span class="stat-label">Récompenses</span></div>
-  </div>
-</header>
-
-<section id="home-nav">
-  <h2 class="section-title">Accès rapide</h2>
-  <div class="section-subtitle">Sélectionnez la section à consulter</div>
-  <div class="home-grid">
-    <a href="gouverneur.html" class="home-card" data-perm="gouv">
+<main class="home-3col" id="top">
+  <aside class="home-side home-side-left">
+    <a href="gouverneur.html" class="home-card home-card-h" data-perm="gouv">
       <div class="home-card-icon">🏛️</div>
-      <div class="home-card-title">Dossier Gouverneur</div>
-      <div class="home-card-desc">Présentation officielle du projet</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
+      <div class="home-card-text">
+        <div class="home-card-title">Dossier Gouverneur</div>
+        <div class="home-card-desc">Présentation officielle du projet</div>
+      </div>
+      <div class="home-card-lock" style="display:none">🔒</div>
     </a>
-    <a href="reglement.html" class="home-card">
+    <a href="reglement.html" class="home-card home-card-h">
       <div class="home-card-icon">📜</div>
-      <div class="home-card-title">Règlement Officiel</div>
-      <div class="home-card-desc">10 articles de l'événement</div>
+      <div class="home-card-text">
+        <div class="home-card-title">Règlement Officiel</div>
+        <div class="home-card-desc">10 articles de l'événement</div>
+      </div>
     </a>
-    <a href="partenaires.html" class="home-card">
+    <a href="partenaires.html" class="home-card home-card-h">
       <div class="home-card-icon">🤝</div>
-      <div class="home-card-title">Partenaires</div>
-      <div class="home-card-desc">Devenir partenaire de Master Clash</div>
+      <div class="home-card-text">
+        <div class="home-card-title">Partenaires</div>
+        <div class="home-card-desc">Devenir partenaire</div>
+      </div>
     </a>
-    <a href="contrats.html" class="home-card" data-perm="contrats">
+    <a href="contrats.html" class="home-card home-card-h" data-perm="contrats">
       <div class="home-card-icon">📋</div>
-      <div class="home-card-title">Contrats &amp; Bons</div>
-      <div class="home-card-desc">Documents de partenariat à signer</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
+      <div class="home-card-text">
+        <div class="home-card-title">Contrats &amp; Bons</div>
+        <div class="home-card-desc">Documents à signer</div>
+      </div>
+      <div class="home-card-lock" style="display:none">🔒</div>
     </a>
-    <a href="questions.html" class="home-card" data-perm="ques">
-      <div class="home-card-icon">❓</div>
-      <div class="home-card-title">Banque de Questions</div>
-      <div class="home-card-desc">200 questions de l'animateur</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="budget.html" class="home-card" data-perm="budget">
-      <div class="home-card-icon">💰</div>
-      <div class="home-card-title">Budget</div>
-      <div class="home-card-desc">Estimation et financement</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="participants.html" class="home-card" id="home-card-participants" style="display:none">
-      <div class="home-card-icon">🎯</div>
-      <div class="home-card-title">Participants</div>
-      <div class="home-card-desc">Inscriptions &amp; tirage des groupes</div>
-    </a>
-    <a href="profil.html" class="home-card" id="home-card-profil" style="display:none">
-      <div class="home-card-icon">👤</div>
-      <div class="home-card-title">Mon profil</div>
-      <div class="home-card-desc">Mes informations &amp; mes contrats</div>
-    </a>
-    <a href="admin.html" class="home-card home-card-admin" id="home-card-admin" style="display:none">
-      <div class="home-card-icon">🔧</div>
-      <div class="home-card-title">Administration</div>
-      <div class="home-card-desc">Gestion utilisateurs &amp; système</div>
-    </a>
+  </aside>
+
+  <div class="home-center">
+    <div class="hero-badge">Document officiel — État de San Andreas</div>
+    <h1 class="hero-wordmark"><img src="assets/logo-wordmark.png" alt="MASTER CLASH"></h1>
+    <div class="hero-tagline">« Le savoir ne suffit pas. Il faut vaincre. »</div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-value">42</span><span class="stat-label">Participants</span></div>
+      <div class="stat"><span class="stat-value">3</span><span class="stat-label">Manches</span></div>
+      <div class="stat"><span class="stat-value">100%</span><span class="stat-label">Récompenses</span></div>
+    </div>
   </div>
-</section>
-<footer>
-  MASTER CLASH — Document officiel — Réservé à l'animateur — État de San Andreas
-</footer>
+
+  <aside class="home-side home-side-right">
+    <a href="questions.html" class="home-card home-card-h" data-perm="ques">
+      <div class="home-card-icon">❓</div>
+      <div class="home-card-text">
+        <div class="home-card-title">Banque de Questions</div>
+        <div class="home-card-desc">200 questions</div>
+      </div>
+      <div class="home-card-lock" style="display:none">🔒</div>
+    </a>
+    <a href="budget.html" class="home-card home-card-h" data-perm="budget">
+      <div class="home-card-icon">💰</div>
+      <div class="home-card-text">
+        <div class="home-card-title">Budget</div>
+        <div class="home-card-desc">Prévu vs réel</div>
+      </div>
+      <div class="home-card-lock" style="display:none">🔒</div>
+    </a>
+    <a href="participants.html" class="home-card home-card-h" id="home-card-participants" style="display:none">
+      <div class="home-card-icon">🎯</div>
+      <div class="home-card-text">
+        <div class="home-card-title">Participants</div>
+        <div class="home-card-desc">Inscriptions &amp; tirage</div>
+      </div>
+    </a>
+    <a href="profil.html" class="home-card home-card-h" id="home-card-profil" style="display:none">
+      <div class="home-card-icon">👤</div>
+      <div class="home-card-text">
+        <div class="home-card-title">Mon profil</div>
+        <div class="home-card-desc">Infos &amp; mes contrats</div>
+      </div>
+    </a>
+    <a href="admin.html" class="home-card home-card-h home-card-admin" id="home-card-admin" style="display:none">
+      <div class="home-card-icon">🔧</div>
+      <div class="home-card-text">
+        <div class="home-card-title">Administration</div>
+        <div class="home-card-desc">Gestion système</div>
+      </div>
+    </a>
+  </aside>
+</main>
 
 <!-- ===== ZONE IMPRESSION (pour contrats validés) ===== -->
 <div id="print-area"></div>
