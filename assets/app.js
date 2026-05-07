@@ -803,7 +803,10 @@ function showProfilSection(){
   document.getElementById('profil-avatar-preview').src = user.avatar || defaultAvatar(user.displayName || user.username);
   _profilAvatarDataURL = user.avatar || '';
   document.getElementById('profil-secret-question').value = user.secretQuestion || '';
-  document.getElementById('profil-secret-answer').value = user.secretAnswer || '';
+  // Ne JAMAIS pré-remplir la réponse en clair (sécurité). Placeholder indique l'état.
+  var sa = document.getElementById('profil-secret-answer');
+  sa.value = '';
+  sa.placeholder = user.secretAnswer ? '••••••• (déjà configurée — ressaisir pour modifier)' : 'Votre réponse';
   renderMyContrats();
   renderMyLogs();
 }
@@ -866,6 +869,10 @@ function saveMySecret(){
   users[idx].secretAnswer = a;
   saveUsers(users);
   logAction('Question secrète modifiée');
+  // Vider la réponse après sauvegarde + remettre placeholder sécurisé
+  var sa = document.getElementById('profil-secret-answer');
+  sa.value = '';
+  sa.placeholder = '••••••• (déjà configurée — ressaisir pour modifier)';
   mcAlert('✓ Question secrète enregistrée.\nVous pourrez l\'utiliser pour récupérer votre mot de passe.', { title: 'Succès' });
 }
 function renderMyContrats(){
