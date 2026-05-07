@@ -500,3 +500,33 @@ body.present-active{overflow:hidden}
 .message-item-preview{color:#aabbc8;font-size:11px;font-style:italic;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical}
 .message-item-date{color:#6a7a8a;font-size:10px;margin-top:3px}
 .message-item-actions{display:flex;gap:4px;flex-shrink:0}
+
+/* ========== TEMPLATE EDITOR ========== */
+.tpl-editor-actions{display:flex;gap:10px;justify-content:flex-end;margin-bottom:18px;flex-wrap:wrap}
+.tpl-editor-split{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:flex-start}
+.tpl-editor-preview{position:sticky;top:80px;max-height:calc(100vh - 100px);overflow-y:auto;background:#0f1420;border:1px solid rgba(0,212,255,.18);border-radius:12px;padding:18px}
+.tpl-preview-label{color:#00d4ff;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(0,212,255,.18)}
+.tpl-editor-preview .contract-doc{margin:0 auto;max-width:100%;box-shadow:none;font-size:11px;padding:18px 20px}
+.tpl-editor-preview .contract-doc h2{font-size:16px}
+.tpl-editor-preview .contract-doc h3{font-size:11px;margin:14px 0 6px}
+.tpl-editor-preview .contract-doc h4{font-size:10px;margin:8px 0 4px}
+.tpl-editor-preview .contract-doc p{font-size:11px;margin-bottom:5px}
+.tpl-editor-preview .contract-doc input,.tpl-editor-preview .contract-doc textarea{font-size:10px;pointer-events:none}
+.tpl-editor-preview .contract-doc .signature-block{gap:14px;margin-top:18px;padding-top:12px}
+.tpl-editor-preview .contract-doc .sig-canvas{height:60px;pointer-events:none}
+.tpl-editor-preview .contract-doc .sig-clear{display:none}
+.tpl-editor-preview .contract-doc .org-locked-msg{display:none}
+.tpl-editor-form{background:#0f1420;border:1px solid rgba(0,212,255,.18);border-radius:12px;padding:20px;max-height:calc(100vh - 100px);overflow-y:auto}
+.tpl-editor-form::-webkit-scrollbar,.tpl-editor-preview::-webkit-scrollbar{width:6px}
+.tpl-editor-form::-webkit-scrollbar-thumb,.tpl-editor-preview::-webkit-scrollbar-thumb{background:rgba(0,212,255,.3);border-radius:3px}
+.tpl-section{margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid rgba(0,212,255,.12)}
+.tpl-section h3{color:#00d4ff;margin:0 0 12px;font-size:14px;letter-spacing:1px}
+.tpl-block{background:#141926;border:1px solid rgba(0,212,255,.15);border-left:3px solid #f5c518;border-radius:8px;padding:14px;margin-bottom:12px}
+.tpl-block-head{font-size:12px;color:#aabbc8;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;font-weight:700;display:flex;align-items:center;gap:8px}
+.tpl-block-head strong{color:#f5c518}
+.tpl-badge-opt{background:rgba(255,171,64,.18);color:#ffab40;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700}
+.tpl-subblock{background:#0a0e1a;border:1px solid rgba(0,212,255,.1);border-radius:6px;padding:10px;margin:8px 0}
+@media(max-width:900px){
+  .tpl-editor-split{grid-template-columns:1fr}
+  .tpl-editor-preview{position:relative;top:auto;max-height:none}
+}

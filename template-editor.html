@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Éditeur de template — MASTER CLASH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="admin">
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html">⚡ <span>MC</span> MASTER CLASH</a>
+  <div class="nav-links">
+    <a href="admin.html">← Retour à l'admin</a>
+  </div>
+  <div class="nav-user" id="nav-user">
+    <button class="nav-login-btn" id="nav-login-btn" onclick="openLoginModal()">🔐 Connexion</button>
+    <div class="nav-user-box" id="nav-user-box" style="display:none">
+      <img class="nav-avatar" id="nav-avatar" src="" alt="">
+      <div class="nav-user-text">
+        <div class="nav-username" id="nav-username"></div>
+        <div class="nav-userrole" id="nav-userrole"></div>
+      </div>
+      <button class="nav-logout-btn" onclick="doLogout()" title="Déconnexion">⏻</button>
+    </div>
+  </div>
+</nav>
+
+<section id="tpl-editor-section" style="max-width:1400px;padding:80px 14px 40px">
+  <h2 class="section-title">📝 Éditeur de template <span id="tpl-editor-mode" style="font-size:13px;color:#6a7a8a;font-weight:400;letter-spacing:1px;text-transform:uppercase">— Création</span></h2>
+  <div class="section-subtitle">Modifiez les textes, métadonnées, et structure de ce contrat. Aperçu en direct à gauche.</div>
+
+  <div class="tpl-editor-actions">
+    <button class="admin-btn" onclick="saveCurrentTemplate()">💾 Sauvegarder</button>
+    <button class="admin-btn admin-btn-secondary" onclick="cancelTemplateEdit()">✕ Annuler</button>
+  </div>
+
+  <div class="tpl-editor-split">
+    <div class="tpl-editor-preview">
+      <div class="tpl-preview-label">📄 Aperçu en direct</div>
+      <div class="contract-doc" id="tpl-preview-doc"></div>
+    </div>
+    <div class="tpl-editor-form" id="tpl-editor-form"></div>
+  </div>
+</section>
+
+<script src="assets/default_templates.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/template-editor.js"></script>
+</body>
+</html>

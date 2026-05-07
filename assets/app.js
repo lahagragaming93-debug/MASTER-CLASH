@@ -1375,6 +1375,62 @@ function updateMsgBtnVisibility(){
   btn.style.display = (u && !u.isAdmin) ? '' : 'none';
 }
 
+// ===========================================================
+// TEMPLATES — liste dans Admin + reset
+// ===========================================================
+function renderTemplatesList(){
+  var c = document.getElementById('templates-list');
+  if (!c) return;
+  var list = getTemplates();
+  if (list.length === 0){
+    c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucun template (utilisez Restaurer pour récupérer les défauts).</div>';
+    return;
+  }
+  c.innerHTML = '<div class="users-list">' + list.map(function(t){
+    return '<div class="user-item">'
+      + '<div class="user-item-avatar" style="display:flex;align-items:center;justify-content:center;font-size:24px;background:#0f1420;border:1px solid rgba(245,197,24,.4)">' + (t.icon || '📄') + '</div>'
+      + '<div class="user-item-info">'
+        + '<div class="user-item-name">' + escHtml(t.label) + '</div>'
+        + '<div class="user-item-login">@' + escHtml(t.id) + ' — ' + escHtml(t.ref) + '</div>'
+        + '<div class="user-item-perms">' + (t.blocks || []).length + ' bloc(s)</div>'
+      + '</div>'
+      + '<div class="user-item-actions">'
+        + '<a class="user-item-btn edit" href="template-editor.html?id=' + encodeURIComponent(t.id) + '" style="text-decoration:none">✎ Modifier</a>'
+        + '<a class="user-item-btn edit" href="template-editor.html?clone=' + encodeURIComponent(t.id) + '" style="text-decoration:none">⎘ Dupliquer</a>'
+        + '<button class="user-item-btn del" onclick="deleteTemplate(\'' + escHtml(t.id) + '\')">🗑</button>'
+      + '</div>'
+    + '</div>';
+  }).join('') + '</div>';
+}
+function deleteTemplate(id){
+  mcConfirm('Supprimer le template "' + id + '" ?\n\nLes contrats déjà signés référençant ce template restent visibles dans les archives.\n\nCette action est irréversible.', { title: '🗑 Supprimer template', okText: 'Supprimer' })
+    .then(function(ok){
+      if (!ok) return;
+      var list = getTemplates().filter(function(t){ return t.id !== id; });
+      saveTemplates(list);
+      renderTemplatesList();
+      logAction('Template supprimé', id);
+      mcAlert('✓ Template supprimé.', { title: 'Succès' });
+    });
+}
+function resetTplsToDefault(){
+  mcConfirm('⚠ Restaurer tous les templates par défaut ?\n\nCela écrase TOUTES les modifications que vous avez faites sur les contrats.\n\nLes contrats déjà signés ne sont PAS affectés.', { title: '↺ Restaurer', okText: 'Restaurer' })
+    .then(function(ok){
+      if (!ok) return;
+      resetTemplatesToDefault();
+      renderTemplatesList();
+      logAction('Templates restaurés au défaut');
+      mcAlert('✓ Templates restaurés.', { title: 'Succès' });
+    });
+}
+
+// Rendre la liste templates au chargement de admin (et à l'ouverture de l'onglet)
+(function(){
+  if (document.body.dataset.page === 'admin'){
+    setTimeout(renderTemplatesList, 200);
+  }
+})();
+
 // Init au chargement
 renderAllContractPanels();  // Génère dynamiquement les panels de contrats à partir des templates (page contrats uniquement)
 checkPageAccess();

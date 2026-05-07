@@ -83,6 +83,16 @@
   </div>
 
   <div class="card">
+    <h3 style="margin-top:0">📝 Templates de contrats</h3>
+    <p>Personnalisez le contenu des contrats existants ou créez de nouveaux types depuis l'éditeur visuel.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <a href="template-editor.html" class="admin-btn" style="text-decoration:none;display:inline-block">➕ Créer un nouveau template</a>
+      <button class="admin-btn admin-btn-secondary" onclick="resetTplsToDefault()">↺ Restaurer les templates par défaut</button>
+    </div>
+    <div id="templates-list"></div>
+  </div>
+
+  <div class="card">
     <h3 style="margin-top:0">📜 Logs d'activité</h3>
     <p>Historique complet des actions sur le site (connexions, modifications, validations…).</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
