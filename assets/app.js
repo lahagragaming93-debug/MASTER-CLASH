@@ -1518,6 +1518,7 @@ function sendReply(){
   var idx = list.findIndex(function(t){ return t.id === _currentThreadId; });
   if (idx === -1) return;
   var now = new Date().toISOString();
+  var subject = list[idx].subject;
   list[idx].entries.push({
     from: u.username,
     fromDisplay: u.displayName || u.username,
@@ -1528,13 +1529,14 @@ function sendReply(){
   });
   list[idx].lastActivityAt = now;
   list[idx].lastFrom = u.username;
-  // Si l'admin répond et que le partenaire n'est pas dans participants (sécurité), l'ajouter
   if (list[idx].participants.indexOf(u.username) === -1) list[idx].participants.push(u.username);
   saveMessages(list);
-  logAction('Réponse envoyée', list[idx].subject);
-  renderThreadView();
+  if (typeof logAction === 'function') logAction('Réponse envoyée', subject);
+  // Fermer la modal et notifier l'utilisateur
+  closeMsgViewModal();
   if (typeof renderInbox === 'function') renderInbox();
   if (typeof renderMessagesList === 'function') renderMessagesList();
+  mcAlert('✓ Réponse envoyée.\n\nVotre interlocuteur recevra une notification.', { title: 'Message envoyé' });
 }
 function closeMsgViewModal(){
   document.getElementById('msg-view-modal').classList.remove('active');
