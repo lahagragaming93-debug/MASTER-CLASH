@@ -22,6 +22,7 @@ var MC_ARCHIVE_KEY = 'mc_archives_v1';
 var MC_USERS_KEY = 'mc_users_v1';
 var MC_SESSION_KEY = 'mc_session_v1';
 var MC_LOGS_KEY = 'mc_logs_v1';
+var MC_MESSAGES_KEY = 'mc_messages_v1';
 var SECRET_QUESTIONS = {
   pet: 'Quel est le nom de votre premier animal de compagnie ?',
   mother: 'Quel est le nom de jeune fille de votre mère ?',
@@ -666,6 +667,19 @@ function getNotifsList(){
       isNew: ts > lastSeen
     });
   });
+  // Messages non lus
+  getMessages().forEach(function(m){
+    if (m.isRead) return; // déjà lu
+    notifs.push({
+      type: 'message',
+      icon: '📨',
+      title: 'Message de ' + m.fromDisplay,
+      desc: m.subject,
+      at: m.sentAt,
+      target: 'admin.html#messages-list',
+      isNew: true
+    });
+  });
   // Tri par date décroissante
   notifs.sort(function(a, b){ return new Date(b.at) - new Date(a.at); });
   return notifs;
@@ -1011,10 +1025,150 @@ document.querySelectorAll('.home-card[data-perm]').forEach(function(card){
   });
 });
 
+// ===========================================================
+// MESSAGERIE PARTENAIRES → ADMIN
+// ===========================================================
+function getMessages(){
+  try { return JSON.parse(localStorage.getItem(MC_MESSAGES_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function saveMessages(list){
+  localStorage.setItem(MC_MESSAGES_KEY, JSON.stringify(list));
+  if (typeof refreshAdminNotifications === 'function') refreshAdminNotifications();
+}
+function openMessageModal(){
+  var u = getCurrentUser();
+  if (!u){ mcAlert('Vous devez être connecté pour envoyer un message.', { title: 'Connexion requise' }); return; }
+  document.getElementById('msg-subject').value = '';
+  document.getElementById('msg-body').value = '';
+  document.getElementById('msg-error').textContent = '';
+  document.getElementById('message-modal').classList.add('active');
+  setTimeout(function(){ document.getElementById('msg-subject').focus(); }, 60);
+}
+function closeMessageModal(){ document.getElementById('message-modal').classList.remove('active'); }
+function sendMessage(){
+  var u = getCurrentUser();
+  if (!u) return;
+  var subject = (document.getElementById('msg-subject').value || '').trim();
+  var body = (document.getElementById('msg-body').value || '').trim();
+  var err = document.getElementById('msg-error');
+  if (!subject){ err.textContent = '⚠ Saisissez un sujet.'; return; }
+  if (!body){ err.textContent = '⚠ Saisissez un message.'; return; }
+  var list = getMessages();
+  list.unshift({
+    id: 'M' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    from: u.username,
+    fromDisplay: u.displayName || u.username,
+    fromAvatar: u.avatar || defaultAvatar(u.displayName || u.username),
+    subject: subject,
+    body: body,
+    sentAt: new Date().toISOString(),
+    isRead: false
+  });
+  if (list.length > 200) list = list.slice(0, 200);
+  saveMessages(list);
+  logAction('Message envoyé à l\'organisateur', subject);
+  closeMessageModal();
+  mcAlert('✓ Message envoyé à l\'organisateur.\nIl recevra une notification.', { title: 'Message envoyé' });
+}
+function viewMessage(id){
+  var list = getMessages();
+  var idx = list.findIndex(function(m){ return m.id === id; });
+  if (idx === -1) return;
+  var m = list[idx];
+  if (!m.isRead){
+    list[idx].isRead = true;
+    saveMessages(list);
+    renderMessagesList();
+  }
+  document.getElementById('msg-view-from').textContent = 'De : ' + m.fromDisplay + ' (@' + m.from + ')';
+  document.getElementById('msg-view-subject').textContent = m.subject;
+  document.getElementById('msg-view-date').textContent = 'Envoyé le ' + fmtDate(m.sentAt);
+  document.getElementById('msg-view-body').textContent = m.body;
+  document.getElementById('msg-view-modal').classList.add('active');
+}
+function closeMsgViewModal(){
+  document.getElementById('msg-view-modal').classList.remove('active');
+}
+function deleteMessage(id, ev){
+  if (ev) ev.stopPropagation();
+  mcConfirm('Supprimer ce message ?', { okText: 'Supprimer' }).then(function(ok){
+    if (!ok) return;
+    var list = getMessages().filter(function(m){ return m.id !== id; });
+    saveMessages(list);
+    renderMessagesList();
+  });
+}
+function renderMessagesList(){
+  var c = document.getElementById('messages-list');
+  if (!c) return;
+  var list = getMessages();
+  var unread = list.filter(function(m){ return !m.isRead; }).length;
+  var badge = document.getElementById('msg-count-badge');
+  if (badge){
+    if (unread > 0){ badge.textContent = unread + ' non lu(s)'; badge.style.background = 'rgba(255,71,87,.18)'; badge.style.color = '#ff4757'; }
+    else { badge.textContent = list.length; badge.style.background = 'rgba(0,212,255,.18)'; badge.style.color = '#00d4ff'; }
+  }
+  if (list.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucun message reçu.</div>'; return; }
+  c.innerHTML = '<div class="messages-list">' + list.map(function(m){
+    return '<div class="message-item' + (m.isRead ? ' is-read' : '') + '" onclick="viewMessage(\'' + m.id + '\')">'
+      + '<img class="message-item-icon" src="' + m.fromAvatar + '" style="border-radius:50%;width:36px;height:36px;object-fit:cover">'
+      + '<div class="message-item-info">'
+        + '<div class="message-item-from">' + escHtml(m.fromDisplay) + ' <span style="color:#6a7a8a;font-weight:400;font-size:11px">@' + escHtml(m.from) + '</span></div>'
+        + '<div class="message-item-subject">' + (m.isRead ? '' : '<strong style="color:#ff4757">● </strong>') + escHtml(m.subject) + '</div>'
+        + '<div class="message-item-preview">' + escHtml(m.body.slice(0, 80)) + (m.body.length > 80 ? '…' : '') + '</div>'
+        + '<div class="message-item-date">' + fmtDate(m.sentAt) + '</div>'
+      + '</div>'
+      + '<div class="message-item-actions">'
+        + '<button class="user-item-btn del" onclick="deleteMessage(\'' + m.id + '\', event)">🗑</button>'
+      + '</div>'
+    + '</div>';
+  }).join('') + '</div>';
+}
+
+// ===========================================================
+// FILTRAGE / RECHERCHE ARCHIVES
+// ===========================================================
+function resetArchFilters(){
+  var s = document.getElementById('arch-search'); if (s) s.value = '';
+  var st = document.getElementById('arch-status'); if (st) st.value = '';
+  var t = document.getElementById('arch-type'); if (t) t.value = '';
+  renderArchivesList();
+}
+function applyArchFilters(list){
+  var s = ((document.getElementById('arch-search') || {}).value || '').toLowerCase().trim();
+  var st = (document.getElementById('arch-status') || {}).value || '';
+  var t = (document.getElementById('arch-type') || {}).value || '';
+  return list.filter(function(r){
+    if (s){
+      var name = (r.partnerName || '').toLowerCase();
+      var by = (r.createdByDisplay || '').toLowerCase();
+      var login = (r.createdBy || '').toLowerCase();
+      if (name.indexOf(s) === -1 && by.indexOf(s) === -1 && login.indexOf(s) === -1) return false;
+    }
+    if (st && (r.status || 'validated') !== st) return false;
+    if (t && r.type !== t) return false;
+    return true;
+  });
+}
+
+// ===========================================================
+// Affichage du bouton message dans la nav (si utilisateur connecté)
+// ===========================================================
+function updateMsgBtnVisibility(){
+  var btn = document.getElementById('nav-msg-btn');
+  if (!btn) return;
+  var u = getCurrentUser();
+  // Visible pour tous les users connectés sauf admin (qui reçoit, pas envoie)
+  btn.style.display = (u && !u.isAdmin) ? '' : 'none';
+}
+
 // Init au chargement
 checkPageAccess();
 applyAuthState();
 refreshAdminNotifications();
+updateMsgBtnVisibility();
+renderMessagesList();
 // Login modal : Enter = submit
 document.getElementById('login-password').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
 document.getElementById('login-username').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('login-password').focus(); } });
@@ -1467,9 +1621,14 @@ function renderArchivesList(){
   } else {
     list = []; // pas connecté : aucun contrat visible
   }
+  // Afficher la barre de filtres si on a au moins quelques contrats à filtrer (et connecté)
+  var filtersBar = document.getElementById('archives-filters');
+  if (filtersBar) filtersBar.style.display = (user && list.length > 2) ? 'flex' : 'none';
+  // Appliquer les filtres en cours
+  list = applyArchFilters(list);
   if (list.length === 0){
     c.innerHTML = '<div class="validated-empty">' + (canSeeAll
-      ? 'Aucun contrat soumis pour le moment.<br>Remplissez un contrat, signez-le et cliquez sur « Valider et archiver ».'
+      ? 'Aucun contrat ne correspond à vos critères de recherche.'
       : (user ? 'Vous n\'avez aucun contrat à votre nom pour le moment.' : 'Connectez-vous pour voir vos contrats.')
     ) + '</div>';
     return;

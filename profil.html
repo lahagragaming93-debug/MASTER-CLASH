@@ -26,7 +26,7 @@
     <a href="admin.html" class="locked-link" data-section="admin"><span class="lock-icon">🔧</span>Admin</a>
   </div>
   <div class="nav-user" id="nav-user">
-    <div class="nav-notif-wrap" id="nav-notif-wrap" style="display:none"><button class="nav-bell" id="nav-bell" onclick="toggleNotifs(event)">🔔<span class="nav-notif-count" id="nav-notif-count">0</span></button><div class="nav-notif-dropdown" id="nav-notif-dropdown"><div class="nav-notif-head"><strong>Notifications</strong><button class="nav-notif-mark" onclick="markAllNotifsRead()">✓ Tout marquer lu</button></div><div class="nav-notif-list" id="nav-notif-list"></div></div></div><button class="nav-login-btn" id="nav-login-btn" onclick="openLoginModal()">🔐 Connexion</button>
+    <button class="nav-msg-btn" id="nav-msg-btn" onclick="openMessageModal()" style="display:none" title="Contacter l'organisateur">📨</button><div class="nav-notif-wrap" id="nav-notif-wrap" style="display:none"><button class="nav-bell" id="nav-bell" onclick="toggleNotifs(event)">🔔<span class="nav-notif-count" id="nav-notif-count">0</span></button><div class="nav-notif-dropdown" id="nav-notif-dropdown"><div class="nav-notif-head"><strong>Notifications</strong><button class="nav-notif-mark" onclick="markAllNotifsRead()">✓ Tout marquer lu</button></div><div class="nav-notif-list" id="nav-notif-list"></div></div></div><button class="nav-login-btn" id="nav-login-btn" onclick="openLoginModal()">🔐 Connexion</button>
     <div class="nav-user-box" id="nav-user-box" style="display:none">
       <img class="nav-avatar" id="nav-avatar" src="" alt="">
       <div class="nav-user-text">
@@ -268,6 +268,39 @@
         <button type="submit" class="modal-btn modal-btn-primary" onclick="saveUserFromModal()">Enregistrer</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ===== MODAL MESSAGERIE ===== -->
+<div class="modal-overlay" id="message-modal" style="align-items:flex-start;padding:30px 20px;overflow-y:auto">
+  <div class="modal" style="max-width:520px;text-align:left">
+    <div class="modal-logo" style="text-align:center">⚡ MASTER CLASH</div>
+    <div class="modal-sub" style="text-align:center">Contacter l'organisateur</div>
+    <h3 style="text-align:center">📨 Nouveau message</h3>
+    <p style="text-align:center;color:#aabbc8;font-size:13px">Posez votre question ou faites une demande à BoulaTV.</p>
+    <label class="auth-label">Sujet</label>
+    <input type="text" id="msg-subject" placeholder="ex: Question sur mon contrat" autocomplete="off" class="auth-input">
+    <label class="auth-label">Message</label>
+    <textarea id="msg-body" placeholder="Tapez votre message..." class="auth-input" style="min-height:120px;resize:vertical;font-family:inherit"></textarea>
+    <div class="modal-error" id="msg-error"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-secondary" onclick="closeMessageModal()">Annuler</button>
+      <button type="button" class="modal-btn modal-btn-primary" onclick="sendMessage()">📨 Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL VOIR MESSAGE (admin) ===== -->
+<div class="modal-overlay" id="msg-view-modal" style="align-items:flex-start;padding:30px 20px;overflow-y:auto">
+  <div class="modal" style="max-width:560px;text-align:left">
+    <div class="modal-logo" style="text-align:center">⚡ MASTER CLASH</div>
+    <div class="modal-sub" style="text-align:center" id="msg-view-from">De : —</div>
+    <h3 style="text-align:center" id="msg-view-subject">Sujet</h3>
+    <p style="color:#6a7a8a;font-size:11px;text-align:center;letter-spacing:1px;margin-bottom:14px" id="msg-view-date"></p>
+    <div id="msg-view-body" style="background:#141926;padding:16px;border-radius:8px;border-left:3px solid #00d4ff;color:#dce4f0;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-secondary" onclick="closeMsgViewModal()">Fermer</button>
+    </div>
   </div>
 </div>
 
