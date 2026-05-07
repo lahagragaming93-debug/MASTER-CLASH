@@ -23,6 +23,218 @@ var MC_USERS_KEY = 'mc_users_v1';
 var MC_SESSION_KEY = 'mc_session_v1';
 var MC_LOGS_KEY = 'mc_logs_v1';
 var MC_MESSAGES_KEY = 'mc_messages_v1';
+var MC_TEMPLATES_KEY = 'mc_templates_v1';
+
+// ===========================================================
+// TEMPLATES DE CONTRATS (système éditable)
+// ===========================================================
+function getTemplates(){
+  try {
+    var custom = JSON.parse(localStorage.getItem(MC_TEMPLATES_KEY) || 'null');
+    if (custom && Array.isArray(custom) && custom.length > 0) return custom;
+  } catch(e){}
+  return (typeof DEFAULT_CONTRACT_TEMPLATES !== 'undefined') ? DEFAULT_CONTRACT_TEMPLATES : [];
+}
+function saveTemplates(list){ localStorage.setItem(MC_TEMPLATES_KEY, JSON.stringify(list)); }
+function getTemplate(id){
+  return getTemplates().find(function(t){ return t.id === id; }) || null;
+}
+function resetTemplatesToDefault(){
+  localStorage.removeItem(MC_TEMPLATES_KEY);
+}
+
+// Fonctions pour transformer un input descripteur en HTML <input>
+function _renderInputAttr(input){
+  if (!input) return '';
+  var attrs = '';
+  if (input.type) attrs += ' type="' + input.type + '"';
+  if (input.placeholder) attrs += ' placeholder="' + escHtml(input.placeholder) + '"';
+  if (input.value !== undefined && input.value !== '') attrs += ' value="' + escHtml(String(input.value)) + '"';
+  if (input.optional) attrs += ' data-optional="1"';
+  if (input.style) attrs += ' style="' + input.style + '"';
+  return attrs;
+}
+
+// Construit le HTML d'un contrat à partir d'un template
+function buildContractHTML(tpl){
+  var h = '';
+  // Header (logo + meta)
+  h += '<div class="contract-header">';
+  h +=   '<div class="contract-logo-block">';
+  h +=     '<div class="cl-line1"><span class="bolt">⚡</span> MASTER</div>';
+  h +=     '<div class="cl-line2">CL<span class="chevron">▲</span>SH</div>';
+  h +=     '<div class="cl-tag">Le savoir ne suffit pas. Il faut vaincre.</div>';
+  h +=   '</div>';
+  h +=   '<div class="contract-meta">';
+  h +=     '<div class="ct-title">Contrat de Partenariat</div>';
+  (tpl.sectorSubs || []).forEach(function(s){ h += '<div class="ct-sub">' + escHtml(s) + '</div>'; });
+  h +=     '<div class="ct-ref">Réf. ' + escHtml(tpl.ref) + '</div>';
+  h +=     '<div class="ct-ed">Édition : <input type="text" placeholder="N°" style="min-width:60px"> &nbsp; Date : <input type="date"></div>';
+  h +=   '</div>';
+  h += '</div>';
+  // Blocks
+  (tpl.blocks || []).forEach(function(b){
+    h += renderBlock(b);
+  });
+  // Signature block
+  var sig = tpl.signature || { organizerLabel: 'Pour l\'Organisateur', partnerLabel: 'Pour le Partenaire' };
+  h += '<div class="signature-block">';
+  h +=   '<div class="signature-col">';
+  h +=     '<h4>' + escHtml(sig.organizerLabel) + '</h4>';
+  h +=     '<div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>';
+  h +=     '<div class="sig-field"><div class="field-label">Date</div><input type="date"></div>';
+  h +=     '<div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>';
+  h +=   '</div>';
+  h +=   '<div class="signature-col">';
+  h +=     '<h4>' + escHtml(sig.partnerLabel) + '</h4>';
+  h +=     '<div class="sig-field"><div class="field-label">Nom &amp; fonction</div><input type="text" style="width:100%"></div>';
+  h +=     '<div class="sig-field"><div class="field-label">Date</div><input type="date"></div>';
+  h +=     '<div class="sig-wrap"><canvas class="sig-canvas" width="700" height="120"></canvas><button type="button" class="sig-clear" onclick="clearSig(this)">✕ Effacer signature</button></div>';
+  h +=   '</div>';
+  h += '</div>';
+  // Footer
+  h += '<div class="contract-footer">' + escHtml(tpl.footer || ('MASTER CLASH — Document officiel — Réf. ' + tpl.ref + ' — État de San Andreas')) + '</div>';
+  return h;
+}
+
+function renderBlock(b){
+  if (!b) return '';
+  switch (b.type){
+    case 'h3': return '<h3>' + escHtml(b.text || '') + '</h3>';
+    case 'h4': return '<h4>' + escHtml(b.text || '') + '</h4>';
+    case 'p': return '<p>' + (b.html || escHtml(b.text || '')) + '</p>';
+    case 'fieldLabel': return '<div class="field-label">' + escHtml(b.text || '') + '</div>';
+    case 'textarea': return '<textarea' + _renderInputAttr(b.input || {}) + '></textarea>';
+    case 'inlineP':
+      var s = '<p>';
+      (b.segments || []).forEach(function(seg){
+        if (seg.kind === 'text') s += escHtml(seg.value || '');
+        else if (seg.kind === 'html') s += seg.value || '';
+        else if (seg.kind === 'input'){
+          var i = seg.input || {};
+          if (i.type === 'textarea') s += '<textarea' + _renderInputAttr(i) + '></textarea>';
+          else s += '<input' + _renderInputAttr(i) + '>';
+        }
+      });
+      s += '</p>';
+      return s;
+    case 'fieldRow':
+      var fr = '<div class="field-row">';
+      (b.fields || []).forEach(function(f){
+        fr += '<div><div class="field-label">' + escHtml(f.label || '') + '</div><input' + _renderInputAttr(f.input || {}) + '>';
+        if (f.suffix) fr += ' ' + escHtml(f.suffix);
+        fr += '</div>';
+      });
+      fr += '</div>';
+      return fr;
+    case 'ul':
+      var u = '<ul>';
+      (b.items || []).forEach(function(it){
+        if (typeof it === 'string') u += '<li>' + escHtml(it) + '</li>';
+        else if (it.html && it.input){
+          u += '<li>' + it.html + '<input' + _renderInputAttr(it.input) + '></li>';
+        } else if (it.html){
+          u += '<li>' + it.html + '</li>';
+        } else u += '<li>' + escHtml(String(it)) + '</li>';
+      });
+      u += '</ul>';
+      return u;
+    case 'checkboxes':
+      var cb = '<p>';
+      (b.items || []).forEach(function(it){
+        cb += '<label class="checkbox-line"><input type="checkbox"' + (it.checked ? ' checked' : '') + (b.optional ? ' data-optional="1"' : '') + '> ' + escHtml(it.label || '') + '</label>';
+      });
+      cb += '</p>';
+      return cb;
+    default: return '';
+  }
+}
+
+// Construit dynamiquement les panels de contrats sur la page contrats.html
+function renderAllContractPanels(){
+  if (document.body.dataset.page !== 'contrats') return;
+  var templates = getTemplates();
+  // Mettre à jour CONTRACT_LABELS pour que les fonctions existantes (notifs, archives) fonctionnent
+  if (typeof CONTRACT_LABELS !== 'undefined'){
+    templates.forEach(function(t){
+      CONTRACT_LABELS[t.id] = { label: t.label, icon: t.icon, ref: t.ref };
+    });
+  }
+  // Mettre à jour les onglets (sauf bons et archives, gardés)
+  var tabsInner = document.querySelector('.contract-tabs-inner');
+  if (!tabsInner) return;
+  // Récupérer les onglets fixes (bons + archives)
+  var bonsTab = tabsInner.querySelector('.contract-tab[data-tab="bons"]');
+  var archivesTab = tabsInner.querySelector('.contract-tab[data-tab="archives"]');
+  // Vider et reconstruire
+  tabsInner.innerHTML = '';
+  templates.forEach(function(t, i){
+    var btn = document.createElement('button');
+    btn.className = 'contract-tab' + (i === 0 ? ' active' : '');
+    btn.dataset.tab = t.id;
+    btn.textContent = (t.icon || '') + ' ' + t.label.replace(/^Contrat\s+/, '');
+    tabsInner.appendChild(btn);
+  });
+  if (bonsTab) tabsInner.appendChild(bonsTab);
+  if (archivesTab) tabsInner.appendChild(archivesTab);
+
+  // Régénérer les panels (on garde panel-bons et panel-archives)
+  var section = document.getElementById('contrats');
+  var bonsPanel = document.getElementById('panel-bons');
+  var archivesPanel = document.getElementById('panel-archives');
+  // Supprimer les anciens panels custom (sauf bons, archives, et la barre tabs)
+  Array.from(section.querySelectorAll('.contract-panel')).forEach(function(p){
+    if (p.id !== 'panel-bons' && p.id !== 'panel-archives') p.remove();
+  });
+  // Insérer les nouveaux panels avant le panel-bons
+  templates.forEach(function(t, i){
+    var panel = document.createElement('div');
+    panel.className = 'contract-panel' + (i === 0 ? ' active' : '');
+    panel.id = 'panel-' + t.id;
+    panel.innerHTML = '<div class="print-bar"><div class="print-info">📋 Le contrat sera imprimable et téléchargeable en PNG une fois validé par l\'organisateur.</div></div>'
+      + '<div class="contract-doc">' + buildContractHTML(t) + '</div>'
+      + '<div class="validate-bar"><button class="validate-btn" onclick="validateContract(\'' + t.id + '\')">✓ Valider et archiver le contrat</button></div>';
+    if (bonsPanel) section.insertBefore(panel, bonsPanel);
+    else section.appendChild(panel);
+  });
+
+  // Réattacher les handlers d'onglets
+  document.querySelectorAll('.contract-tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      var target = tab.getAttribute('data-tab');
+      document.querySelectorAll('.contract-tab').forEach(function(t){ t.classList.remove('active'); });
+      document.querySelectorAll('.contract-panel').forEach(function(p){ p.classList.remove('active'); });
+      tab.classList.add('active');
+      var panel = document.getElementById('panel-' + target);
+      if (panel) panel.classList.add('active');
+      if (target === 'archives' && typeof renderArchivesList === 'function') renderArchivesList();
+    });
+  });
+
+  // Initialiser les canvas signature des contrats nouvellement générés
+  document.querySelectorAll('.contract-panel:not(#panel-bons):not(#panel-archives) .sig-canvas').forEach(function(c){
+    if (typeof initSigCanvas === 'function') initSigCanvas(c);
+  });
+
+  // Re-verrouiller la zone Organisateur dans tous les contrats actifs
+  document.querySelectorAll('.contract-panel:not(#panel-bons):not(#panel-archives) .contract-doc .signature-block .signature-col:first-child').forEach(function(col){
+    col.querySelectorAll('input, textarea').forEach(function(el){
+      el.setAttribute('disabled', 'disabled');
+      el.setAttribute('readonly', 'readonly');
+      el.classList.add('org-locked-input');
+    });
+    var canvas = col.querySelector('canvas.sig-canvas');
+    if (canvas) canvas.classList.add('org-locked-canvas');
+    var clearBtn = col.querySelector('.sig-clear');
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (!col.querySelector('.org-locked-msg')){
+      var msg = document.createElement('div');
+      msg.className = 'org-locked-msg';
+      msg.textContent = '⚠ Zone réservée à l\'organisateur — sera complétée après réception';
+      col.insertBefore(msg, col.firstChild);
+    }
+  });
+}
 var SECRET_QUESTIONS = {
   pet: 'Quel est le nom de votre premier animal de compagnie ?',
   mother: 'Quel est le nom de jeune fille de votre mère ?',
@@ -1164,6 +1376,7 @@ function updateMsgBtnVisibility(){
 }
 
 // Init au chargement
+renderAllContractPanels();  // Génère dynamiquement les panels de contrats à partir des templates (page contrats uniquement)
 checkPageAccess();
 applyAuthState();
 refreshAdminNotifications();
