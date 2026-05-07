@@ -1813,6 +1813,12 @@ function validateContract(type){
   });
 
   var creator = getCurrentUser();
+  // Snapshot du template au moment de la soumission (le contrat ne sera pas affecté par les modifs futures du template)
+  var tplSnap = null;
+  try {
+    var tpl = getTemplate(type);
+    if (tpl) tplSnap = JSON.parse(JSON.stringify(tpl));
+  } catch(e){}
   var record = {
     id: 'C' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
     type: type,
@@ -1824,7 +1830,8 @@ function validateContract(type){
     submittedAt: new Date().toISOString(),
     validatedAt: null,
     fields: fields,
-    signatures: signatures
+    signatures: signatures,
+    templateSnapshot: tplSnap   // copie figée du template à la signature
   };
   var list = getArchives();
   list.unshift(record);
@@ -1944,7 +1951,9 @@ function renderArchivesList(){
   var validated = list.filter(function(r){ return r.status === 'validated' || !r.status; });
 
   function rowPending(r){
-    var meta = CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄', ref: '' };
+    var meta = (r.templateSnapshot && r.templateSnapshot.label)
+      ? { label: r.templateSnapshot.label, icon: r.templateSnapshot.icon, ref: r.templateSnapshot.ref }
+      : (typeof getContractMeta === 'function' ? getContractMeta(r.type) : (CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄', ref: '' }));
     return '<div class="validated-item pending-item" data-id="' + escHtml(r.id) + '">'
       + '<div class="vi-icon">' + meta.icon + '</div>'
       + '<div class="vi-info">'
@@ -1959,7 +1968,9 @@ function renderArchivesList(){
     + '</div>';
   }
   function rowValidated(r){
-    var meta = CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄', ref: '' };
+    var meta = (r.templateSnapshot && r.templateSnapshot.label)
+      ? { label: r.templateSnapshot.label, icon: r.templateSnapshot.icon, ref: r.templateSnapshot.ref }
+      : (typeof getContractMeta === 'function' ? getContractMeta(r.type) : (CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄', ref: '' }));
     var ownerLabel = r.createdByDisplay
       ? '<span style="color:#6a7a8a;font-size:11px;font-weight:400"> — par ' + escHtml(r.createdByDisplay) + '</span>'
       : (r.createdBy ? '<span style="color:#6a7a8a;font-size:11px;font-weight:400"> — par @' + escHtml(r.createdBy) + '</span>' : '<span style="color:#ff4757;font-size:11px;font-weight:600;font-style:italic"> — ⚠ orphelin</span>');
@@ -2001,10 +2012,20 @@ function renderArchivesList(){
 function buildArchiveDoc(record, opts){
   opts = opts || {};
   var editableOrg = !!opts.editableOrgSignature;
-  var srcPanel = document.getElementById('panel-' + record.type);
-  if (!srcPanel) return null;
-  var srcDoc = srcPanel.querySelector('.contract-doc');
-  var clone = srcDoc.cloneNode(true);
+  var clone;
+  // Priorité 1 : snapshot historique du template (contrats récents) → garantit l'aspect d'origine
+  if (record.templateSnapshot && typeof buildContractHTML === 'function'){
+    clone = document.createElement('div');
+    clone.className = 'contract-doc';
+    clone.innerHTML = buildContractHTML(record.templateSnapshot);
+  } else {
+    // Priorité 2 : panel actuel (fallback pour contrats anciens sans snapshot)
+    var srcPanel = document.getElementById('panel-' + record.type);
+    if (!srcPanel) return null;
+    var srcDoc = srcPanel.querySelector('.contract-doc');
+    if (!srcDoc) return null;
+    clone = srcDoc.cloneNode(true);
+  }
   // Injecter le logo de l'entreprise du partenaire dans l'en-tête (si avatar disponible)
   var avatar = record.creatorAvatar;
   if (avatar){
@@ -2092,7 +2113,10 @@ function viewArchive(id){
 }
 function _openArchiveView(rec, isPending){
   if (!rec) return;
-  var meta = CONTRACT_LABELS[rec.type] || { label: rec.type };
+  // Préférer le snapshot historique pour le label (cohérence avec le contenu affiché)
+  var meta = (rec.templateSnapshot && rec.templateSnapshot.label)
+    ? { label: rec.templateSnapshot.label, icon: rec.templateSnapshot.icon, ref: rec.templateSnapshot.ref }
+    : (typeof getContractMeta === 'function' ? getContractMeta(rec.type) : (CONTRACT_LABELS[rec.type] || { label: rec.type }));
   var titleSuffix = isPending ? '  ⏳ En attente de validation' : '  ✓ Validé';
   document.getElementById('view-modal-title').textContent = meta.label + ' — ' + rec.partnerName + titleSuffix;
   var clone = buildArchiveDoc(rec, { editableOrgSignature: isPending });
