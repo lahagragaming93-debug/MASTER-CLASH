@@ -499,6 +499,9 @@ function applyAuthState(){
 
   // Onglet "Mon profil" visible uniquement si connecté
   if (profilLink) profilLink.style.display = user ? '' : 'none';
+  // Onglet Participants visible si connecté
+  var participantsLink = document.getElementById('nav-participants-link');
+  if (participantsLink) participantsLink.style.display = user ? '' : 'none';
   if (profilSection){
     if (user){ profilSection.style.display = ''; if (typeof showProfilSection === 'function') showProfilSection(); }
     else { profilSection.style.display = 'none'; }
