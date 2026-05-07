@@ -103,7 +103,8 @@ function doLogin(){
   setSession(user.username);
   logAction('Connexion');
   try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
-  location.reload();
+  // Redirect vers la home pour repartir d'un état propre (sans query params hérités)
+  location.href = 'index.html';
 }
 function doLogout(){
   mcConfirm('Voulez-vous vous déconnecter ?', { okText: 'Déconnexion' }).then(function(ok){
@@ -111,7 +112,7 @@ function doLogout(){
     logAction('Déconnexion');
     clearSession();
     try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
-    location.reload();
+    location.href = 'index.html';
   });
 }
 
@@ -507,7 +508,7 @@ function deleteUser(username){
 var PERM_LABELS = {
   regl: 'Règlement', part: 'Partenaires', contrats: 'Contrats',
   gouv: 'Gouverneur', ques: 'Questions', budget: 'Budget', bons: 'Bons',
-  validate: 'Validation', print: 'Impression/PNG'
+  validate: 'Validation', print: 'Impression/PNG', all_contracts: 'Voir tous les contrats'
 };
 function renderUsersList(){
   var c = document.getElementById('users-list');
@@ -734,14 +735,12 @@ document.addEventListener('click', function(e){
 });
 
 // Si on arrive sur contrats.html?view=ID, ouvrir directement la modale du contrat
+// (sans toucher au timestamp des notifs : seul "Tout marquer lu" doit le faire)
 (function(){
   if (location.pathname.indexOf('contrats.html') === -1 && document.body.dataset.page !== 'contrats') return;
   var params = new URLSearchParams(location.search);
   var viewId = params.get('view');
   if (!viewId) return;
-  // Marquer comme vu pour les notifs
-  localStorage.setItem('mc_admin_last_seen', String(Date.now()));
-  // Aller sur l'onglet archives + ouvrir la modale
   setTimeout(function(){
     var archTab = document.querySelector('.contract-tab[data-tab="archives"]');
     if (archTab) archTab.click();
@@ -1443,9 +1442,28 @@ function renderArchivesList(){
   var c = document.getElementById('validated-container');
   if (!c) return;
   updateArchivesCount();
-  var list = getArchives();
+  var allList = getArchives();
+  // Filtrer selon les droits : admin et perm 'all_contracts' voient tout, les autres ne voient que les leurs
+  var user = getCurrentUser();
+  var canSeeAll = user && (user.isAdmin || (user.perms || []).indexOf('all_contracts') !== -1);
+  var list;
+  if (canSeeAll){
+    list = allList;
+  } else if (user){
+    var dn = (user.displayName || '').toLowerCase();
+    var un = user.username.toLowerCase();
+    list = allList.filter(function(r){
+      var pn = (r.partnerName || '').toLowerCase();
+      return pn.indexOf(dn) !== -1 || pn.indexOf(un) !== -1;
+    });
+  } else {
+    list = []; // pas connecté : aucun contrat visible
+  }
   if (list.length === 0){
-    c.innerHTML = '<div class="validated-empty">Aucun contrat soumis pour le moment.<br>Remplissez un contrat, signez-le et cliquez sur « Valider et archiver ».</div>';
+    c.innerHTML = '<div class="validated-empty">' + (canSeeAll
+      ? 'Aucun contrat soumis pour le moment.<br>Remplissez un contrat, signez-le et cliquez sur « Valider et archiver ».'
+      : (user ? 'Vous n\'avez aucun contrat à votre nom pour le moment.' : 'Connectez-vous pour voir vos contrats.')
+    ) + '</div>';
     return;
   }
   var pending = list.filter(function(r){ return r.status === 'pending'; });
