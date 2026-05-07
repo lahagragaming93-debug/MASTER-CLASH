@@ -1,0 +1,62 @@
+// ============================================================================
+// Règles de sécurité Firestore — Master Clash
+// À copier dans Firebase Console → Firestore Database → onglet "Règles"
+//
+// Stratégie actuelle (transition) :
+// - Tous les utilisateurs authentifiés (anonymes inclus) peuvent lire/écrire.
+// - C'est volontairement permissif tant que le système d'auth complet n'est
+//   pas en place sur tous les comptes.
+// - Empêche cependant l'accès public sans aucune authentification Firebase
+//   (= protège contre un visiteur lambda sans rien).
+//
+// Plus tard on durcira par collection + check d'admin via lookup du doc users.
+// ============================================================================
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helpers
+    function isAuth() {
+      return request.auth != null;
+    }
+    function isNamed() {
+      return isAuth() && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    // Collection users : lecture libre pour authentifiés, écriture limitée
+    match /users/{username} {
+      allow read: if isAuth();
+      // En attendant la migration auth complète, on laisse écrire les
+      // utilisateurs authentifiés (anonymes ou nommés). Les anonymes ne
+      // peuvent pas créer de comptes via doRegister tant qu'ils ne se
+      // sont pas authentifiés.
+      allow write: if isAuth();
+    }
+
+    // Messages : lire/écrire si authentifié
+    match /messages/{threadId} {
+      allow read, write: if isAuth();
+    }
+
+    // Participants : inscriptions partagées
+    match /participants/{participantId} {
+      allow read, write: if isAuth();
+    }
+
+    // Contracts : contrats archivés
+    match /contracts/{contractId} {
+      allow read, write: if isAuth();
+    }
+
+    // Config (budget, allocations, etc.) : lecture libre, écriture limitée
+    match /config/{docId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // Bloque tout accès sans authentification Firebase
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
