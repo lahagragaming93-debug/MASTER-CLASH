@@ -1393,22 +1393,53 @@ function renderTemplatesList(){
     c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucun template (utilisez Restaurer pour récupérer les défauts).</div>';
     return;
   }
+  var defaultIds = (typeof DEFAULT_CONTRACT_TEMPLATES !== 'undefined') ? DEFAULT_CONTRACT_TEMPLATES.map(function(d){ return d.id; }) : [];
   c.innerHTML = '<div class="users-list">' + list.map(function(t){
+    var isDefault = defaultIds.indexOf(t.id) !== -1;
+    var resetBtn = isDefault ? '<button class="user-item-btn edit" onclick="resetSingleTemplate(\'' + escHtml(t.id) + '\')" title="Restaurer la version par défaut de ce template">↺</button>' : '';
     return '<div class="user-item">'
       + '<div class="user-item-avatar" style="display:flex;align-items:center;justify-content:center;font-size:24px;background:#0f1420;border:1px solid rgba(245,197,24,.4)">' + (t.icon || '📄') + '</div>'
       + '<div class="user-item-info">'
-        + '<div class="user-item-name">' + escHtml(t.label) + '</div>'
+        + '<div class="user-item-name">' + escHtml(t.label) + (isDefault ? ' <span style="font-size:9px;color:#00d4ff;font-weight:700;letter-spacing:.5px;background:rgba(0,212,255,.12);padding:2px 6px;border-radius:6px;text-transform:uppercase;margin-left:4px">Défaut</span>' : ' <span style="font-size:9px;color:#f5c518;font-weight:700;letter-spacing:.5px;background:rgba(245,197,24,.12);padding:2px 6px;border-radius:6px;text-transform:uppercase;margin-left:4px">Custom</span>') + '</div>'
         + '<div class="user-item-login">@' + escHtml(t.id) + ' — ' + escHtml(t.ref) + '</div>'
         + '<div class="user-item-perms">' + (t.blocks || []).length + ' bloc(s)</div>'
       + '</div>'
       + '<div class="user-item-actions">'
         + '<a class="user-item-btn edit" href="template-editor.html?id=' + encodeURIComponent(t.id) + '" style="text-decoration:none">✎ Modifier</a>'
         + '<a class="user-item-btn edit" href="template-editor.html?clone=' + encodeURIComponent(t.id) + '" style="text-decoration:none">⎘ Dupliquer</a>'
+        + resetBtn
         + '<button class="user-item-btn del" onclick="deleteTemplate(\'' + escHtml(t.id) + '\')">🗑</button>'
       + '</div>'
     + '</div>';
   }).join('') + '</div>';
 }
+// Restaurer UN SEUL template à sa version par défaut (sans toucher aux autres)
+function resetSingleTemplate(id){
+  if (typeof DEFAULT_CONTRACT_TEMPLATES === 'undefined'){
+    mcAlert('⚠ Templates par défaut indisponibles.', { title: 'Erreur' });
+    return;
+  }
+  var def = DEFAULT_CONTRACT_TEMPLATES.find(function(t){ return t.id === id; });
+  if (!def){
+    mcAlert('⚠ Aucune version par défaut pour ce template.\nIl s\'agit d\'un template personnalisé que vous avez créé.', { title: 'Pas de défaut' });
+    return;
+  }
+  mcConfirm('Restaurer le template « ' + def.label + ' » à sa version par défaut ?\n\nVos modifications sur ce template seront perdues, mais les autres templates ne seront pas affectés.\nLes contrats déjà signés ne changent pas.', { title: '↺ Restaurer ce template', okText: 'Restaurer' })
+    .then(function(ok){
+      if (!ok) return;
+      var list = getTemplates();
+      var idx = list.findIndex(function(t){ return t.id === id; });
+      // Deep clone du template par défaut pour éviter les references partagées
+      var cloned = JSON.parse(JSON.stringify(def));
+      if (idx === -1) list.push(cloned);
+      else list[idx] = cloned;
+      saveTemplates(list);
+      renderTemplatesList();
+      logAction('Template restauré au défaut', def.label);
+      mcAlert('✓ Template « ' + def.label + ' » restauré à sa version par défaut.', { title: 'Succès' });
+    });
+}
+
 function deleteTemplate(id){
   mcConfirm('Supprimer le template "' + id + '" ?\n\nLes contrats déjà signés référençant ce template restent visibles dans les archives.\n\nCette action est irréversible.', { title: '🗑 Supprimer template', okText: 'Supprimer' })
     .then(function(ok){
