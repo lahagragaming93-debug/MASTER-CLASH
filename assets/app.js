@@ -1350,10 +1350,13 @@ function validateContract(type){
     return isCanvasBlank(c) ? '' : c.toDataURL('image/png');
   });
 
+  var creator = getCurrentUser();
   var record = {
     id: 'C' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
     type: type,
     partnerName: partnerName,
+    createdBy: creator ? creator.username : null,
+    createdByDisplay: creator ? (creator.displayName || creator.username) : null,
     status: 'pending',
     submittedAt: new Date().toISOString(),
     validatedAt: null,
@@ -1453,8 +1456,11 @@ function renderArchivesList(){
     var dn = (user.displayName || '').toLowerCase();
     var un = user.username.toLowerCase();
     list = allList.filter(function(r){
+      // Méthode 1 (récente) : matching par createdBy (fiable, indépendant du contenu du contrat)
+      if (r.createdBy) return r.createdBy === user.username;
+      // Méthode 2 (legacy) : matching par partnerName pour les anciens contrats sans createdBy
       var pn = (r.partnerName || '').toLowerCase();
-      return pn.indexOf(dn) !== -1 || pn.indexOf(un) !== -1;
+      return (dn && pn.indexOf(dn) !== -1) || pn.indexOf(un) !== -1;
     });
   } else {
     list = []; // pas connecté : aucun contrat visible
@@ -1486,17 +1492,24 @@ function renderArchivesList(){
   }
   function rowValidated(r){
     var meta = CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄', ref: '' };
+    var ownerLabel = r.createdByDisplay
+      ? '<span style="color:#6a7a8a;font-size:11px;font-weight:400"> — par ' + escHtml(r.createdByDisplay) + '</span>'
+      : (r.createdBy ? '<span style="color:#6a7a8a;font-size:11px;font-weight:400"> — par @' + escHtml(r.createdBy) + '</span>' : '<span style="color:#ff4757;font-size:11px;font-weight:600;font-style:italic"> — ⚠ orphelin</span>');
+    var reassignBtn = userIsAdmin()
+      ? '<button class="vi-btn vi-btn-view" onclick="reassignArchive(\'' + r.id + '\')" title="Réassigner à un utilisateur">🔗</button>'
+      : '';
     return '<div class="validated-item" data-id="' + escHtml(r.id) + '">'
       + '<div class="vi-icon">' + meta.icon + '</div>'
       + '<div class="vi-info">'
         + '<div class="vi-title">' + escHtml(meta.label) + ' <span class="status-badge status-validated">✓ VALIDÉ</span></div>'
-        + '<div class="vi-partner">' + escHtml(r.partnerName) + '</div>'
+        + '<div class="vi-partner">' + escHtml(r.partnerName) + ownerLabel + '</div>'
         + '<div class="vi-date">Validé le ' + fmtDate(r.validatedAt) + '</div>'
       + '</div>'
       + '<div class="vi-actions">'
         + '<button class="vi-btn vi-btn-view" onclick="viewArchive(\'' + r.id + '\')">👁 Voir</button>'
         + '<button class="vi-btn vi-btn-print" onclick="printArchive(\'' + r.id + '\')">🖨 Imprimer</button>'
         + '<button class="vi-btn vi-btn-print" onclick="downloadContractPng(\'' + r.id + '\')">⬇ PNG</button>'
+        + reassignBtn
         + '<button class="vi-btn vi-btn-del" onclick="deleteArchive(\'' + r.id + '\')">🗑 Supprimer</button>'
       + '</div>'
     + '</div>';
@@ -1929,6 +1942,30 @@ function lockAllSections(){
       return mcAlert('✓ Sections re-verrouillées.\nLa page va se recharger.', { title: 'Succès' });
     })
     .then(function(){ if (arguments[0] !== undefined) setTimeout(function(){ location.reload(); }, 200); });
+}
+// Réassigner manuellement un contrat à un user (utile pour les anciens contrats sans createdBy)
+function reassignArchive(id){
+  if (!userIsAdmin()) return;
+  var users = getUsers();
+  var options = users.map(function(u){ return u.username + ' (' + (u.displayName || u.username) + ')'; }).join('\n');
+  mcPrompt('Saisissez le LOGIN du propriétaire de ce contrat.\n\nUtilisateurs disponibles :\n' + options, {
+    title: '🔗 Réassigner le contrat',
+    placeholder: 'login',
+    okText: 'Réassigner'
+  }).then(function(login){
+    if (!login) return;
+    login = login.trim();
+    var u = users.find(function(x){ return x.username.toLowerCase() === login.toLowerCase(); });
+    if (!u){ mcAlert('⚠ Utilisateur introuvable : ' + login, { title: 'Erreur' }); return; }
+    var list = getArchives();
+    var idx = list.findIndex(function(r){ return r.id === id; });
+    if (idx === -1) return;
+    list[idx].createdBy = u.username;
+    list[idx].createdByDisplay = u.displayName || u.username;
+    saveArchives(list);
+    renderArchivesList();
+    mcAlert('✓ Contrat réassigné à ' + u.username + '.', { title: 'Succès' });
+  });
 }
 function clearAllArchives(){
   mcConfirm('⚠ ATTENTION\n\nVous êtes sur le point d\'effacer TOUS les contrats archivés (en attente + validés).\n\nCette action est IRRÉVERSIBLE.\n\nContinuer ?', { title: '🗑 Effacer les archives', okText: 'Effacer' })
