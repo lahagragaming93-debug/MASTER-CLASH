@@ -548,12 +548,50 @@ body.present-active{overflow:hidden}
   100% { opacity: 1; transform: scale(1); }
 }
 
+/* ========== BUDGET — édition + suivi ========== */
+.budget-admin-bar {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: rgba(245,197,24,.08); border: 1px solid rgba(245,197,24,.3);
+  border-radius: 8px; padding: 12px 14px; margin-bottom: 18px;
+}
+.budget-section { margin-bottom: 22px; }
+.budget-table input.budget-edit {
+  background: #0f1420; border: 1px solid rgba(0,212,255,.25); color: #dce4f0;
+  border-radius: 4px; padding: 4px 6px; font-family: inherit; font-size: 13px;
+  outline: none; transition: border-color .15s, background .15s;
+}
+.budget-table input.budget-edit:hover { border-color: rgba(0,212,255,.5); }
+.budget-table input.budget-edit:focus { border-color: #00d4ff; background: #141926; }
+.budget-edit-text  { width: 100%; min-width: 180px; }
+.budget-edit-num   { width: 100px; text-align: right; }
+.budget-edit-qty   { width: 70px; text-align: center; }
+.budget-edit-title { width: 100%; font-size: inherit; font-weight: inherit; padding: 6px 8px; }
+.budget-del {
+  background: transparent; border: 1px solid rgba(255,71,87,.4); color: #ff7a8c;
+  border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 14px;
+}
+.budget-del:hover { background: rgba(255,71,87,.15); }
+.budget-check { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-size: 12px; color: #aabbc8; }
+.budget-check input { cursor: pointer; }
+.budget-row-pending td { opacity: .65; }
+.budget-summary-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px; margin-top: 14px;
+}
+.budget-stat {
+  background: #0f1420; border: 1px solid rgba(0,212,255,.2);
+  border-radius: 8px; padding: 12px; text-align: center;
+}
+.budget-stat-label { color: #6a7a8a; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.budget-stat-value { color: #00d4ff; font-size: 20px; font-weight: 700; }
+
 /* ========== IP FLOUTÉE (anti-leak stream) ========== */
 .ip-blur {
   display: inline-block;
   filter: blur(4px);
   cursor: pointer;
   transition: filter .2s ease;
+  -webkit-user-select: none;
   user-select: none;
   font-family: monospace;
   background: rgba(0,212,255,.08);
@@ -563,6 +601,7 @@ body.present-active{overflow:hidden}
 .ip-blur:hover { filter: blur(2px); }
 .ip-blur.revealed {
   filter: none;
+  -webkit-user-select: text;
   user-select: text;
   background: rgba(245,197,24,.15);
   color: #f5c518;

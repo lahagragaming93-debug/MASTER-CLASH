@@ -2186,7 +2186,398 @@ function resetDraw(){
   if (document.body.dataset.page === 'participants'){
     setTimeout(renderParticipantsList, 100);
   }
+  if (document.body.dataset.page === 'budget'){
+    setTimeout(renderBudget, 100);
+  }
 })();
+
+// ===========================================================
+// BUDGET — Prévu vs Réel + suivi par bénéficiaire
+// ===========================================================
+var MC_BUDGET_KEY = 'mc_budget_v1';
+var MC_BUDGET_ALLOC_KEY = 'mc_budget_alloc_v1';
+function defaultBudget(){
+  return {
+    sections: [
+      {
+        id: 'm1',
+        title: 'Manche 1 — 30 éliminés (chacun reçoit les 3 bons)',
+        type: 'rounds',
+        defaultQty: 30,
+        items: [
+          { id: 'm1-coif', name: 'Bon coiffure', unitPlanned: 300, qty: 30 },
+          { id: 'm1-rep',  name: 'Bon réparation', unitPlanned: 650, qty: 30 },
+          { id: 'm1-rep10',name: 'Bon repas (10 menus)', unitPlanned: 1100, qty: 30 }
+        ]
+      },
+      {
+        id: 'm2',
+        title: 'Manche 2 — 8 éliminés (chacun reçoit les 4 bons)',
+        type: 'rounds',
+        defaultQty: 8,
+        items: [
+          { id: 'm2-rep10',name: 'Bon repas (10 menus)', unitPlanned: 1100, qty: 8 },
+          { id: 'm2-rep', name: 'Bon réparation', unitPlanned: 650, qty: 8 },
+          { id: 'm2-est', name: 'Bon esthétique (coiffure 300 + tatouage ~500)', unitPlanned: 800, qty: 8 },
+          { id: 'm2-mfa', name: 'Bon stage pilotage MFA (15 min)', unitPlanned: 1000, qty: 8 }
+        ]
+      },
+      {
+        id: 'm3',
+        title: 'Manche 3 — 4 finalistes',
+        type: 'rounds',
+        defaultQty: 4,
+        items: [
+          { id: 'm3-base', name: 'Base commune (Package M2 + VIP GP4 + Hélico Maze)', unitPlanned: 5550, qty: 4 },
+          { id: 'm3-prime3', name: 'Prime 3ᵉ place', unitPlanned: 10000, qty: 1 },
+          { id: 'm3-prime2', name: 'Prime 2ᵉ place', unitPlanned: 20000, qty: 1 },
+          { id: 'm3-prime1', name: 'Prime 1er — Grand Vainqueur', unitPlanned: 40000, qty: 1 }
+        ]
+      },
+      {
+        id: 'prod',
+        title: 'Frais production & événement',
+        type: 'fixed',
+        items: [
+          { id: 'prod-studio',  name: 'Location studio',                   unitPlanned: 15000,  unitReal: 0 },
+          { id: 'prod-real',    name: 'Réalisation & production',          unitPlanned: 100000, unitReal: 0 },
+          { id: 'prod-annex',   name: 'Frais annexes (logistique, com, imprévus)', unitPlanned: 20000, unitReal: 0 }
+        ]
+      }
+    ]
+  };
+}
+function getBudget(){
+  try {
+    var raw = JSON.parse(localStorage.getItem(MC_BUDGET_KEY) || 'null');
+    if (!raw) return defaultBudget();
+    return raw;
+  } catch(e){ return defaultBudget(); }
+}
+function saveBudget(b){
+  localStorage.setItem(MC_BUDGET_KEY, JSON.stringify(b));
+}
+function getBudgetAllocs(){
+  try { return JSON.parse(localStorage.getItem(MC_BUDGET_ALLOC_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveBudgetAllocs(a){
+  localStorage.setItem(MC_BUDGET_ALLOC_KEY, JSON.stringify(a));
+}
+function fmtMoney(n){
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return Math.round(n).toLocaleString('fr-FR') + ' $';
+}
+// Calcule le total réel d'un item à partir des allocations
+function itemRealTotal(item){
+  if (item.unitReal !== undefined){
+    // section fixed (production)
+    return (item.unitReal || 0);
+  }
+  // sections rounds : somme des allocations distribuées
+  var allocs = getBudgetAllocs();
+  var total = 0;
+  Object.keys(allocs).forEach(function(k){
+    if (k.indexOf('::' + item.id) !== -1){
+      var a = allocs[k];
+      if (a.distributed){
+        total += (a.amount !== undefined ? a.amount : (item.unitPlanned || 0));
+      }
+    }
+  });
+  return total;
+}
+function itemPaidTotal(item){
+  if (item.unitReal !== undefined) return (item.unitReal || 0);
+  var allocs = getBudgetAllocs();
+  var total = 0;
+  Object.keys(allocs).forEach(function(k){
+    if (k.indexOf('::' + item.id) !== -1){
+      var a = allocs[k];
+      if (a.distributed && a.paid){
+        total += (a.amount !== undefined ? a.amount : (item.unitPlanned || 0));
+      }
+    }
+  });
+  return total;
+}
+function itemPlannedTotal(item){
+  return (item.unitPlanned || 0) * (item.qty || 1);
+}
+function sectionPlannedTotal(s){
+  return s.items.reduce(function(acc, it){ return acc + itemPlannedTotal(it); }, 0);
+}
+function sectionRealTotal(s){
+  return s.items.reduce(function(acc, it){ return acc + itemRealTotal(it); }, 0);
+}
+function sectionPaidTotal(s){
+  return s.items.reduce(function(acc, it){ return acc + itemPaidTotal(it); }, 0);
+}
+function renderBudget(){
+  var c = document.getElementById('budget-container');
+  if (!c) return;
+  var b = getBudget();
+  var isAdmin = userIsAdmin();
+  var html = '';
+  // Bandeau d'aide + actions admin
+  if (isAdmin){
+    html += '<div class="budget-admin-bar">'
+      + '<span style="color:#aabbc8">👑 Mode édition activé. Cliquez sur les valeurs pour les modifier.</span>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap">'
+        + '<button class="modal-btn modal-btn-secondary" onclick="addBudgetItem()">+ Ajouter une ligne</button>'
+        + '<button class="modal-btn modal-btn-secondary" onclick="resetBudget()" style="border-color:rgba(255,71,87,.4);color:#ff7a8c">↺ Réinitialiser</button>'
+      + '</div>'
+    + '</div>';
+  } else {
+    html += '<blockquote>📊 Vue lecture seule. Seul l\'organisateur peut modifier les valeurs.</blockquote>';
+  }
+  // Sections
+  b.sections.forEach(function(s){
+    html += renderBudgetSection(s, isAdmin);
+  });
+  // Suivi par bénéficiaire (sections rounds uniquement)
+  html += renderBudgetBeneficiaries(b, isAdmin);
+  // Récap
+  html += renderBudgetSummary(b);
+  c.innerHTML = html;
+}
+function renderBudgetSection(s, isAdmin){
+  var planned = sectionPlannedTotal(s);
+  var real = sectionRealTotal(s);
+  var paid = sectionPaidTotal(s);
+  var diff = real - planned;
+  var diffColor = diff > 0 ? '#ff5252' : (diff < 0 ? '#00e676' : '#aabbc8');
+  var diffSign = diff > 0 ? '+' : '';
+  var rows = s.items.map(function(it){
+    var pTotal = itemPlannedTotal(it);
+    var rTotal = itemRealTotal(it);
+    var pdTotal = itemPaidTotal(it);
+    var nameCell = isAdmin
+      ? '<input class="budget-edit budget-edit-text" value="' + escHtml(it.name) + '" onchange="updateBudgetItem(\'' + s.id + '\',\'' + it.id + '\',\'name\',this.value)">'
+      : escHtml(it.name);
+    var unitCell = isAdmin
+      ? '<input class="budget-edit budget-edit-num" type="number" min="0" step="50" value="' + (it.unitPlanned || 0) + '" onchange="updateBudgetItem(\'' + s.id + '\',\'' + it.id + '\',\'unitPlanned\',this.value)">'
+      : fmtMoney(it.unitPlanned || 0);
+    var qtyCell = '';
+    if (s.type === 'rounds'){
+      qtyCell = isAdmin
+        ? '<input class="budget-edit budget-edit-qty" type="number" min="0" step="1" value="' + (it.qty || 0) + '" onchange="updateBudgetItem(\'' + s.id + '\',\'' + it.id + '\',\'qty\',this.value)">'
+        : '× ' + (it.qty || 0);
+    }
+    var realCell = '';
+    if (s.type === 'fixed' && isAdmin){
+      realCell = '<input class="budget-edit budget-edit-num" type="number" min="0" step="50" value="' + (it.unitReal || 0) + '" onchange="updateBudgetItem(\'' + s.id + '\',\'' + it.id + '\',\'unitReal\',this.value)">';
+    } else if (s.type === 'fixed'){
+      realCell = fmtMoney(it.unitReal || 0);
+    } else {
+      // rounds : total réel calculé
+      realCell = '<span style="color:' + (rTotal === pTotal ? '#aabbc8' : (rTotal > pTotal ? '#ff5252' : '#00e676')) + '">' + fmtMoney(rTotal) + '</span>'
+              + (pdTotal !== rTotal ? '<br><span style="font-size:10px;color:#6a7a8a">dont ' + fmtMoney(pdTotal) + ' payé</span>' : '');
+    }
+    var delBtn = isAdmin ? '<button class="budget-del" onclick="deleteBudgetItem(\'' + s.id + '\',\'' + it.id + '\')">🗑</button>' : '';
+    return '<tr>'
+      + '<td>' + nameCell + '</td>'
+      + '<td>' + unitCell + '</td>'
+      + (s.type === 'rounds' ? '<td>' + qtyCell + '</td>' : '')
+      + '<td>' + fmtMoney(pTotal) + '</td>'
+      + '<td>' + realCell + '</td>'
+      + (isAdmin ? '<td>' + delBtn + '</td>' : '')
+    + '</tr>';
+  }).join('');
+  var totalRow = '<tr class="total-row">'
+    + '<td><strong>Sous-total</strong></td>'
+    + '<td></td>'
+    + (s.type === 'rounds' ? '<td></td>' : '')
+    + '<td><strong>' + fmtMoney(planned) + '</strong></td>'
+    + '<td><strong style="color:' + diffColor + '">' + fmtMoney(real) + '</strong>'
+      + (planned > 0 ? '<br><span style="font-size:10px;color:' + diffColor + '">(' + diffSign + fmtMoney(diff) + ')</span>' : '')
+    + '</td>'
+    + (isAdmin ? '<td></td>' : '')
+  + '</tr>';
+  var titleEdit = isAdmin
+    ? '<input class="budget-edit budget-edit-title" value="' + escHtml(s.title) + '" onchange="updateBudgetSection(\'' + s.id + '\',\'title\',this.value)">'
+    : escHtml(s.title);
+  return '<div class="budget-section">'
+    + '<h3>' + titleEdit + '</h3>'
+    + '<div class="table-wrap"><table class="budget-table"><thead><tr>'
+      + '<th>Poste</th><th>Prévu unit.</th>'
+      + (s.type === 'rounds' ? '<th>Quantité</th>' : '')
+      + '<th>Total prévu</th>'
+      + '<th>Total réel</th>'
+      + (isAdmin ? '<th></th>' : '')
+    + '</tr></thead><tbody>'
+      + rows + totalRow
+    + '</tbody></table></div>'
+  + '</div>';
+}
+function renderBudgetBeneficiaries(b, isAdmin){
+  // Section dynamique listant tous les participants éliminés/qualifiés et permettant de cocher les bons distribués
+  var participants = (typeof getParticipants === 'function') ? getParticipants() : [];
+  // On ne montre que les rounds (m1, m2, m3) dans cette vue
+  var roundSections = b.sections.filter(function(s){ return s.type === 'rounds'; });
+  if (participants.length === 0){
+    return '<div class="budget-section"><h3>Suivi des bons distribués par bénéficiaire</h3>'
+      + '<blockquote>Aucun participant inscrit pour le moment. Les bons à distribuer apparaîtront ici une fois le tirage et les éliminations effectués.</blockquote>'
+    + '</div>';
+  }
+  var allocs = getBudgetAllocs();
+  var rows = participants.map(function(p){
+    return roundSections.map(function(s){
+      return s.items.map(function(it){
+        var key = p.id + '::' + it.id;
+        var a = allocs[key] || {};
+        var distributed = !!a.distributed;
+        var paid = !!a.paid;
+        var amount = a.amount !== undefined ? a.amount : (it.unitPlanned || 0);
+        var distAttr = distributed ? 'checked' : '';
+        var paidAttr = paid ? 'checked' : '';
+        var disabledAttr = isAdmin ? '' : 'disabled';
+        var amountInput = isAdmin
+          ? '<input class="budget-edit budget-edit-num" type="number" min="0" step="50" value="' + amount + '" onchange="updateAlloc(\'' + p.id + '\',\'' + it.id + '\',\'amount\',this.value)">'
+          : fmtMoney(amount);
+        return '<tr class="' + (distributed ? '' : 'budget-row-pending') + '">'
+          + '<td>' + escHtml(p.fullName || (p.firstName + ' ' + p.lastName)) + '<br><span style="font-size:10px;color:#6a7a8a">' + (STATUS_LABELS[p.status] || p.status) + '</span></td>'
+          + '<td>' + s.id.toUpperCase() + ' — ' + escHtml(it.name) + '</td>'
+          + '<td>' + amountInput + '</td>'
+          + '<td><label class="budget-check"><input type="checkbox" ' + distAttr + ' ' + disabledAttr + ' onchange="updateAlloc(\'' + p.id + '\',\'' + it.id + '\',\'distributed\',this.checked)"> distribué</label></td>'
+          + '<td><label class="budget-check"><input type="checkbox" ' + paidAttr + ' ' + disabledAttr + ' onchange="updateAlloc(\'' + p.id + '\',\'' + it.id + '\',\'paid\',this.checked)"> payé</label></td>'
+        + '</tr>';
+      }).join('');
+    }).join('');
+  }).join('');
+  return '<div class="budget-section">'
+    + '<h3>📋 Suivi des bons par bénéficiaire</h3>'
+    + '<p style="color:#aabbc8;font-size:13px">Cochez « distribué » pour comptabiliser dans le total réel. Cochez « payé » pour suivre les règlements effectifs.</p>'
+    + '<div class="table-wrap" style="max-height:500px;overflow-y:auto"><table class="budget-table"><thead><tr>'
+      + '<th>Participant</th><th>Bon</th><th>Montant réel</th><th>Distribué ?</th><th>Payé ?</th>'
+    + '</tr></thead><tbody>' + rows + '</tbody></table></div>'
+  + '</div>';
+}
+function renderBudgetSummary(b){
+  var totalPlanned = b.sections.reduce(function(acc, s){ return acc + sectionPlannedTotal(s); }, 0);
+  var totalReal = b.sections.reduce(function(acc, s){ return acc + sectionRealTotal(s); }, 0);
+  var totalPaid = b.sections.reduce(function(acc, s){ return acc + sectionPaidTotal(s); }, 0);
+  var diff = totalReal - totalPlanned;
+  var diffColor = diff > 0 ? '#ff5252' : (diff < 0 ? '#00e676' : '#aabbc8');
+  var diffLabel = diff > 0 ? 'Dépassement' : (diff < 0 ? 'Économie' : 'Conforme');
+  var diffSign = diff > 0 ? '+' : '';
+  var rows = b.sections.map(function(s){
+    var sp = sectionPlannedTotal(s);
+    var sr = sectionRealTotal(s);
+    var sd = sr - sp;
+    var sc = sd > 0 ? '#ff5252' : (sd < 0 ? '#00e676' : '#aabbc8');
+    return '<tr><td>' + escHtml(s.title) + '</td>'
+      + '<td>' + fmtMoney(sp) + '</td>'
+      + '<td style="color:' + sc + '">' + fmtMoney(sr) + '</td>'
+      + '<td style="color:' + sc + '">' + (sd === 0 ? '—' : ((sd > 0 ? '+' : '') + fmtMoney(sd))) + '</td>'
+    + '</tr>';
+  }).join('');
+  return '<div class="budget-section">'
+    + '<h3>📊 Récapitulatif général</h3>'
+    + '<div class="table-wrap"><table class="budget-table"><thead><tr>'
+      + '<th>Poste</th><th>Prévu</th><th>Réel</th><th>Écart</th>'
+    + '</tr></thead><tbody>' + rows
+    + '<tr class="total-row"><td><strong>TOTAL</strong></td>'
+      + '<td><strong>' + fmtMoney(totalPlanned) + '</strong></td>'
+      + '<td style="color:' + diffColor + '"><strong>' + fmtMoney(totalReal) + '</strong></td>'
+      + '<td style="color:' + diffColor + '"><strong>' + (diff === 0 ? '—' : (diffSign + fmtMoney(diff))) + '</strong></td>'
+    + '</tr>'
+    + '</tbody></table></div>'
+    + '<div class="budget-summary-grid">'
+      + '<div class="budget-stat"><div class="budget-stat-label">Total prévu</div><div class="budget-stat-value">' + fmtMoney(totalPlanned) + '</div></div>'
+      + '<div class="budget-stat"><div class="budget-stat-label">Total réel distribué</div><div class="budget-stat-value" style="color:' + diffColor + '">' + fmtMoney(totalReal) + '</div></div>'
+      + '<div class="budget-stat"><div class="budget-stat-label">Effectivement payé</div><div class="budget-stat-value" style="color:#f5c518">' + fmtMoney(totalPaid) + '</div></div>'
+      + '<div class="budget-stat"><div class="budget-stat-label">Écart vs prévu</div><div class="budget-stat-value" style="color:' + diffColor + '">' + diffLabel + '<br><span style="font-size:14px">' + (diff === 0 ? '—' : (diffSign + fmtMoney(diff))) + '</span></div></div>'
+    + '</div>'
+    + '<blockquote>💡 Les valeurs sont mises à jour en temps réel à mesure que les bons sont distribués et payés aux participants.</blockquote>'
+  + '</div>';
+}
+function updateBudgetItem(sectionId, itemId, field, value){
+  if (!userIsAdmin()) return;
+  var b = getBudget();
+  var s = b.sections.find(function(x){ return x.id === sectionId; });
+  if (!s) return;
+  var it = s.items.find(function(x){ return x.id === itemId; });
+  if (!it) return;
+  if (field === 'name'){ it.name = (value || '').trim() || 'Sans nom'; }
+  else { it[field] = parseFloat(value) || 0; }
+  saveBudget(b);
+  renderBudget();
+}
+function updateBudgetSection(sectionId, field, value){
+  if (!userIsAdmin()) return;
+  var b = getBudget();
+  var s = b.sections.find(function(x){ return x.id === sectionId; });
+  if (!s) return;
+  s[field] = (value || '').trim();
+  saveBudget(b);
+  renderBudget();
+}
+function addBudgetItem(){
+  if (!userIsAdmin()) return;
+  var b = getBudget();
+  var sectionIds = b.sections.map(function(s){ return s.id; }).join(', ');
+  mcPrompt('Dans quelle section ajouter une ligne ?\n\nSections disponibles : ' + sectionIds, {
+    title: 'Ajouter une ligne',
+    placeholder: 'ex: m1',
+    okText: 'Continuer'
+  }).then(function(sid){
+    if (!sid) return;
+    sid = sid.trim().toLowerCase();
+    var s = b.sections.find(function(x){ return x.id === sid; });
+    if (!s){ mcAlert('Section introuvable : ' + sid); return; }
+    var newItem = {
+      id: sid + '-' + Date.now().toString(36),
+      name: 'Nouveau poste',
+      unitPlanned: 0
+    };
+    if (s.type === 'rounds') newItem.qty = s.defaultQty || 1;
+    if (s.type === 'fixed') newItem.unitReal = 0;
+    s.items.push(newItem);
+    saveBudget(b);
+    renderBudget();
+  });
+}
+function deleteBudgetItem(sectionId, itemId){
+  if (!userIsAdmin()) return;
+  mcConfirm('Supprimer cette ligne du budget ?', { okText: 'Supprimer' }).then(function(ok){
+    if (!ok) return;
+    var b = getBudget();
+    var s = b.sections.find(function(x){ return x.id === sectionId; });
+    if (!s) return;
+    s.items = s.items.filter(function(x){ return x.id !== itemId; });
+    // Nettoyer les allocations associées
+    var allocs = getBudgetAllocs();
+    Object.keys(allocs).forEach(function(k){ if (k.indexOf('::' + itemId) !== -1) delete allocs[k]; });
+    saveBudgetAllocs(allocs);
+    saveBudget(b);
+    renderBudget();
+  });
+}
+function resetBudget(){
+  if (!userIsAdmin()) return;
+  mcConfirm('⚠ Réinitialiser le budget aux valeurs par défaut ?\n\nLes allocations par bénéficiaire seront aussi effacées.\n\nAction irréversible.', { okText: 'Réinitialiser' }).then(function(ok){
+    if (!ok) return;
+    try { localStorage.removeItem(MC_BUDGET_KEY); } catch(e){}
+    try { localStorage.removeItem(MC_BUDGET_ALLOC_KEY); } catch(e){}
+    renderBudget();
+    mcAlert('✓ Budget réinitialisé.');
+  });
+}
+function updateAlloc(participantId, itemId, field, value){
+  if (!userIsAdmin()) return;
+  var allocs = getBudgetAllocs();
+  var key = participantId + '::' + itemId;
+  if (!allocs[key]) allocs[key] = { distributed: false, paid: false };
+  if (field === 'amount') allocs[key].amount = parseFloat(value) || 0;
+  else allocs[key][field] = !!value;
+  if (field === 'paid' && value && !allocs[key].distributed){
+    allocs[key].distributed = true; // payé implique distribué
+  }
+  if (field === 'paid' && value){ allocs[key].paidAt = new Date().toISOString(); }
+  saveBudgetAllocs(allocs);
+  renderBudget();
+}
 
 // Init au chargement
 renderAllContractPanels();  // Génère dynamiquement les panels de contrats à partir des templates (page contrats uniquement)
