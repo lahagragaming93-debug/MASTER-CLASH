@@ -332,6 +332,26 @@ function doLogin(){
   setSession(user.username);
   logAction('Connexion');
   try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+  // Auth Firebase en arrière-plan (silencieux, non-bloquant) — permet aux règles
+  // Firestore de différencier un utilisateur authentifié d'un visiteur anonyme.
+  if (window.MC_FB && MC_FB.available && MC_FB.auth){
+    var email = user.email || (user.username.toLowerCase() + '@masterclash.local');
+    MC_FB.auth.signInWithEmailAndPassword(email, p)
+      .catch(function(err){
+        if (err && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials')){
+          MC_FB.auth.createUserWithEmailAndPassword(email, p)
+            .then(function(){
+              if (!user.email && window.MC_DATA){
+                MC_DATA.update('users', user.username, { email: email });
+              }
+              console.log('[MC_AUTH] Compte Firebase créé pour', user.username);
+            })
+            .catch(function(e){ console.warn('[MC_AUTH] createUser error:', e && e.code); });
+        } else if (err){
+          console.warn('[MC_AUTH] signIn error:', err.code);
+        }
+      });
+  }
   // Redirect vers la home pour repartir d'un état propre (sans query params hérités)
   location.href = 'index.html';
 }
@@ -341,6 +361,10 @@ function doLogout(){
     logAction('Déconnexion');
     clearSession();
     try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+    // Déconnexion Firebase (sans bloquer)
+    if (window.MC_FB && MC_FB.available && MC_FB.auth){
+      MC_FB.auth.signOut().catch(function(err){ console.warn('[MC_AUTH] signOut:', err); });
+    }
     location.href = 'index.html';
   });
 }
@@ -398,8 +422,10 @@ function doRegister(){
     err.textContent = '⚠ Ce nom d\'utilisateur est déjà pris. Choisissez-en un autre.';
     return;
   }
-  users.push({
+  var fbEmail = u.toLowerCase() + '@masterclash.local';
+  var newUser = {
     username: u,
+    email: fbEmail,
     password: p1,
     displayName: dn,
     avatar: _regAvatarDataURL || defaultAvatar(dn),
@@ -408,12 +434,19 @@ function doRegister(){
     secretQuestion: sq,
     secretAnswer: sa,
     createdAt: new Date().toISOString()
-  });
+  };
+  users.push(newUser);
   saveUsers(users);
   setSession(u);
   logAction('Inscription nouveau compte', dn);
   try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
   try { sessionStorage.setItem('mc_just_registered', dn); } catch(e){}
+  // Création parallèle du compte Firebase Auth (silencieux, non-bloquant)
+  if (window.MC_FB && MC_FB.available && MC_FB.auth){
+    MC_FB.auth.createUserWithEmailAndPassword(fbEmail, p1)
+      .then(function(){ console.log('[MC_AUTH] Compte Firebase créé pour', u); })
+      .catch(function(e){ console.warn('[MC_AUTH] createUser register:', e && e.code); });
+  }
   location.reload();
 }
 
