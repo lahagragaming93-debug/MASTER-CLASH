@@ -16,7 +16,7 @@
  * ============================================================================ */
 (function(){
   var COLLECTION = 'users';
-  var STORAGE_KEY = 'mc_users';
+  var STORAGE_KEY = 'mc_users_v1'; // doit matcher MC_USERS_KEY dans app.js
 
   window.MC_USERS = {
     cache: [],
