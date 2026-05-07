@@ -2655,6 +2655,38 @@ refreshAdminNotifications();
 updateMsgBtnVisibility();
 refreshUserMsgBadge();
 renderMessagesList();
+
+// Re-authentification Firebase nominale automatique si une session legacy existe
+// Nécessaire car certains navigateurs (Opera GX, CEF FiveM) ne persistent pas
+// la session Firebase Auth entre les chargements de page → l'utilisateur
+// retombe en mode anonyme et les règles Firestore strictes bloquent ses
+// opérations.
+function autoReauthFromLegacy(){
+  if (!window.MC_FB || !MC_FB.available || !MC_FB.auth) return;
+  var localUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  if (!localUser) return;
+  if (!MC_FB.auth.currentUser) return;
+  if (!MC_FB.auth.currentUser.isAnonymous) return; // déjà nominal
+  if (typeof MC_DATA === 'undefined') return;
+  MC_DATA.get('users', localUser.username).then(function(u){
+    if (!u || !u.password) return;
+    var email = u.email || (u.username.toLowerCase() + '@masterclash.local');
+    MC_FB.auth.signInWithEmailAndPassword(email, u.password)
+      .then(function(){ console.log('[MC_AUTH] Re-auth nominal :', u.username); })
+      .catch(function(err){
+        if (err && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials')){
+          MC_FB.auth.createUserWithEmailAndPassword(email, u.password)
+            .then(function(){ console.log('[MC_AUTH] Compte Firebase créé pour', u.username); })
+            .catch(function(e){ console.warn('[MC_AUTH] create:', e && e.code); });
+        } else {
+          console.warn('[MC_AUTH] re-auth:', err && err.code);
+        }
+      });
+  });
+}
+if (window.MC_FB && MC_FB.ready){
+  MC_FB.ready.then(function(){ setTimeout(autoReauthFromLegacy, 200); });
+}
 // Login modal : Enter = submit
 document.getElementById('login-password').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
 document.getElementById('login-username').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('login-password').focus(); } });
