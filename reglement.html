@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accueil — MASTER CLASH</title>
+<title>Règlement Officiel — MASTER CLASH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="assets/style.css">
 </head>
-<body data-page="home">
+<body data-page="regl">
 <nav class="nav">
   <a class="nav-logo" href="index.html">⚡ <span>MC</span> MASTER CLASH</a>
   <div class="nav-links">
@@ -35,65 +35,122 @@
     </div>
   </div>
 </nav>
-<header class="hero" id="top">
-  <div class="hero-badge">Document officiel — État de San Andreas</div>
-  <h1>MASTER CLASH</h1>
-  <div class="hero-tagline">« Le savoir ne suffit pas. Il faut vaincre. »</div>
-  <div class="hero-stats">
-    <div class="stat"><span class="stat-value">42</span><span class="stat-label">Participants</span></div>
-    <div class="stat"><span class="stat-value">3</span><span class="stat-label">Manches</span></div>
-    <div class="stat"><span class="stat-value">100%</span><span class="stat-label">Récompenses</span></div>
-  </div>
-</header>
+<!-- ===== SECTION 2 — RÈGLEMENT ===== -->
+<section id="regl">
+  <h2 class="section-title">Règlement Officiel</h2>
+  <div class="section-subtitle">Section 2 — 10 articles</div>
 
-<section id="home-nav">
-  <h2 class="section-title">Accès rapide</h2>
-  <div class="section-subtitle">Sélectionnez la section à consulter</div>
-  <div class="home-grid">
-    <a href="gouverneur.html" class="home-card" data-perm="gouv">
-      <div class="home-card-icon">🏛️</div>
-      <div class="home-card-title">Dossier Gouverneur</div>
-      <div class="home-card-desc">Présentation officielle du projet</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="reglement.html" class="home-card">
-      <div class="home-card-icon">📜</div>
-      <div class="home-card-title">Règlement Officiel</div>
-      <div class="home-card-desc">10 articles de l'événement</div>
-    </a>
-    <a href="partenaires.html" class="home-card">
-      <div class="home-card-icon">🤝</div>
-      <div class="home-card-title">Partenaires</div>
-      <div class="home-card-desc">Devenir partenaire de Master Clash</div>
-    </a>
-    <a href="contrats.html" class="home-card">
-      <div class="home-card-icon">📋</div>
-      <div class="home-card-title">Contrats &amp; Bons</div>
-      <div class="home-card-desc">Documents de partenariat à signer</div>
-    </a>
-    <a href="questions.html" class="home-card" data-perm="ques">
-      <div class="home-card-icon">❓</div>
-      <div class="home-card-title">Banque de Questions</div>
-      <div class="home-card-desc">200 questions de l'animateur</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="budget.html" class="home-card" data-perm="budget">
-      <div class="home-card-icon">💰</div>
-      <div class="home-card-title">Budget</div>
-      <div class="home-card-desc">Estimation et financement</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="profil.html" class="home-card" id="home-card-profil" style="display:none">
-      <div class="home-card-icon">👤</div>
-      <div class="home-card-title">Mon profil</div>
-      <div class="home-card-desc">Mes informations &amp; mes contrats</div>
-    </a>
-    <a href="admin.html" class="home-card home-card-admin" id="home-card-admin" style="display:none">
-      <div class="home-card-icon">🔧</div>
-      <div class="home-card-title">Administration</div>
-      <div class="home-card-desc">Gestion utilisateurs &amp; système</div>
-    </a>
+  <div class="card"><h4 style="margin-top:0">Article 1 — Participation</h4>
+    <ul>
+      <li>L'événement est ouvert à tout citoyen en règle.</li>
+      <li>L'inscription préalable est obligatoire pour participer.</li>
+      <li>Un comportement exemplaire et respectueux est exigé tout au long de l'événement.</li>
+    </ul>
   </div>
+
+  <div class="card"><h4 style="margin-top:0">Article 2 — Déroulement général</h4>
+    <ul>
+      <li>L'événement se déroule en trois manches progressives.</li>
+      <li>Chaque participant s'engage à respecter les règles spécifiques à chaque manche.</li>
+      <li>Les décisions prises par l'animateur sont <strong>définitives et sans appel.</strong></li>
+      <li>L'organisateur se réserve le droit d'adapter les règles en cas de force majeure.</li>
+    </ul>
+  </div>
+
+  <div class="card"><h4 style="margin-top:0">Article 3 — Manche 1 : Qualification (42 → 12)</h4>
+    <p>Les 42 participants sont répartis en 3 groupes de 14. Les 4 premiers à atteindre <strong>12 points</strong> dans chaque groupe accèdent à la manche suivante.</p>
+    <ul>
+      <li>Questions posées à l'ensemble du groupe via un système de buzzer.</li>
+      <li>Chaque question rapporte entre 1 et 3 points selon son niveau de difficulté.</li>
+      <li>Thèmes : culture générale, mathématiques, histoire, géographie, cinéma, musique, questions partenaires.</li>
+      <li>Seule la première réponse donnée après activation du buzzer est prise en compte.</li>
+      <li>Couper volontairement la réponse d'un adversaire est <strong>strictement interdit.</strong></li>
+      <li>La manche continue jusqu'à ce que 4 qualifiés soient désignés par groupe.</li>
+      <li>Les participants éliminés repartent avec des bons d'achat partenaires.</li>
+    </ul>
+  </div>
+
+  <div class="card"><h4 style="margin-top:0">Article 4 — Manche 2 : Sélection (12 → 4)</h4>
+    <p>Les 12 qualifiés passent un par un, avec un maximum de <strong>4 questions</strong> par participant pour atteindre 12 points.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Format</th><th>Points</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Réponse directe</td><td><strong>+3 pts</strong></td><td>Le joueur répond sans aide.</td></tr>
+          <tr><td>QCM (4 choix)</td><td><strong>+1 pt</strong></td><td>4 choix proposés à l'écran.</td></tr>
+          <tr><td>Blind Test (Q4)</td><td><strong>Variable</strong></td><td>Extrait sonore — 15 secondes. S'applique uniquement à la 4ᵉ question.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h4>Égalité</h4>
+    <ul>
+      <li>Duel rapide entre les ex-aequo : 3 questions, 1 point par bonne réponse.</li>
+      <li>Le premier à atteindre 2 points est qualifié.</li>
+    </ul>
+  </div>
+
+  <div class="card"><h4 style="margin-top:0">Article 5 — Manche 3 : La Grande Finale (4 → 1)</h4>
+    <p>Les 4 finalistes s'affrontent avec un capital de temps individuel. Le dernier à conserver du temps remporte la finale.</p>
+    <ul>
+      <li>Chaque finaliste dispose d'un capital de <strong>90 secondes.</strong></li>
+      <li>Les questions sont posées à tour de rôle.</li>
+      <li>Le chrono démarre dès la fin de l'énoncé de la question.</li>
+      <li>Le chrono s'arrête <strong>uniquement</strong> lors d'une bonne réponse.</li>
+      <li>Toute mauvaise réponse ou absence de réponse : le chrono continue (perte de temps).</li>
+      <li>Le dernier joueur conservant du temps est déclaré vainqueur.</li>
+    </ul>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Rang</th><th>Récompense</th></tr></thead>
+        <tbody>
+          <tr><td>🏆 1er — Grand Vainqueur</td><td>Vitrine finale exceptionnelle</td></tr>
+          <tr><td>2ᵉ place</td><td>Récompense intermédiaire premium</td></tr>
+          <tr><td>3ᵉ place</td><td>Récompense secondaire</td></tr>
+          <tr><td>4ᵉ place</td><td>Récompense de participation</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card"><h4 style="margin-top:0">Article 6 — Buzzer</h4>
+    <ul>
+      <li>Une seule réponse est acceptée par activation du buzzer.</li>
+      <li>Il est formellement interdit d'activer le buzzer pour bloquer un adversaire.</li>
+      <li>Tout abus peut entraîner une <strong>pénalité ou une disqualification.</strong></li>
+    </ul>
+  </div>
+
+  <div class="card card-red"><h4 style="margin-top:0;color:#ff4757">Article 7 — Triche et comportement déloyal</h4>
+    <p>Est considéré comme triche : toute aide extérieure (téléphone, oreillette, document), communication entre joueurs, ou utilisation d'un outil quelconque.</p>
+    <p><strong style="color:#ff4757">Sanction : exclusion immédiate et définitive, sans compensation.</strong></p>
+  </div>
+
+  <div class="card"><h4 style="margin-top:0">Article 8 — Litiges</h4>
+    <ul>
+      <li>Tout litige est tranché par l'organisateur ou l'animateur.</li>
+      <li>Aucune contestation ne peut interrompre le cours d'une manche active.</li>
+      <li>Une procédure d'arbitrage peut être mise en place si le litige l'exige.</li>
+    </ul>
+  </div>
+
+  <div class="card"><h4 style="margin-top:0">Article 9 — Récompenses</h4>
+    <ul>
+      <li>Tous les participants reçoivent a minima des bons d'achat partenaires.</li>
+      <li>Les récompenses sont non échangeables contre de l'argent (sauf accord partenaire).</li>
+      <li>Les récompenses sont remises après validation par l'organisateur.</li>
+      <li>Tout comportement irrespectueux peut entraîner la <strong>perte des récompenses.</strong></li>
+    </ul>
+  </div>
+
+  <div class="card"><h4 style="margin-top:0">Article 10 — Comportement général</h4>
+    <ul>
+      <li>Le respect mutuel entre participants est obligatoire.</li>
+      <li>Tout comportement toxique ou agressif entraîne une <strong>exclusion immédiate.</strong></li>
+      <li>Le cadre de l'événement et ses règles doivent être respectés en toutes circonstances.</li>
+    </ul>
+  </div>
+
+  <blockquote>En participant à MASTER CLASH, chaque joueur reconnaît avoir lu et accepté l'intégralité du présent règlement.</blockquote>
 </section>
 <footer>
   MASTER CLASH — Document officiel — Réservé à l'animateur — État de San Andreas

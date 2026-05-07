@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accueil — MASTER CLASH</title>
+<title>Dossier Gouverneur — MASTER CLASH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="assets/style.css">
 </head>
-<body data-page="home">
+<body data-page="gouv">
 <nav class="nav">
   <a class="nav-logo" href="index.html">⚡ <span>MC</span> MASTER CLASH</a>
   <div class="nav-links">
@@ -35,65 +35,94 @@
     </div>
   </div>
 </nav>
-<header class="hero" id="top">
-  <div class="hero-badge">Document officiel — État de San Andreas</div>
-  <h1>MASTER CLASH</h1>
-  <div class="hero-tagline">« Le savoir ne suffit pas. Il faut vaincre. »</div>
-  <div class="hero-stats">
-    <div class="stat"><span class="stat-value">42</span><span class="stat-label">Participants</span></div>
-    <div class="stat"><span class="stat-value">3</span><span class="stat-label">Manches</span></div>
-    <div class="stat"><span class="stat-value">100%</span><span class="stat-label">Récompenses</span></div>
-  </div>
-</header>
+<!-- ===== SECTION 1 — GOUVERNEUR ===== -->
+<section id="gouv">
+  <h2 class="section-title">Dossier Gouverneur</h2>
+  <div class="section-subtitle">Section 1 — Présentation officielle</div>
+<div class="locked-wrap" data-section="gouv">
+<div class="locked-content locked">
 
-<section id="home-nav">
-  <h2 class="section-title">Accès rapide</h2>
-  <div class="section-subtitle">Sélectionnez la section à consulter</div>
-  <div class="home-grid">
-    <a href="gouverneur.html" class="home-card" data-perm="gouv">
-      <div class="home-card-icon">🏛️</div>
-      <div class="home-card-title">Dossier Gouverneur</div>
-      <div class="home-card-desc">Présentation officielle du projet</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="reglement.html" class="home-card">
-      <div class="home-card-icon">📜</div>
-      <div class="home-card-title">Règlement Officiel</div>
-      <div class="home-card-desc">10 articles de l'événement</div>
-    </a>
-    <a href="partenaires.html" class="home-card">
-      <div class="home-card-icon">🤝</div>
-      <div class="home-card-title">Partenaires</div>
-      <div class="home-card-desc">Devenir partenaire de Master Clash</div>
-    </a>
-    <a href="contrats.html" class="home-card">
-      <div class="home-card-icon">📋</div>
-      <div class="home-card-title">Contrats &amp; Bons</div>
-      <div class="home-card-desc">Documents de partenariat à signer</div>
-    </a>
-    <a href="questions.html" class="home-card" data-perm="ques">
-      <div class="home-card-icon">❓</div>
-      <div class="home-card-title">Banque de Questions</div>
-      <div class="home-card-desc">200 questions de l'animateur</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="budget.html" class="home-card" data-perm="budget">
-      <div class="home-card-icon">💰</div>
-      <div class="home-card-title">Budget</div>
-      <div class="home-card-desc">Estimation et financement</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="profil.html" class="home-card" id="home-card-profil" style="display:none">
-      <div class="home-card-icon">👤</div>
-      <div class="home-card-title">Mon profil</div>
-      <div class="home-card-desc">Mes informations &amp; mes contrats</div>
-    </a>
-    <a href="admin.html" class="home-card home-card-admin" id="home-card-admin" style="display:none">
-      <div class="home-card-icon">🔧</div>
-      <div class="home-card-title">Administration</div>
-      <div class="home-card-desc">Gestion utilisateurs &amp; système</div>
-    </a>
+  <div class="card">
+    <h3 style="margin-top:0">Présentation du projet</h3>
+    <p>Master Clash est un événement compétitif et immersif alliant culture générale, rapidité et stratégie. 42 participants s'affrontent en trois manches progressives pour décrocher le titre de Grand Vainqueur et remporter la vitrine finale.</p>
+    <p>Au-delà du divertissement, Master Clash constitue une opportunité unique pour Los Santos : un événement structuré, professionnel et fédérateur, ancré dans la vie de la communauté.</p>
   </div>
+
+  <h3>Objectifs du projet</h3>
+  <div class="card">
+    <ul>
+      <li>Dynamiser la vie sociale et culturelle de Los Santos.</li>
+      <li>Créer un événement fédérateur autour d'une compétition saine et ambitieuse.</li>
+      <li>Stimuler l'économie locale via la mise en valeur des entreprises partenaires.</li>
+      <li>Favoriser les interactions citoyennes et le sentiment d'appartenance.</li>
+      <li>Proposer un programme régulier, structuré et potentiellement récurrent.</li>
+    </ul>
+  </div>
+
+  <h3>Format et déroulement</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Phase</th><th>Participants</th><th>Mécanique</th><th>Objectif</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Manche 1 — Qualification</strong></td><td>42 → 12 (3 groupes × 14)</td><td>Buzzer — questions 1 à 3 pts selon difficulté</td><td>12 points</td></tr>
+        <tr><td><strong>Manche 2 — Sélection</strong></td><td>12 → 4 (individuel)</td><td>4 questions max (blind test possible Q4, 15s)</td><td>12 points</td></tr>
+        <tr><td><strong>Manche 3 — Finale</strong></td><td>4 → 1 Vainqueur</td><td>Chronomètre individuel 90 secondes par finaliste</td><td>Dernier avec du temps</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Impact économique &amp; social</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4 style="margin-top:0">Impact économique</h4>
+      <ul>
+        <li>Valorisation des enseignes et commerces partenaires.</li>
+        <li>Bons d'achat distribués aux partenaires locaux.</li>
+        <li>Visibilité, notoriété et contact direct avec le public.</li>
+      </ul>
+    </div>
+    <div class="card card-yellow">
+      <h4 style="margin-top:0;color:#f5c518">Impact social</h4>
+      <ul>
+        <li>Interaction directe entre citoyens.</li>
+        <li>Animation régulière de la vie de Los Santos.</li>
+        <li>Renforcement du lien institutions / citoyens.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Système de récompenses</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Étape</th><th>Participants</th><th>Récompense</th></tr></thead>
+      <tbody>
+        <tr><td>Éliminés Manche 1</td><td>30</td><td>Bons d'achat partenaires</td></tr>
+        <tr><td>Éliminés Manche 2</td><td>8</td><td>Bons premium + expériences partenaires</td></tr>
+        <tr><td>Finaliste 4ᵉ place</td><td>1</td><td>Récompense de participation finaliste</td></tr>
+        <tr><td>Podium — 3ᵉ / 2ᵉ</td><td>2</td><td>Récompenses exclusives (podium)</td></tr>
+        <tr class="total-row"><td>🏆 Grand Vainqueur</td><td>1</td><td>Vitrine finale exceptionnelle</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Vision &amp; pérennité</h3>
+  <div class="card">
+    <p>Master Clash a vocation à devenir un rendez-vous régulier de la vie culturelle et sociale de Los Santos. Chaque édition peut évoluer dans ses thématiques, ses partenariats et son format, offrant une dynamique durable et renouvelée.</p>
+    <ul>
+      <li>Événement déclinable en éditions thématiques saisonnières.</li>
+      <li>Format évolutif selon les retours de la communauté.</li>
+      <li>Possibilité d'intégrer des catégories spéciales ou tournois par équipes.</li>
+    </ul>
+  </div>
+
+</div>
+<div class="lock-overlay" data-section="gouv">
+  <div class="lock-big">🔒</div>
+  <div class="lock-msg">Accès restreint</div>
+  <div class="lock-sub">Code requis pour consulter le dossier Gouverneur</div>
+  <button class="lock-btn">🔐 Voir comment accéder</button>
+</div>
+</div>
 </section>
 <footer>
   MASTER CLASH — Document officiel — Réservé à l'animateur — État de San Andreas

@@ -1,0 +1,1867 @@
+// ===========================================================
+// MASTER CLASH — Logique principale (multi-pages, compatible CEF FiveM)
+// ===========================================================
+
+// Permissions requises par page (clé = data-page sur <body>)
+var PAGE_PERMS = {
+  home: null,
+  regl: null,
+  part: null,
+  contrats: null,
+  gouv: 'gouv',
+  ques: 'ques',
+  budget: 'budget',
+  profil: 'login',
+  admin: 'admin'
+};
+
+var MC_DEFAULT_SECRET = 'MASTER2026';
+var MC_SECRET_KEY = 'mc_secret_v1';
+var MC_UNLOCK_KEY = 'mc_unlocked_v1';
+var MC_ARCHIVE_KEY = 'mc_archives_v1';
+var MC_USERS_KEY = 'mc_users_v1';
+var MC_SESSION_KEY = 'mc_session_v1';
+var MC_LOGS_KEY = 'mc_logs_v1';
+var SECRET_QUESTIONS = {
+  pet: 'Quel est le nom de votre premier animal de compagnie ?',
+  mother: 'Quel est le nom de jeune fille de votre mère ?',
+  city: 'Dans quelle ville êtes-vous né(e) ?',
+  friend: 'Quel est le nom de votre meilleur ami d\'enfance ?',
+  color: 'Quelle est votre couleur préférée ?',
+  car: 'Quel est le modèle de votre première voiture ?',
+  school: 'Quel était le nom de votre école primaire ?'
+};
+var MC_SECRET = localStorage.getItem(MC_SECRET_KEY) || MC_DEFAULT_SECRET;
+
+// ===========================================================
+// AUTHENTIFICATION (système RP — pas une vraie sécurité serveur)
+// ===========================================================
+function getUsers(){
+  try { return JSON.parse(localStorage.getItem(MC_USERS_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function saveUsers(list){ localStorage.setItem(MC_USERS_KEY, JSON.stringify(list)); }
+function getCurrentUser(){
+  try {
+    var s = JSON.parse(localStorage.getItem(MC_SESSION_KEY) || 'null');
+    if (!s) return null;
+    var users = getUsers();
+    return users.find(function(u){ return u.username === s.username; }) || null;
+  } catch(e){ return null; }
+}
+function setSession(username){ localStorage.setItem(MC_SESSION_KEY, JSON.stringify({ username: username, loginAt: new Date().toISOString() })); }
+function clearSession(){ localStorage.removeItem(MC_SESSION_KEY); }
+
+// Avatars par défaut (SVG inline data URI)
+function defaultAvatar(name){
+  var initials = (name || '?').trim().slice(0, 2).toUpperCase();
+  var hue = 0;
+  for (var i = 0; i < (name || '').length; i++) hue = (hue + name.charCodeAt(i)) % 360;
+  var bg = 'hsl(' + hue + ',50%,30%)';
+  var fg = 'hsl(' + hue + ',60%,75%)';
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="' + bg + '"/><text x="40" y="50" font-size="34" font-family="Arial" font-weight="bold" fill="' + fg + '" text-anchor="middle">' + initials + '</text></svg>';
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+
+// Initialisation : créer le compte admin BoulaTV au 1er lancement
+function initAdminUser(){
+  var users = getUsers();
+  if (users.length === 0){
+    users.push({
+      username: 'BoulaTV',
+      password: 'BoulaTV2026',
+      displayName: 'BoulaTV (Organisateur)',
+      avatar: defaultAvatar('BT'),
+      isAdmin: true,
+      perms: ['regl','part','contrats','gouv','ques','budget','bons','validate','print'],
+      createdAt: new Date().toISOString()
+    });
+    saveUsers(users);
+  }
+}
+initAdminUser();
+
+// ----- LOGIN -----
+function openLoginModal(){
+  document.getElementById('login-modal').classList.add('active');
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  setTimeout(function(){ document.getElementById('login-username').focus(); }, 60);
+}
+function closeLoginModal(){ document.getElementById('login-modal').classList.remove('active'); }
+function doLogin(){
+  var u = (document.getElementById('login-username').value || '').trim();
+  var p = document.getElementById('login-password').value || '';
+  if (!u || !p){ document.getElementById('login-error').textContent = 'Saisissez votre identifiant et votre mot de passe.'; return; }
+  var users = getUsers();
+  var user = users.find(function(x){ return x.username.toLowerCase() === u.toLowerCase(); });
+  if (!user || user.password !== p){
+    document.getElementById('login-error').textContent = '⚠ Identifiants incorrects.';
+    return;
+  }
+  setSession(user.username);
+  logAction('Connexion');
+  try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+  location.reload();
+}
+function doLogout(){
+  mcConfirm('Voulez-vous vous déconnecter ?', { okText: 'Déconnexion' }).then(function(ok){
+    if (!ok) return;
+    logAction('Déconnexion');
+    clearSession();
+    try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+    location.reload();
+  });
+}
+
+// ----- INSCRIPTION (auto-inscription partenaire) -----
+var _regAvatarDataURL = '';
+function openRegisterModal(){
+  _regAvatarDataURL = '';
+  document.getElementById('register-modal').classList.add('active');
+  document.getElementById('register-error').textContent = '';
+  document.getElementById('reg-username').value = '';
+  document.getElementById('reg-displayname').value = '';
+  document.getElementById('reg-password').value = '';
+  document.getElementById('reg-password2').value = '';
+  document.getElementById('reg-avatar-preview').src = defaultAvatar('?');
+  setTimeout(function(){ document.getElementById('reg-username').focus(); }, 60);
+}
+function closeRegisterModal(){ document.getElementById('register-modal').classList.remove('active'); }
+function handleRegAvatarUpload(ev){
+  var file = ev.target.files[0];
+  if (!file) return;
+  if (file.size > 800 * 1024){
+    mcAlert('⚠ L\'image est trop lourde (max 800 Ko).', { title: 'Erreur' });
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    _regAvatarDataURL = e.target.result;
+    document.getElementById('reg-avatar-preview').src = _regAvatarDataURL;
+  };
+  reader.readAsDataURL(file);
+}
+function doRegister(){
+  var u = (document.getElementById('reg-username').value || '').trim();
+  var dn = (document.getElementById('reg-displayname').value || '').trim();
+  var p1 = document.getElementById('reg-password').value || '';
+  var p2 = document.getElementById('reg-password2').value || '';
+  var sq = document.getElementById('reg-secret-question').value || '';
+  var sa = (document.getElementById('reg-secret-answer').value || '').trim();
+  var err = document.getElementById('register-error');
+  err.textContent = '';
+
+  if (!u){ err.textContent = '⚠ Saisissez un nom d\'utilisateur.'; return; }
+  if (!/^[a-zA-Z0-9._-]+$/.test(u)){ err.textContent = '⚠ Login : lettres, chiffres, points, tirets seulement.'; return; }
+  if (u.length < 3){ err.textContent = '⚠ Le login doit faire au moins 3 caractères.'; return; }
+  if (!dn){ err.textContent = '⚠ Saisissez le nom de votre entreprise.'; return; }
+  if (!p1){ err.textContent = '⚠ Saisissez un mot de passe.'; return; }
+  if (p1.length < 4){ err.textContent = '⚠ Le mot de passe doit faire au moins 4 caractères.'; return; }
+  if (p1 !== p2){ err.textContent = '⚠ Les mots de passe ne correspondent pas.'; return; }
+  if (!sq){ err.textContent = '⚠ Choisissez une question secrète.'; return; }
+  if (!sa){ err.textContent = '⚠ Saisissez la réponse à votre question secrète.'; return; }
+
+  var users = getUsers();
+  if (users.find(function(x){ return x.username.toLowerCase() === u.toLowerCase(); })){
+    err.textContent = '⚠ Ce nom d\'utilisateur est déjà pris. Choisissez-en un autre.';
+    return;
+  }
+  users.push({
+    username: u,
+    password: p1,
+    displayName: dn,
+    avatar: _regAvatarDataURL || defaultAvatar(dn),
+    isAdmin: false,
+    perms: ['regl', 'part', 'contrats'],
+    secretQuestion: sq,
+    secretAnswer: sa,
+    createdAt: new Date().toISOString()
+  });
+  saveUsers(users);
+  setSession(u);
+  logAction('Inscription nouveau compte', dn);
+  try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+  try { sessionStorage.setItem('mc_just_registered', dn); } catch(e){}
+  location.reload();
+}
+
+// Au chargement, si on vient de s'inscrire, afficher le message de bienvenue
+(function(){
+  try {
+    var justReg = sessionStorage.getItem('mc_just_registered');
+    if (justReg){
+      sessionStorage.removeItem('mc_just_registered');
+      setTimeout(function(){
+        mcAlert('✓ Bienvenue ' + justReg + ' !\n\nVotre compte a été créé et vous êtes connecté.\nVous avez accès au Règlement, aux Partenaires et aux Contrats.\n\nPour des accès supplémentaires, contactez l\'organisateur.', { title: 'Compte créé' });
+      }, 200);
+    }
+  } catch(e){}
+})();
+
+// ----- PERMISSIONS -----
+function userHasPerm(perm){
+  var u = getCurrentUser();
+  if (!u) return false;
+  if (u.isAdmin) return true;
+  return (u.perms || []).indexOf(perm) !== -1;
+}
+function userIsAdmin(){
+  var u = getCurrentUser();
+  return !!(u && u.isAdmin);
+}
+
+// Sections : selon les perms du user, on affiche/masque le contenu
+// Sans login : Règlement et Partenaires accessibles en lecture seule
+var SECTION_PERMS = {
+  gouv: 'gouv',
+  ques: 'ques',
+  budget: 'budget',
+  admin: null // admin only via isAdmin
+};
+
+// Vérifie l'accès à la page courante. Si l'user n'a pas la perm, redirige vers index.
+function checkPageAccess(){
+  var page = (document.body && document.body.dataset.page) || 'home';
+  var requiredPerm = PAGE_PERMS[page];
+  var user = getCurrentUser();
+  if (requiredPerm === null) return true; // page publique
+  if (requiredPerm === 'login'){
+    if (user) return true;
+    var msg = 'Cette page nécessite d\'être connecté.';
+    setTimeout(function(){
+      mcAlert(msg, { title: '🔐 Connexion requise' }).then(function(){
+        location.replace('index.html');
+      });
+    }, 100);
+    return false;
+  }
+  if (requiredPerm === 'admin'){
+    if (user && user.isAdmin) return true;
+    setTimeout(function(){
+      mcAlert('🚫 Cette page est réservée à l\'administrateur.', { title: 'Accès refusé' }).then(function(){
+        location.replace('index.html');
+      });
+    }, 100);
+    return false;
+  }
+  // Sinon : permission spécifique
+  if (user && (user.isAdmin || (user.perms || []).indexOf(requiredPerm) !== -1)) return true;
+  setTimeout(function(){
+    var alertMsg = user
+      ? 'Votre compte « ' + (user.displayName || user.username) + ' » n\'a pas les permissions pour accéder à cette page.\n\nContactez l\'organisateur (BoulaTV).'
+      : 'Cette page nécessite une autorisation.\n\nConnectez-vous avec un compte ayant les droits requis.';
+    mcAlert(alertMsg, { title: '🚫 Accès refusé' }).then(function(){
+      location.replace('index.html');
+    });
+  }, 100);
+  return false;
+}
+
+function applyAuthState(){
+  var user = getCurrentUser();
+  var loginBtn = document.getElementById('nav-login-btn');
+  var userBox = document.getElementById('nav-user-box');
+  var profilLink = document.getElementById('nav-profil-link');
+  var profilSection = document.getElementById('profil');
+
+  // Onglet "Mon profil" visible uniquement si connecté
+  if (profilLink) profilLink.style.display = user ? '' : 'none';
+  if (profilSection){
+    if (user){ profilSection.style.display = ''; if (typeof showProfilSection === 'function') showProfilSection(); }
+    else { profilSection.style.display = 'none'; }
+  }
+
+  // Page home : afficher/masquer les cards selon les perms
+  var homeAdminCard = document.getElementById('home-card-admin');
+  if (homeAdminCard) homeAdminCard.style.display = (user && user.isAdmin) ? '' : 'none';
+  var homeProfilCard = document.getElementById('home-card-profil');
+  if (homeProfilCard) homeProfilCard.style.display = user ? '' : 'none';
+  document.querySelectorAll('.home-card[data-perm]').forEach(function(card){
+    var perm = card.dataset.perm;
+    var has = user && (user.isAdmin || (user.perms || []).indexOf(perm) !== -1);
+    var lock = card.querySelector('.home-card-lock');
+    if (lock) lock.style.display = has ? 'none' : '';
+  });
+
+  if (user){
+    loginBtn.style.display = 'none';
+    userBox.style.display = '';
+    document.getElementById('nav-avatar').src = user.avatar || defaultAvatar(user.displayName || user.username);
+    document.getElementById('nav-username').textContent = user.displayName || user.username;
+    var roleEl = document.getElementById('nav-userrole');
+    roleEl.textContent = user.isAdmin ? '👑 Admin' : 'Partenaire';
+    roleEl.className = 'nav-userrole' + (user.isAdmin ? ' admin' : '');
+  } else {
+    loginBtn.style.display = '';
+    userBox.style.display = 'none';
+  }
+
+  // Liste de toutes les sections / panels protégés
+  var protectedItems = [
+    { sectionId: 'gouv', perm: 'gouv', linkSelector: '.nav-links a[href="gouverneur.html"]' },
+    { sectionId: 'ques', perm: 'ques', linkSelector: '.nav-links a[href="questions.html"]' },
+    { sectionId: 'budget', perm: 'budget', linkSelector: '.nav-links a[href="budget.html"]' }
+  ];
+  protectedItems.forEach(function(item){
+    var section = document.getElementById(item.sectionId);
+    if (!section) return;
+    var content = section.querySelector('.locked-content');
+    var overlay = section.querySelector('.lock-overlay');
+    var hasAccess = userIsAdmin() || userHasPerm(item.perm);
+    if (content){
+      if (hasAccess) content.classList.remove('locked');
+      else content.classList.add('locked');
+    }
+    if (overlay) overlay.style.display = hasAccess ? 'none' : '';
+    // Mise à jour visuelle du lien dans la nav (retirer le cadenas si accès)
+    var link = document.querySelector(item.linkSelector);
+    if (link){
+      var icon = link.querySelector('.lock-icon');
+      if (hasAccess){
+        if (icon) icon.style.display = 'none';
+        link.classList.remove('locked-link-visual');
+        link.classList.add('access-ok');
+      } else {
+        if (icon) icon.style.display = '';
+        link.classList.remove('access-ok');
+      }
+    }
+  });
+
+  // Bons (panel à l'intérieur de Contrats)
+  var bonsPanel = document.getElementById('panel-bons');
+  if (bonsPanel){
+    var bc = bonsPanel.querySelector('.locked-content');
+    var bo = bonsPanel.querySelector('.lock-overlay');
+    var bonsAccess = userIsAdmin() || userHasPerm('bons');
+    if (bc){
+      if (bonsAccess) bc.classList.remove('locked');
+      else bc.classList.add('locked');
+    }
+    if (bo) bo.style.display = bonsAccess ? 'none' : '';
+    // Mise à jour de l'onglet "🔒 Bons Officiels"
+    var bonsTab = document.querySelector('.contract-tab[data-tab="bons"]');
+    if (bonsTab) bonsTab.innerHTML = bonsAccess ? 'Bons Officiels' : '🔒 Bons Officiels';
+  }
+
+  // Admin
+  var adminLink = document.querySelector('.nav-links a[href="admin.html"]');
+  var adminSection = document.getElementById('admin');
+  var ac = adminSection && adminSection.querySelector('.locked-content');
+  var ao = adminSection && adminSection.querySelector('.lock-overlay');
+  if (userIsAdmin()){
+    if (adminLink){
+      adminLink.style.display = '';
+      var icon = adminLink.querySelector('.lock-icon');
+      if (icon) icon.style.display = 'none';
+    }
+    if (ac) ac.classList.remove('locked');
+    if (ao) ao.style.display = 'none';
+    renderUsersList();
+  } else {
+    // Non-admin : on cache complètement l'onglet Admin de la nav (inutile)
+    if (adminLink) adminLink.style.display = 'none';
+    if (ac) ac.classList.add('locked');
+    if (ao) ao.style.display = '';
+  }
+}
+
+// ----- GESTION UTILISATEURS (modale création/édition) -----
+var _userEditingUsername = null;
+var _userAvatarDataURL = '';
+
+function openUserModal(editUsername){
+  _userEditingUsername = editUsername || null;
+  _userAvatarDataURL = '';
+  var modal = document.getElementById('user-modal');
+  document.getElementById('user-error').textContent = '';
+  document.getElementById('user-modal-title').textContent = editUsername ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur';
+  document.getElementById('user-modal-sub').textContent = editUsername ? 'Édition utilisateur' : 'Créer un utilisateur';
+  document.getElementById('user-pw-label').textContent = editUsername ? 'Mot de passe (laisser vide pour ne pas changer)' : 'Mot de passe';
+
+  if (editUsername){
+    var users = getUsers();
+    var u = users.find(function(x){ return x.username === editUsername; });
+    if (!u) return;
+    document.getElementById('user-username').value = u.username;
+    document.getElementById('user-username').disabled = true;
+    document.getElementById('user-displayname').value = u.displayName || '';
+    document.getElementById('user-password').value = '';
+    document.getElementById('user-avatar-preview').src = u.avatar || defaultAvatar(u.displayName || u.username);
+    _userAvatarDataURL = u.avatar || '';
+    document.getElementById('user-isadmin').checked = !!u.isAdmin;
+    document.querySelectorAll('.perm-cb').forEach(function(cb){
+      cb.checked = (u.perms || []).indexOf(cb.dataset.perm) !== -1;
+    });
+  } else {
+    document.getElementById('user-username').value = '';
+    document.getElementById('user-username').disabled = false;
+    document.getElementById('user-displayname').value = '';
+    document.getElementById('user-password').value = '';
+    document.getElementById('user-avatar-preview').src = defaultAvatar('?');
+    document.getElementById('user-isadmin').checked = false;
+    document.querySelectorAll('.perm-cb').forEach(function(cb){
+      cb.checked = ['regl','part','contrats'].indexOf(cb.dataset.perm) !== -1;
+    });
+  }
+  modal.classList.add('active');
+}
+function closeUserModal(){ document.getElementById('user-modal').classList.remove('active'); }
+
+function handleAvatarUpload(ev){
+  var file = ev.target.files[0];
+  if (!file) return;
+  if (file.size > 800 * 1024){
+    mcAlert('⚠ L\'image est trop lourde (max 800 Ko).\nUtilisez une image plus petite.', { title: 'Erreur' });
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    _userAvatarDataURL = e.target.result;
+    document.getElementById('user-avatar-preview').src = _userAvatarDataURL;
+  };
+  reader.readAsDataURL(file);
+}
+function clearAvatarPreview(){
+  _userAvatarDataURL = '';
+  var name = document.getElementById('user-displayname').value || '?';
+  document.getElementById('user-avatar-preview').src = defaultAvatar(name);
+}
+
+function saveUserFromModal(){
+  var username = (document.getElementById('user-username').value || '').trim();
+  var displayName = (document.getElementById('user-displayname').value || '').trim();
+  var password = document.getElementById('user-password').value || '';
+  var isAdmin = document.getElementById('user-isadmin').checked;
+  var perms = Array.from(document.querySelectorAll('.perm-cb')).filter(function(cb){ return cb.checked; }).map(function(cb){ return cb.dataset.perm; });
+  var err = document.getElementById('user-error');
+
+  if (!username){ err.textContent = '⚠ Saisissez un nom d\'utilisateur.'; return; }
+  if (!/^[a-zA-Z0-9._-]+$/.test(username)){ err.textContent = '⚠ Nom d\'utilisateur : lettres, chiffres, points, tirets seulement.'; return; }
+  if (!displayName){ err.textContent = '⚠ Saisissez un nom affiché.'; return; }
+  if (!_userEditingUsername && !password){ err.textContent = '⚠ Saisissez un mot de passe.'; return; }
+  if (password && password.length < 4){ err.textContent = '⚠ Le mot de passe doit faire au moins 4 caractères.'; return; }
+
+  var users = getUsers();
+  if (_userEditingUsername){
+    var idx = users.findIndex(function(x){ return x.username === _userEditingUsername; });
+    if (idx === -1){ err.textContent = 'Utilisateur introuvable.'; return; }
+    users[idx].displayName = displayName;
+    if (password) users[idx].password = password;
+    users[idx].avatar = _userAvatarDataURL || defaultAvatar(displayName);
+    users[idx].isAdmin = isAdmin;
+    users[idx].perms = perms;
+  } else {
+    var exists = users.find(function(x){ return x.username.toLowerCase() === username.toLowerCase(); });
+    if (exists){ err.textContent = '⚠ Ce nom d\'utilisateur existe déjà.'; return; }
+    users.push({
+      username: username,
+      password: password,
+      displayName: displayName,
+      avatar: _userAvatarDataURL || defaultAvatar(displayName),
+      isAdmin: isAdmin,
+      perms: perms,
+      createdAt: new Date().toISOString()
+    });
+  }
+  saveUsers(users);
+  // Si on a édité son propre compte, forcer un reload pour que les nouvelles perms s'appliquent partout
+  var current = getCurrentUser();
+  var editingSelf = _userEditingUsername && current && current.username === _userEditingUsername;
+  closeUserModal();
+  if (editingSelf){
+    try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+    mcAlert('✓ Compte modifié.\nLa page va se recharger pour appliquer les changements.', { title: 'Succès' }).then(function(){
+      location.reload();
+    });
+    return;
+  }
+  renderUsersList();
+  applyAuthState();
+  mcAlert('✓ Utilisateur ' + (_userEditingUsername ? 'modifié' : 'créé') + ' avec succès.', { title: 'Succès' });
+}
+
+function deleteUser(username){
+  if (username === 'BoulaTV'){
+    mcAlert('⚠ Le compte BoulaTV ne peut pas être supprimé.', { title: 'Erreur' });
+    return;
+  }
+  mcConfirm('Supprimer le compte « ' + username + ' » ?\n\nCette action est irréversible.', { title: '🗑 Supprimer', okText: 'Supprimer' })
+    .then(function(ok){
+      if (!ok) return;
+      var users = getUsers().filter(function(x){ return x.username !== username; });
+      saveUsers(users);
+      // Si on supprime le user actuellement loggé, déconnecter
+      var current = getCurrentUser();
+      if (current && current.username === username){
+        clearSession();
+        applyAuthState();
+      }
+      renderUsersList();
+      mcAlert('✓ Utilisateur supprimé.', { title: 'Succès' });
+    });
+}
+
+var PERM_LABELS = {
+  regl: 'Règlement', part: 'Partenaires', contrats: 'Contrats',
+  gouv: 'Gouverneur', ques: 'Questions', budget: 'Budget', bons: 'Bons',
+  validate: 'Validation', print: 'Impression/PNG'
+};
+function renderUsersList(){
+  var c = document.getElementById('users-list');
+  if (!c) return;
+  var users = getUsers();
+  var badge = document.getElementById('users-count-badge');
+  if (badge) badge.textContent = users.length;
+  if (users.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucun utilisateur enregistré.</div>'; return; }
+  c.innerHTML = '<div class="users-list">' + users.map(function(u){
+    var permsLabels = (u.perms || []).map(function(p){ return PERM_LABELS[p] || p; });
+    var permsLabel = u.isAdmin
+      ? '👑 ADMIN — tous les droits'
+      : (permsLabels.length ? permsLabels.join(' · ') : '⚠ Aucune permission');
+    var date = u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '';
+    return '<div class="user-item' + (u.isAdmin ? ' admin-item' : '') + '">'
+      + '<img class="user-item-avatar" src="' + (u.avatar || defaultAvatar(u.displayName || u.username)) + '" alt="">'
+      + '<div class="user-item-info">'
+        + '<div class="user-item-name">' + escHtml(u.displayName || u.username) + (date ? ' <span style="color:#6a7a8a;font-size:10px;font-weight:400">— créé le ' + date + '</span>' : '') + '</div>'
+        + '<div class="user-item-login">@' + escHtml(u.username) + '</div>'
+        + '<div class="user-item-perms' + (u.isAdmin ? ' admin' : '') + '">' + escHtml(permsLabel) + '</div>'
+      + '</div>'
+      + '<div class="user-item-actions">'
+        + '<button class="user-item-btn edit" onclick="openUserModal(\'' + u.username + '\')">✎ Modifier</button>'
+        + (u.username === 'BoulaTV' ? '' : '<button class="user-item-btn del" onclick="deleteUser(\'' + u.username + '\')">🗑 Supprimer</button>')
+      + '</div>'
+    + '</div>';
+  }).join('') + '</div>';
+}
+// Rafraîchir les listes à chaque clic sur l'onglet Admin
+(function(){
+  var adminLink = document.querySelector('.nav-links a[href="admin.html"]');
+  if (adminLink) adminLink.addEventListener('click', function(){
+    setTimeout(function(){
+      if (userIsAdmin()){
+        renderUsersList();
+        renderAdminLogs();
+      }
+    }, 80);
+  });
+})();
+
+// ===========================================================
+// BACKUP / RESTORE — sauvegarde JSON de toutes les données
+// ===========================================================
+function exportBackup(){
+  var data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    secret: localStorage.getItem(MC_SECRET_KEY) || null,
+    users: getUsers(),
+    archives: getArchives()
+  };
+  var json = JSON.stringify(data, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  var stamp = d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes());
+  a.href = url;
+  a.download = 'master-clash-backup-' + stamp + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+  var info = document.getElementById('backup-info');
+  if (info) info.textContent = '✓ Sauvegarde téléchargée le ' + d.toLocaleString('fr-FR') + ' — ' + data.users.length + ' utilisateur(s), ' + data.archives.length + ' contrat(s).';
+}
+function importBackupFile(ev){
+  var file = ev.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var data;
+    try { data = JSON.parse(e.target.result); } catch(err){
+      mcAlert('⚠ Fichier invalide : ce n\'est pas un JSON valide.', { title: 'Erreur' });
+      return;
+    }
+    if (!data || typeof data !== 'object' || !Array.isArray(data.users)){
+      mcAlert('⚠ Le fichier ne semble pas être une sauvegarde Master Clash valide.', { title: 'Erreur' });
+      return;
+    }
+    var summary = '⚠ Cette restauration va REMPLACER toutes les données actuelles :\n\n'
+      + '• ' + data.users.length + ' utilisateur(s) (vous écraserez les comptes actuels)\n'
+      + '• ' + (data.archives ? data.archives.length : 0) + ' contrat(s) archivé(s)\n'
+      + '• Code admin restauré\n\n'
+      + 'Sauvegarde du ' + (data.exportedAt ? new Date(data.exportedAt).toLocaleString('fr-FR') : 'date inconnue') + '\n\n'
+      + 'Continuer ?';
+    mcConfirm(summary, { title: '📂 Restaurer la sauvegarde', okText: 'Restaurer' }).then(function(ok){
+      if (!ok){ ev.target.value = ''; return; }
+      try {
+        saveUsers(data.users);
+        if (Array.isArray(data.archives)) localStorage.setItem(MC_ARCHIVE_KEY, JSON.stringify(data.archives));
+        if (data.secret) localStorage.setItem(MC_SECRET_KEY, data.secret);
+        clearSession();
+        localStorage.removeItem(MC_UNLOCK_KEY);
+        mcAlert('✓ Sauvegarde restaurée avec succès !\nLa page va se recharger.', { title: 'Restauration réussie' }).then(function(){ location.reload(); });
+      } catch(err){
+        mcAlert('⚠ Erreur pendant la restauration : ' + err.message, { title: 'Erreur' });
+      }
+    });
+  };
+  reader.readAsText(file);
+}
+
+// ===========================================================
+// GÉNÉRATION DE MOT DE PASSE ALÉATOIRE
+// ===========================================================
+function generateRandomPassword(){
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sans 0/O/I/1 pour éviter confusion
+  var len = 8;
+  var pwd = '';
+  for (var i = 0; i < len; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+  document.getElementById('user-password').value = pwd;
+  // Afficher une notification visuelle
+  var input = document.getElementById('user-password');
+  input.style.background = 'rgba(245,197,24,.2)';
+  input.style.borderColor = '#f5c518';
+  setTimeout(function(){ input.style.background = ''; input.style.borderColor = ''; }, 1000);
+}
+
+// ===========================================================
+// NOTIFICATIONS ADMIN (badges sur l'onglet Admin)
+// ===========================================================
+function refreshAdminNotifications(){
+  if (!userIsAdmin()) {
+    var b = document.getElementById('admin-notif-badge');
+    if (b) b.style.display = 'none';
+    return;
+  }
+  var archives = getArchives();
+  var pending = archives.filter(function(r){ return r.status === 'pending'; }).length;
+  var users = getUsers();
+  // Comptes auto-inscrits non encore "vus" : on garde la liste des dernières dates de visite admin
+  var lastSeen = parseInt(localStorage.getItem('mc_admin_last_seen') || '0', 10);
+  var newUsers = users.filter(function(u){
+    if (u.username === 'BoulaTV') return false;
+    if (!u.createdAt) return false;
+    return new Date(u.createdAt).getTime() > lastSeen;
+  }).length;
+  var total = pending + newUsers;
+  var badge = document.getElementById('admin-notif-badge');
+  if (badge){
+    if (total > 0){
+      badge.textContent = total;
+      badge.style.display = '';
+      badge.title = pending + ' contrat(s) en attente, ' + newUsers + ' nouveau(x) compte(s)';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+// Quand admin clique sur l'onglet Admin, marquer comme "vu"
+(function(){
+  var adminLink = document.querySelector('.nav-links a[href="admin.html"]');
+  if (adminLink) adminLink.addEventListener('click', function(){
+    if (userIsAdmin()){
+      localStorage.setItem('mc_admin_last_seen', String(Date.now()));
+      setTimeout(refreshAdminNotifications, 200);
+    }
+  });
+})();
+
+// ===========================================================
+// LOGS D'ACTIVITÉ
+// ===========================================================
+function getLogs(){
+  try { return JSON.parse(localStorage.getItem(MC_LOGS_KEY) || '[]'); } catch(e){ return []; }
+}
+function logAction(action, details){
+  var u = getCurrentUser();
+  var logs = getLogs();
+  logs.unshift({
+    at: new Date().toISOString(),
+    username: u ? u.username : '(anonyme)',
+    displayName: u ? (u.displayName || u.username) : '(anonyme)',
+    action: action,
+    details: details || ''
+  });
+  // Limite à 500 entrées pour ne pas saturer
+  if (logs.length > 500) logs = logs.slice(0, 500);
+  try { localStorage.setItem(MC_LOGS_KEY, JSON.stringify(logs)); } catch(e){}
+}
+function clearAllLogs(){
+  mcConfirm('Vider tout l\'historique d\'activité ?\n\nCette action est irréversible.', { title: '🗑 Vider les logs', okText: 'Vider' }).then(function(ok){
+    if (!ok) return;
+    localStorage.removeItem(MC_LOGS_KEY);
+    renderAdminLogs();
+    mcAlert('✓ Historique vidé.', { title: 'Succès' });
+  });
+}
+function renderAdminLogs(){
+  var c = document.getElementById('admin-logs-list');
+  if (!c) return;
+  var logs = getLogs();
+  if (logs.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucune activité enregistrée.</div>'; return; }
+  c.innerHTML = '<div style="max-height:400px;overflow-y:auto;background:#141926;border-radius:8px;padding:8px">'
+    + logs.slice(0, 100).map(function(l){
+      return '<div style="padding:8px 10px;border-bottom:1px solid rgba(0,212,255,.08);display:flex;gap:10px;align-items:center;font-size:12px">'
+        + '<span style="color:#6a7a8a;min-width:140px;font-family:monospace">' + new Date(l.at).toLocaleString('fr-FR') + '</span>'
+        + '<span style="color:#f5c518;font-weight:600;min-width:120px">' + escHtml(l.displayName) + '</span>'
+        + '<span style="color:#dce4f0;flex:1">' + escHtml(l.action) + '</span>'
+        + '<span style="color:#aabbc8;font-style:italic">' + escHtml(l.details) + '</span>'
+      + '</div>';
+    }).join('') + '</div>'
+    + '<div style="font-size:11px;color:#6a7a8a;margin-top:6px;text-align:center">Affichage des 100 dernières actions sur ' + logs.length + ' au total</div>';
+}
+
+// ===========================================================
+// MOT DE PASSE OUBLIÉ (via question secrète)
+// ===========================================================
+var _forgotStep = 1;
+var _forgotUser = null;
+function openForgotModal(){
+  _forgotStep = 1;
+  _forgotUser = null;
+  document.getElementById('forgot-modal').classList.add('active');
+  document.getElementById('forgot-error').textContent = '';
+  document.getElementById('forgot-username').value = '';
+  document.getElementById('forgot-answer').value = '';
+  document.getElementById('forgot-newpwd').value = '';
+  document.getElementById('forgot-newpwd2').value = '';
+  showForgotStep(1);
+  setTimeout(function(){ document.getElementById('forgot-username').focus(); }, 60);
+}
+function closeForgotModal(){ document.getElementById('forgot-modal').classList.remove('active'); }
+function showForgotStep(n){
+  _forgotStep = n;
+  document.getElementById('forgot-step-1').style.display = n === 1 ? '' : 'none';
+  document.getElementById('forgot-step-2').style.display = n === 2 ? '' : 'none';
+  document.getElementById('forgot-step-3').style.display = n === 3 ? '' : 'none';
+  document.getElementById('forgot-title').textContent = 'Étape ' + n + '/3';
+  document.getElementById('forgot-next-btn').textContent = n === 3 ? '🔑 Changer mon mot de passe' : 'Continuer →';
+}
+function forgotNext(){
+  var err = document.getElementById('forgot-error');
+  err.textContent = '';
+  if (_forgotStep === 1){
+    var u = (document.getElementById('forgot-username').value || '').trim();
+    if (!u){ err.textContent = '⚠ Saisissez votre nom d\'utilisateur.'; return; }
+    var users = getUsers();
+    var user = users.find(function(x){ return x.username.toLowerCase() === u.toLowerCase(); });
+    if (!user){ err.textContent = '⚠ Aucun compte trouvé avec ce nom.'; return; }
+    if (!user.secretQuestion || !user.secretAnswer){
+      err.textContent = '⚠ Ce compte n\'a pas de question secrète configurée.\nContactez l\'organisateur pour réinitialiser votre mot de passe.';
+      return;
+    }
+    _forgotUser = user;
+    document.getElementById('forgot-question-display').textContent = SECRET_QUESTIONS[user.secretQuestion] || user.secretQuestion;
+    showForgotStep(2);
+    setTimeout(function(){ document.getElementById('forgot-answer').focus(); }, 60);
+  } else if (_forgotStep === 2){
+    var ans = (document.getElementById('forgot-answer').value || '').trim();
+    if (!ans){ err.textContent = '⚠ Saisissez votre réponse.'; return; }
+    if (ans !== _forgotUser.secretAnswer){
+      err.textContent = '⚠ Réponse incorrecte.';
+      logAction('Tentative reset mdp échouée', _forgotUser.username);
+      return;
+    }
+    showForgotStep(3);
+    setTimeout(function(){ document.getElementById('forgot-newpwd').focus(); }, 60);
+  } else if (_forgotStep === 3){
+    var p1 = document.getElementById('forgot-newpwd').value || '';
+    var p2 = document.getElementById('forgot-newpwd2').value || '';
+    if (!p1){ err.textContent = '⚠ Saisissez un nouveau mot de passe.'; return; }
+    if (p1.length < 4){ err.textContent = '⚠ Minimum 4 caractères.'; return; }
+    if (p1 !== p2){ err.textContent = '⚠ Les mots de passe ne correspondent pas.'; return; }
+    var users = getUsers();
+    var idx = users.findIndex(function(x){ return x.username === _forgotUser.username; });
+    if (idx === -1) return;
+    users[idx].password = p1;
+    saveUsers(users);
+    logAction('Mot de passe réinitialisé via question secrète', _forgotUser.username);
+    closeForgotModal();
+    mcAlert('✓ Mot de passe réinitialisé avec succès.\nVous pouvez maintenant vous connecter.', { title: 'Succès' }).then(function(){
+      openLoginModal();
+      document.getElementById('login-username').value = _forgotUser.username;
+      document.getElementById('login-password').focus();
+    });
+  }
+}
+
+// ===========================================================
+// MON PROFIL (utilisateur connecté)
+// ===========================================================
+var _profilAvatarDataURL = '';
+function showProfilSection(){
+  var user = getCurrentUser();
+  if (!user) return;
+  document.getElementById('profil').style.display = '';
+  document.getElementById('profil-username').value = user.username;
+  document.getElementById('profil-displayname').value = user.displayName || '';
+  document.getElementById('profil-avatar-preview').src = user.avatar || defaultAvatar(user.displayName || user.username);
+  _profilAvatarDataURL = user.avatar || '';
+  document.getElementById('profil-secret-question').value = user.secretQuestion || '';
+  document.getElementById('profil-secret-answer').value = user.secretAnswer || '';
+  renderMyContrats();
+  renderMyLogs();
+}
+function handleProfilAvatarUpload(ev){
+  var file = ev.target.files[0];
+  if (!file) return;
+  if (file.size > 800 * 1024){ mcAlert('⚠ Image trop lourde (max 800 Ko).', { title: 'Erreur' }); return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    _profilAvatarDataURL = e.target.result;
+    document.getElementById('profil-avatar-preview').src = _profilAvatarDataURL;
+  };
+  reader.readAsDataURL(file);
+}
+function saveMyProfile(){
+  var user = getCurrentUser();
+  if (!user) return;
+  var dn = (document.getElementById('profil-displayname').value || '').trim();
+  if (!dn){ mcAlert('⚠ Le nom affiché ne peut pas être vide.', { title: 'Erreur' }); return; }
+  var users = getUsers();
+  var idx = users.findIndex(function(x){ return x.username === user.username; });
+  if (idx === -1) return;
+  users[idx].displayName = dn;
+  if (_profilAvatarDataURL) users[idx].avatar = _profilAvatarDataURL;
+  saveUsers(users);
+  logAction('Profil modifié', dn);
+  mcAlert('✓ Profil mis à jour.\nLa page va se recharger.', { title: 'Succès' }).then(function(){ location.reload(); });
+}
+function changeMyPassword(){
+  var user = getCurrentUser();
+  if (!user) return;
+  var oldP = document.getElementById('profil-oldpwd').value || '';
+  var p1 = document.getElementById('profil-newpwd').value || '';
+  var p2 = document.getElementById('profil-newpwd2').value || '';
+  if (oldP !== user.password){ mcAlert('⚠ Mot de passe actuel incorrect.', { title: 'Erreur' }); return; }
+  if (!p1 || p1.length < 4){ mcAlert('⚠ Le nouveau mot de passe doit faire au moins 4 caractères.', { title: 'Erreur' }); return; }
+  if (p1 !== p2){ mcAlert('⚠ Les nouveaux mots de passe ne correspondent pas.', { title: 'Erreur' }); return; }
+  var users = getUsers();
+  var idx = users.findIndex(function(x){ return x.username === user.username; });
+  if (idx === -1) return;
+  users[idx].password = p1;
+  saveUsers(users);
+  logAction('Mot de passe modifié');
+  document.getElementById('profil-oldpwd').value = '';
+  document.getElementById('profil-newpwd').value = '';
+  document.getElementById('profil-newpwd2').value = '';
+  mcAlert('✓ Mot de passe modifié avec succès.', { title: 'Succès' });
+}
+function saveMySecret(){
+  var user = getCurrentUser();
+  if (!user) return;
+  var q = document.getElementById('profil-secret-question').value;
+  var a = (document.getElementById('profil-secret-answer').value || '').trim();
+  if (!q){ mcAlert('⚠ Choisissez une question.', { title: 'Erreur' }); return; }
+  if (!a){ mcAlert('⚠ Saisissez une réponse.', { title: 'Erreur' }); return; }
+  var users = getUsers();
+  var idx = users.findIndex(function(x){ return x.username === user.username; });
+  if (idx === -1) return;
+  users[idx].secretQuestion = q;
+  users[idx].secretAnswer = a;
+  saveUsers(users);
+  logAction('Question secrète modifiée');
+  mcAlert('✓ Question secrète enregistrée.\nVous pourrez l\'utiliser pour récupérer votre mot de passe.', { title: 'Succès' });
+}
+function renderMyContrats(){
+  var c = document.getElementById('profil-mes-contrats');
+  if (!c) return;
+  var user = getCurrentUser();
+  if (!user) return;
+  var mine = getArchives().filter(function(r){
+    return (r.partnerName || '').toLowerCase().indexOf((user.displayName || '').toLowerCase()) !== -1
+        || (r.partnerName || '').toLowerCase().indexOf(user.username.toLowerCase()) !== -1;
+  });
+  if (mine.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucun contrat enregistré à votre nom.</div>'; return; }
+  c.innerHTML = '<div class="validated-list">' + mine.map(function(r){
+    var meta = CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄' };
+    var statusBadge = r.status === 'pending'
+      ? '<span class="status-badge status-pending">⏳ En attente</span>'
+      : '<span class="status-badge status-validated">✓ Validé</span>';
+    return '<div class="validated-item' + (r.status === 'pending' ? ' pending-item' : '') + '">'
+      + '<div class="vi-icon">' + meta.icon + '</div>'
+      + '<div class="vi-info">'
+        + '<div class="vi-title">' + escHtml(meta.label) + ' ' + statusBadge + '</div>'
+        + '<div class="vi-date">' + (r.validatedAt ? 'Validé le ' + fmtDate(r.validatedAt) : 'Soumis le ' + fmtDate(r.submittedAt || r.validatedAt)) + '</div>'
+      + '</div>'
+    + '</div>';
+  }).join('') + '</div>';
+}
+function renderMyLogs(){
+  var c = document.getElementById('profil-mes-logs');
+  if (!c) return;
+  var user = getCurrentUser();
+  if (!user) return;
+  var mine = getLogs().filter(function(l){ return l.username === user.username; }).slice(0, 50);
+  if (mine.length === 0){ c.innerHTML = '<div style="color:#6a7a8a;font-style:italic;padding:14px;text-align:center;background:#141926;border-radius:8px">Aucune activité enregistrée.</div>'; return; }
+  c.innerHTML = '<div style="max-height:300px;overflow-y:auto;background:#141926;border-radius:8px;padding:6px">'
+    + mine.map(function(l){
+      return '<div style="padding:7px 10px;border-bottom:1px solid rgba(0,212,255,.08);font-size:12px">'
+        + '<span style="color:#6a7a8a;font-family:monospace">' + new Date(l.at).toLocaleString('fr-FR') + '</span> — '
+        + '<span style="color:#dce4f0">' + escHtml(l.action) + '</span>'
+        + (l.details ? ' <span style="color:#aabbc8;font-style:italic">(' + escHtml(l.details) + ')</span>' : '')
+      + '</div>';
+    }).join('') + '</div>';
+}
+
+// Au clic sur les home-cards (page accueil), bloquer si pas de perm
+document.querySelectorAll('.home-card[data-perm]').forEach(function(card){
+  card.addEventListener('click', function(e){
+    var perm = card.dataset.perm;
+    var u = getCurrentUser();
+    if (u && (u.isAdmin || (u.perms || []).indexOf(perm) !== -1)) return;
+    e.preventDefault();
+    var msg = u
+      ? 'Votre compte n\'a pas les permissions pour accéder à cette section.\n\nContactez l\'organisateur (BoulaTV).'
+      : 'Cette section nécessite d\'être connecté avec un compte autorisé.';
+    mcAlert(msg, { title: '🚫 Accès refusé' }).then(function(){
+      if (!u && typeof openLoginModal === 'function') openLoginModal();
+    });
+  });
+});
+
+// Init au chargement
+checkPageAccess();
+applyAuthState();
+refreshAdminNotifications();
+// Login modal : Enter = submit
+document.getElementById('login-password').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
+document.getElementById('login-username').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('login-password').focus(); } });
+
+// ===========================================================
+// DIALOGUE CUSTOM (remplace alert/confirm/prompt — compatible CEF FiveM)
+// ===========================================================
+function _dlgEls(){
+  return {
+    modal: document.getElementById('dlg-modal'),
+    icon: document.getElementById('dlg-icon'),
+    title: document.getElementById('dlg-title'),
+    msg: document.getElementById('dlg-msg'),
+    input: document.getElementById('dlg-input'),
+    error: document.getElementById('dlg-error'),
+    ok: document.getElementById('dlg-ok'),
+    cancel: document.getElementById('dlg-cancel')
+  };
+}
+function _dlgClose(){ _dlgEls().modal.classList.remove('active'); }
+function _dlgOpen(opts){
+  return new Promise(function(resolve){
+    var e = _dlgEls();
+    e.icon.textContent = opts.icon || '⚡ MASTER CLASH';
+    e.title.textContent = opts.title || 'Information';
+    e.msg.innerHTML = String(opts.message || '').replace(/\n/g, '<br>');
+    e.error.textContent = '';
+    if (opts.showInput){
+      e.input.style.display = '';
+      e.input.type = opts.inputType || 'text';
+      e.input.value = opts.defaultValue || '';
+      e.input.placeholder = opts.placeholder || '';
+    } else {
+      e.input.style.display = 'none';
+    }
+    if (opts.showCancel){
+      e.cancel.style.display = '';
+      e.cancel.textContent = opts.cancelText || 'Annuler';
+    } else {
+      e.cancel.style.display = 'none';
+    }
+    e.ok.textContent = opts.okText || 'Valider';
+    var doOk = function(){
+      var v = opts.showInput ? e.input.value : true;
+      if (opts.validate){
+        var err = opts.validate(v);
+        if (err){ e.error.textContent = err; return; }
+      }
+      _dlgClose();
+      resolve(opts.showInput ? v : true);
+    };
+    var doCancel = function(){ _dlgClose(); resolve(opts.showInput ? null : false); };
+    e.ok.onclick = doOk;
+    e.cancel.onclick = doCancel;
+    e.input.onkeydown = function(ev){ if (ev.key === 'Enter'){ ev.preventDefault(); doOk(); } };
+    e.modal.classList.add('active');
+    if (opts.showInput) setTimeout(function(){ e.input.focus(); }, 60);
+  });
+}
+function mcAlert(message, opts){
+  opts = opts || {};
+  return _dlgOpen({ icon: opts.icon || '⚡ MASTER CLASH', title: opts.title || 'Information', message: message, okText: opts.okText || 'OK' });
+}
+function mcConfirm(message, opts){
+  opts = opts || {};
+  return _dlgOpen({ icon: opts.icon || '⚡ MASTER CLASH', title: opts.title || 'Confirmation', message: message, showCancel: true, okText: opts.okText || 'Confirmer' });
+}
+function mcPrompt(message, opts){
+  opts = opts || {};
+  return _dlgOpen({
+    icon: opts.icon || '⚡ MASTER CLASH',
+    title: opts.title || 'Saisie',
+    message: message,
+    showInput: true,
+    showCancel: true,
+    inputType: opts.inputType || 'text',
+    placeholder: opts.placeholder || '',
+    defaultValue: opts.defaultValue || '',
+    okText: opts.okText || 'Valider',
+    validate: opts.validate
+  });
+}
+
+var CONTRACT_LABELS = {
+  est:  { label: 'Contrat Esthétique',     icon: '💆', ref: 'MC-EST-2026'  },
+  gar:  { label: 'Contrat Garage',         icon: '🔧', ref: 'MC-GAR-2026'  },
+  res:  { label: 'Contrat Restaurant',     icon: '🍽️', ref: 'MC-RES-2026'  },
+  maze: { label: 'Contrat Maze Event',     icon: '🚁', ref: 'MC-MAZE-2026' },
+  mfa:  { label: 'Contrat MFA Pilotage',   icon: '🏎️', ref: 'MC-MFA-2026'  }
+};
+
+// ===== VERROU PAR CODE =====
+(function(){
+  var unlocked = localStorage.getItem(MC_UNLOCK_KEY) === '1';
+  var pendingTarget = null;
+  var modal = document.getElementById('mc-modal');
+  var input = document.getElementById('mc-code-input');
+  var err = document.getElementById('mc-code-error');
+  var form = document.getElementById('mc-code-form');
+  var cancelBtn = document.getElementById('mc-code-cancel');
+
+  function applyUnlockState(){
+    if (unlocked){
+      document.querySelectorAll('.locked-content').forEach(function(el){ el.classList.remove('locked'); });
+      document.querySelectorAll('.lock-overlay').forEach(function(el){ el.style.display = 'none'; });
+      document.querySelectorAll('.locked-link').forEach(function(el){
+        el.classList.remove('locked-link');
+        var lockSpan = el.querySelector('.lock-icon');
+        if (lockSpan) lockSpan.remove();
+      });
+    }
+  }
+  function showAccessDenied(sectionId){
+    var user = getCurrentUser();
+    var msg, title;
+    if (!user){
+      title = '🔐 Connexion requise';
+      msg = 'Cette section est réservée aux utilisateurs autorisés.\n\nConnectez-vous ou créez un compte pour demander l\'accès auprès de l\'organisateur.';
+    } else {
+      title = '🚫 Accès refusé';
+      msg = 'Votre compte « ' + (user.displayName || user.username) + ' » n\'a pas les permissions nécessaires pour accéder à cette section.\n\nContactez l\'organisateur (BoulaTV) pour demander un accès.';
+    }
+    mcAlert(msg, { title: title }).then(function(){
+      if (!user) openLoginModal();
+    });
+  }
+  document.querySelectorAll('.locked-link').forEach(function(link){
+    link.addEventListener('click', function(e){
+      var section = link.getAttribute('data-section');
+      // Si l'utilisateur connecté a la permission ou est admin, laisser passer le clic (scroll vers la section)
+      if (userIsAdmin() || userHasPerm(section)) return;
+      e.preventDefault();
+      showAccessDenied(section);
+    });
+  });
+  document.querySelectorAll('.lock-overlay').forEach(function(ov){
+    ov.addEventListener('click', function(e){
+      var section = ov.getAttribute('data-section');
+      if (userIsAdmin() || userHasPerm(section)) return;
+      e.preventDefault();
+      showAccessDenied(section);
+    });
+  });
+  // Anciennes fonctions de modale code (conservées pour compatibilité, plus utilisées pour les sections)
+  function closeModal(){ modal.classList.remove('active'); err.textContent = ''; input.value = ''; }
+  if (form) form.addEventListener('submit', function(e){ e.preventDefault(); closeModal(); });
+  if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+    var vm = document.getElementById('view-modal');
+    if (e.key === 'Escape' && vm && vm.classList.contains('active')) closeViewModal();
+  });
+  applyUnlockState();
+})();
+
+// ===== ONGLETS CONTRATS =====
+document.querySelectorAll('.contract-tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    var target = tab.getAttribute('data-tab');
+    document.querySelectorAll('.contract-tab').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.contract-panel').forEach(function(p){ p.classList.remove('active'); });
+    tab.classList.add('active');
+    var panel = document.getElementById('panel-' + target);
+    if (panel) panel.classList.add('active');
+    if (target === 'archives') renderArchivesList();
+  });
+});
+
+// ===== SIGNATURE CANVAS =====
+function initSigCanvas(canvas){
+  if (canvas.dataset.sigInit) return;
+  canvas.dataset.sigInit = '1';
+  var ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#1a1612';
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  var drawing = false;
+  function pos(e){
+    var r = canvas.getBoundingClientRect();
+    return [
+      (e.clientX - r.left) * (canvas.width / r.width),
+      (e.clientY - r.top) * (canvas.height / r.height)
+    ];
+  }
+  canvas.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    try { canvas.setPointerCapture(e.pointerId); } catch(_){}
+    drawing = true;
+    var p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p[0], p[1]);
+  });
+  canvas.addEventListener('pointermove', function(e){
+    if (!drawing) return;
+    var p = pos(e);
+    ctx.lineTo(p[0], p[1]);
+    ctx.stroke();
+  });
+  canvas.addEventListener('pointerup', function(){ drawing = false; });
+  canvas.addEventListener('pointercancel', function(){ drawing = false; });
+  canvas.addEventListener('pointerleave', function(){ drawing = false; });
+}
+document.querySelectorAll('.sig-canvas').forEach(initSigCanvas);
+
+// Retirer le highlight rouge dès que l'utilisateur tape dans un champ marqué
+document.addEventListener('input', function(e){
+  if (e.target && e.target.classList && e.target.classList.contains('field-missing')){
+    if ((e.target.value || '').trim()) e.target.classList.remove('field-missing');
+  }
+});
+
+// Au chargement : verrouiller la zone Organisateur dans tous les contrats actifs
+// (le partenaire ne doit pas pouvoir y signer ni y écrire)
+document.querySelectorAll('.contract-panel:not(#panel-bons):not(#panel-archives) .contract-doc .signature-block .signature-col:first-child').forEach(function(col){
+  col.querySelectorAll('input, textarea').forEach(function(el){
+    el.setAttribute('disabled', 'disabled');
+    el.setAttribute('readonly', 'readonly');
+    el.classList.add('org-locked-input');
+  });
+  var canvas = col.querySelector('canvas.sig-canvas');
+  if (canvas){
+    canvas.classList.add('org-locked-canvas');
+  }
+  var clearBtn = col.querySelector('.sig-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  if (!col.querySelector('.org-locked-msg')){
+    var msg = document.createElement('div');
+    msg.className = 'org-locked-msg';
+    msg.textContent = '⚠ Zone réservée à l\'organisateur — sera complétée après réception';
+    col.insertBefore(msg, col.firstChild);
+  }
+});
+
+function clearSig(btn){
+  var wrap = btn.closest('.sig-wrap');
+  if (!wrap) return;
+  var cv = wrap.querySelector('canvas.sig-canvas');
+  if (!cv) return;
+  cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
+}
+function isCanvasBlank(canvas){
+  var ctx = canvas.getContext('2d');
+  var data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  for (var i = 3; i < data.length; i += 4){ if (data[i] !== 0) return false; }
+  return true;
+}
+
+// ===== ARCHIVES =====
+function getArchives(){
+  try { return JSON.parse(localStorage.getItem(MC_ARCHIVE_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function saveArchives(list){
+  localStorage.setItem(MC_ARCHIVE_KEY, JSON.stringify(list));
+  updateArchivesCount();
+  if (typeof refreshAdminNotifications === 'function') refreshAdminNotifications();
+}
+function updateArchivesCount(){
+  var list = getArchives();
+  var pending = list.filter(function(r){ return r.status === 'pending'; }).length;
+  var validated = list.filter(function(r){ return r.status === 'validated' || !r.status; }).length;
+  var c = document.getElementById('archives-count');
+  if (c) c.textContent = validated;
+  var p = document.getElementById('archives-pending-count');
+  if (p){
+    if (pending > 0){ p.textContent = '⏳ ' + pending; p.style.display = 'inline-block'; }
+    else { p.style.display = 'none'; }
+  }
+}
+
+function validateContract(type){
+  var panel = document.getElementById('panel-' + type);
+  if (!panel) return;
+  var doc = panel.querySelector('.contract-doc');
+  var inputs = Array.from(doc.querySelectorAll('input, textarea'));
+  var canvases = Array.from(doc.querySelectorAll('canvas.sig-canvas'));
+
+  // Identifier les inputs de la zone Organisateur (à exclure de la validation côté partenaire)
+  var orgSigCol = doc.querySelector('.signature-block .signature-col:first-child');
+  var orgInputsSet = orgSigCol ? new Set(orgSigCol.querySelectorAll('input, textarea')) : new Set();
+
+  // Reset du highlight précédent
+  inputs.forEach(function(el){ el.classList.remove('field-missing'); });
+
+  // Vérifier les champs requis
+  var missing = [];
+  inputs.forEach(function(el){
+    if (el.type === 'checkbox') return;
+    if (el.dataset.optional === '1') return;
+    if (orgInputsSet.has(el)) return; // zone organisateur : non requise côté partenaire
+    var v = (el.value || '').trim();
+    if (!v){
+      el.classList.add('field-missing');
+      missing.push(el);
+    }
+  });
+
+  if (missing.length){
+    if (missing[0]) missing[0].scrollIntoView({behavior:'smooth', block:'center'});
+    mcAlert('⚠ Veuillez remplir tous les champs obligatoires (en rouge) avant de soumettre.\n\n' + missing.length + ' champ(s) manquant(s).', { title: 'Champs manquants' });
+    return;
+  }
+
+  // Convention : index 0 = Organisateur, index 1 = Partenaire
+  if (canvases.length < 2 || isCanvasBlank(canvases[1])){
+    mcAlert('⚠ Veuillez signer la zone « Pour le Partenaire » avant de soumettre le contrat.', { title: 'Signature manquante' });
+    return;
+  }
+
+  // Détecter le nom du partenaire
+  var partnerName = '';
+  inputs.forEach(function(el){
+    if (partnerName) return;
+    var lbl = el.previousElementSibling && el.previousElementSibling.textContent || '';
+    if (el.type === 'text' && el.value && /raison|nom|établissement/i.test(lbl)){
+      partnerName = el.value;
+    }
+  });
+  if (!partnerName){
+    var firstText = inputs.find(function(el){ return el.type === 'text' && el.value; });
+    if (firstText) partnerName = firstText.value;
+  }
+  if (!partnerName) partnerName = '— Partenaire non nommé —';
+
+  var fields = inputs.map(function(el){
+    if (el.type === 'checkbox') return el.checked ? 1 : 0;
+    return el.value || '';
+  });
+  // On enregistre uniquement la signature partenaire ; l'organisateur signera plus tard
+  var signatures = canvases.map(function(c, i){
+    if (i === 0) return ''; // Organisateur : à signer après par l'organisateur
+    return isCanvasBlank(c) ? '' : c.toDataURL('image/png');
+  });
+
+  var record = {
+    id: 'C' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    type: type,
+    partnerName: partnerName,
+    status: 'pending',
+    submittedAt: new Date().toISOString(),
+    validatedAt: null,
+    fields: fields,
+    signatures: signatures
+  };
+  var list = getArchives();
+  list.unshift(record);
+  saveArchives(list);
+  logAction('Contrat soumis (en attente)', (CONTRACT_LABELS[type] || {label: type}).label + ' — ' + partnerName);
+
+  // Réinitialiser le formulaire pour ne pas garder l'ancienne signature
+  canvases.forEach(function(c){ c.getContext('2d').clearRect(0, 0, c.width, c.height); });
+
+  mcAlert('✓ Contrat soumis !\n\nIl est désormais EN ATTENTE de validation par l\'organisateur.\n\nRetrouvez-le dans l\'onglet « 📁 Contrats ».', { title: 'Soumission réussie' });
+  var archTab = document.querySelector('.contract-tab[data-tab="archives"]');
+  if (archTab) archTab.click();
+}
+
+// ===== ORGANISATEUR : SIGNATURE & VALIDATION FINALE =====
+function organizerSignAndValidate(id){
+  var content = document.getElementById('view-modal-content');
+  var docClone = content.querySelector('.contract-doc');
+  if (!docClone){ alert('Erreur : contrat introuvable.'); return; }
+
+  // Vérifier les champs Organisateur (non readonly) : ils doivent être remplis
+  var orgSigCol = docClone.querySelector('.signature-block .signature-col:first-child');
+  var orgInputs = orgSigCol ? Array.from(orgSigCol.querySelectorAll('input, textarea')) : [];
+  orgInputs.forEach(function(el){ el.classList.remove('field-missing'); });
+  var missing = [];
+  orgInputs.forEach(function(el){
+    if (el.type === 'checkbox') return;
+    var v = (el.value || '').trim();
+    if (!v){
+      el.classList.add('field-missing');
+      missing.push(el);
+    }
+  });
+  if (missing.length){
+    if (missing[0]) missing[0].scrollIntoView({behavior:'smooth', block:'center'});
+    mcAlert('⚠ Veuillez remplir vos champs Organisateur (en rouge) avant de confirmer.\n\n' + missing.length + ' champ(s) manquant(s).', { title: 'Champs manquants' });
+    return;
+  }
+
+  // Vérifier la signature organisateur
+  var orgCanvas = docClone.querySelector('canvas.sig-canvas[data-role="org"]');
+  if (!orgCanvas){ mcAlert('Erreur : zone de signature organisateur introuvable.'); return; }
+  if (isCanvasBlank(orgCanvas)){
+    mcAlert('⚠ Veuillez signer en tant qu\'organisateur avant de confirmer.', { title: 'Signature manquante' });
+    return;
+  }
+
+  // Récupérer toutes les valeurs (incluant celles modifiées par l'organisateur)
+  var allInputs = Array.from(docClone.querySelectorAll('input, textarea'));
+  var newFields = allInputs.map(function(el){
+    if (el.type === 'checkbox') return el.checked ? 1 : 0;
+    return el.value || '';
+  });
+
+  var list = getArchives();
+  var idx = list.findIndex(function(r){ return r.id === id; });
+  if (idx === -1) return;
+  list[idx].fields = newFields;
+  list[idx].signatures[0] = orgCanvas.toDataURL('image/png');
+  list[idx].status = 'validated';
+  list[idx].validatedAt = new Date().toISOString();
+  saveArchives(list);
+  logAction('Contrat validé', (CONTRACT_LABELS[list[idx].type] || {label: list[idx].type}).label + ' — ' + list[idx].partnerName);
+  closeViewModal();
+  renderArchivesList();
+  mcAlert('✓ Contrat validé et archivé définitivement.\n\nIl est maintenant non-éditable et imprimable.', { title: 'Validation réussie' });
+}
+
+function escHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
+  });
+}
+function fmtDate(iso){
+  var d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' })
+       + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+}
+function renderArchivesList(){
+  var c = document.getElementById('validated-container');
+  if (!c) return;
+  updateArchivesCount();
+  var list = getArchives();
+  if (list.length === 0){
+    c.innerHTML = '<div class="validated-empty">Aucun contrat soumis pour le moment.<br>Remplissez un contrat, signez-le et cliquez sur « Valider et archiver ».</div>';
+    return;
+  }
+  var pending = list.filter(function(r){ return r.status === 'pending'; });
+  var validated = list.filter(function(r){ return r.status === 'validated' || !r.status; });
+
+  function rowPending(r){
+    var meta = CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄', ref: '' };
+    return '<div class="validated-item pending-item" data-id="' + escHtml(r.id) + '">'
+      + '<div class="vi-icon">' + meta.icon + '</div>'
+      + '<div class="vi-info">'
+        + '<div class="vi-title">' + escHtml(meta.label) + ' <span class="status-badge status-pending">⏳ EN ATTENTE</span></div>'
+        + '<div class="vi-partner">' + escHtml(r.partnerName) + '</div>'
+        + '<div class="vi-date">Soumis par le partenaire le ' + fmtDate(r.submittedAt || r.validatedAt) + '</div>'
+      + '</div>'
+      + '<div class="vi-actions">'
+        + '<button class="vi-btn vi-btn-sign" onclick="viewArchive(\'' + r.id + '\')">✍ Voir et signer</button>'
+        + '<button class="vi-btn vi-btn-del" onclick="deleteArchive(\'' + r.id + '\')">🗑 Refuser</button>'
+      + '</div>'
+    + '</div>';
+  }
+  function rowValidated(r){
+    var meta = CONTRACT_LABELS[r.type] || { label: r.type, icon: '📄', ref: '' };
+    return '<div class="validated-item" data-id="' + escHtml(r.id) + '">'
+      + '<div class="vi-icon">' + meta.icon + '</div>'
+      + '<div class="vi-info">'
+        + '<div class="vi-title">' + escHtml(meta.label) + ' <span class="status-badge status-validated">✓ VALIDÉ</span></div>'
+        + '<div class="vi-partner">' + escHtml(r.partnerName) + '</div>'
+        + '<div class="vi-date">Validé le ' + fmtDate(r.validatedAt) + '</div>'
+      + '</div>'
+      + '<div class="vi-actions">'
+        + '<button class="vi-btn vi-btn-view" onclick="viewArchive(\'' + r.id + '\')">👁 Voir</button>'
+        + '<button class="vi-btn vi-btn-print" onclick="printArchive(\'' + r.id + '\')">🖨 Imprimer</button>'
+        + '<button class="vi-btn vi-btn-print" onclick="downloadContractPng(\'' + r.id + '\')">⬇ PNG</button>'
+        + '<button class="vi-btn vi-btn-del" onclick="deleteArchive(\'' + r.id + '\')">🗑 Supprimer</button>'
+      + '</div>'
+    + '</div>';
+  }
+
+  var html = '';
+  if (pending.length){
+    html += '<div class="archives-section-title pending">⏳ En attente de votre validation (' + pending.length + ')</div>';
+    html += '<div class="validated-list">' + pending.map(rowPending).join('') + '</div>';
+  }
+  if (validated.length){
+    html += '<div class="archives-section-title validated">✓ Contrats validés &amp; archivés (' + validated.length + ')</div>';
+    html += '<div class="validated-list">' + validated.map(rowValidated).join('') + '</div>';
+  }
+  c.innerHTML = html;
+}
+
+function buildArchiveDoc(record, opts){
+  opts = opts || {};
+  var editableOrg = !!opts.editableOrgSignature;
+  var srcPanel = document.getElementById('panel-' + record.type);
+  if (!srcPanel) return null;
+  var srcDoc = srcPanel.querySelector('.contract-doc');
+  var clone = srcDoc.cloneNode(true);
+  // Identifier les inputs de la zone Organisateur (1ère signature-col)
+  var firstSigCol = clone.querySelector('.signature-block .signature-col:first-child');
+  var orgInputs = firstSigCol ? Array.from(firstSigCol.querySelectorAll('input, textarea')) : [];
+  var orgInputsSet = new Set(orgInputs);
+  // En mode édition org, retirer le message de verrouillage du clone
+  if (editableOrg){
+    Array.from(clone.querySelectorAll('.org-locked-msg')).forEach(function(m){ m.remove(); });
+  }
+  var inputs = Array.from(clone.querySelectorAll('input, textarea'));
+  inputs.forEach(function(el, i){
+    var v = record.fields[i];
+    if (el.type === 'checkbox'){ el.checked = !!v; }
+    else { el.value = v == null ? '' : v; }
+    var keepEditable = editableOrg && orgInputsSet.has(el);
+    if (keepEditable){
+      el.removeAttribute('readonly');
+      el.removeAttribute('disabled');
+      el.disabled = false;
+      el.readOnly = false;
+      el.classList.remove('org-locked-input');
+      el.classList.add('org-editable');
+    } else {
+      el.setAttribute('readonly', 'readonly');
+      el.setAttribute('disabled', 'disabled');
+    }
+  });
+  var canvases = Array.from(clone.querySelectorAll('canvas.sig-canvas'));
+  canvases.forEach(function(c, i){
+    var isOrgSlot = (i === 0);
+    var dataURL = record.signatures[i];
+    // Cas 1 : signature présente -> img
+    if (dataURL){
+      var img = document.createElement('img');
+      img.src = dataURL;
+      img.className = 'sig-img';
+      c.replaceWith(img);
+      return;
+    }
+    // Cas 2 : organisateur en mode édition -> garder canvas dessinable
+    if (editableOrg && isOrgSlot){
+      c.dataset.role = 'org';
+      return;
+    }
+    // Cas 3 : autre -> placeholder
+    var ph = document.createElement('div');
+    ph.className = 'sig-img-placeholder';
+    ph.textContent = isOrgSlot ? '(en attente — organisateur)' : '(non signé)';
+    c.replaceWith(ph);
+  });
+  // Boutons effacer : garder seulement celui de l'org en mode pending
+  var clearBtns = Array.from(clone.querySelectorAll('.sig-clear'));
+  clearBtns.forEach(function(b, i){
+    if (editableOrg && i === 0) return; // garder
+    b.remove();
+  });
+  return clone;
+}
+
+function viewArchive(id){
+  var rec = getArchives().find(function(r){ return r.id === id; });
+  if (!rec) return;
+  var isPending = rec.status === 'pending';
+  // Pour les contrats en attente, demander le code organisateur AVANT d'ouvrir
+  if (isPending){
+    requireOrgCode('Code requis pour valider ce contrat en attente.').then(function(ok){
+      if (ok) _openArchiveView(rec, true);
+    });
+    return;
+  }
+  _openArchiveView(rec, false);
+}
+function _openArchiveView(rec, isPending){
+  if (!rec) return;
+  var meta = CONTRACT_LABELS[rec.type] || { label: rec.type };
+  var titleSuffix = isPending ? '  ⏳ En attente de validation' : '  ✓ Validé';
+  document.getElementById('view-modal-title').textContent = meta.label + ' — ' + rec.partnerName + titleSuffix;
+  var clone = buildArchiveDoc(rec, { editableOrgSignature: isPending });
+  var content = document.getElementById('view-modal-content');
+  content.innerHTML = '';
+  content.dataset.mode = isPending ? 'pending' : 'validated';
+  if (clone) content.appendChild(clone);
+  // Init signature canvas si éditable
+  if (isPending){
+    var orgCanvas = content.querySelector('canvas.sig-canvas[data-role="org"]');
+    if (orgCanvas){
+      orgCanvas.removeAttribute('disabled');
+      orgCanvas.removeAttribute('readonly');
+      orgCanvas.classList.remove('org-locked-canvas');
+      delete orgCanvas.dataset.sigInit;
+      initSigCanvas(orgCanvas);
+    }
+  }
+  // Configurer les boutons d'action
+  var actions = document.getElementById('view-modal-actions');
+  if (isPending){
+    actions.innerHTML =
+        '<button class="vi-btn vi-btn-confirm" onclick="organizerSignAndValidate(\'' + rec.id + '\')">✓ Confirmer la validation</button>'
+      + '<button class="vi-btn vi-btn-view" onclick="closeViewModal()">✕ Fermer</button>';
+  } else {
+    actions.innerHTML =
+        '<button class="vi-btn vi-btn-print" onclick="printValidated()">🖨 Imprimer</button>'
+      + '<button class="vi-btn vi-btn-print" onclick="downloadContractPng(\'' + rec.id + '\')">⬇ PNG</button>'
+      + '<button class="vi-btn vi-btn-view" onclick="closeViewModal()">✕ Fermer</button>';
+  }
+  document.getElementById('view-modal').classList.add('active');
+}
+
+function closeViewModal(){
+  document.getElementById('view-modal').classList.remove('active');
+  document.getElementById('view-modal-content').innerHTML = '';
+}
+function printValidated(){
+  requireOrgCode().then(function(ok){ if (!ok) return; _printValidatedConfirmed(); });
+}
+function _printValidatedConfirmed(){
+  var content = document.getElementById('view-modal-content');
+  var clone = content.firstElementChild;
+  if (!clone) return;
+  var area = document.getElementById('print-area');
+  area.innerHTML = '';
+  area.appendChild(clone.cloneNode(true));
+  document.body.classList.add('print-validated');
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){
+      document.body.classList.remove('print-validated');
+      area.innerHTML = '';
+    }, 200);
+  }, 80);
+}
+function printArchive(id){
+  requireOrgCode().then(function(ok){ if (!ok) return; _printArchiveConfirmed(id); });
+}
+function _printArchiveConfirmed(id){
+  var rec = getArchives().find(function(r){ return r.id === id; });
+  if (!rec) return;
+  var clone = buildArchiveDoc(rec);
+  var area = document.getElementById('print-area');
+  area.innerHTML = '';
+  if (clone) area.appendChild(clone);
+  document.body.classList.add('print-validated');
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){
+      document.body.classList.remove('print-validated');
+      area.innerHTML = '';
+    }, 200);
+  }, 80);
+}
+function deleteArchive(id){
+  requireOrgCode('Code requis pour supprimer ce contrat.').then(function(ok){
+    if (!ok) return;
+    return mcConfirm('Supprimer définitivement ce contrat ?\n\nCette action est irréversible.', { okText: '🗑 Supprimer' });
+  }).then(function(ok){
+    if (!ok) return;
+    var list = getArchives().filter(function(r){ return r.id !== id; });
+    saveArchives(list);
+    renderArchivesList();
+    return mcAlert('✓ Contrat supprimé.', { title: 'Suppression réussie' });
+  });
+}
+
+function printActive(){ window.print(); }
+
+// Vérifie que l'utilisateur connecté a la permission requise pour cette action.
+// Plus de demande de code : on bloque directement si pas de permission.
+function requireOrgCode(titleMsg, requiredPerm){
+  var perm = requiredPerm || 'validate';
+  if (userIsAdmin() || userHasPerm(perm)) return Promise.resolve(true);
+  var user = getCurrentUser();
+  var msg = user
+    ? 'Votre compte « ' + (user.displayName || user.username) + ' » n\'a pas la permission nécessaire pour cette action.\n\nContactez l\'organisateur (BoulaTV) pour demander un accès.'
+    : 'Cette action est réservée aux utilisateurs autorisés.\n\nConnectez-vous avec un compte ayant les droits requis.';
+  return mcAlert(msg, { title: '🚫 Permission insuffisante' }).then(function(){
+    if (!user) openLoginModal();
+    return false;
+  });
+}
+
+// ===== EXPORT PNG (html2canvas) =====
+function ensureH2C(){
+  if (typeof html2canvas === 'undefined'){
+    mcAlert('⚠ Module d\'export PNG non chargé.\nVérifiez votre connexion internet.', { title: 'Erreur' });
+    return false;
+  }
+  return true;
+}
+function snapToPng(element, filename){
+  if (!ensureH2C()) return;
+  // Wait microtask for any layout
+  html2canvas(element, {
+    backgroundColor: '#fdfaf4',
+    scale: 2,
+    useCORS: true,
+    logging: false
+  }).then(function(canvas){
+    var link = document.createElement('a');
+    link.download = filename || ('master-clash-' + Date.now() + '.png');
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }).catch(function(err){
+    mcAlert('Erreur lors de la génération du PNG : ' + err, { title: 'Erreur' });
+  });
+}
+
+// ===== BONS : impression / PNG individuels =====
+function printCoupon(btn){
+  var coupon = btn.closest('.coupon');
+  if (!coupon) return;
+  var area = document.getElementById('print-area');
+  area.innerHTML = '';
+  var clone = coupon.cloneNode(true);
+  // Retirer les boutons d'action
+  Array.from(clone.querySelectorAll('.coupon-actions')).forEach(function(b){ b.remove(); });
+  // Wrapper dans un container avec padding
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:30px;max-width:500px;margin:0 auto';
+  wrap.appendChild(clone);
+  area.appendChild(wrap);
+  document.body.classList.add('print-validated');
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){
+      document.body.classList.remove('print-validated');
+      area.innerHTML = '';
+    }, 200);
+  }, 80);
+}
+function downloadCouponPng(btn){
+  var coupon = btn.closest('.coupon');
+  if (!coupon) return;
+  // Utiliser la même transformation input → texte que pour les contrats
+  var clone = freezeContractClone(coupon);
+  clone.classList.add('coupon-png-export');
+  Array.from(clone.querySelectorAll('.coupon-actions')).forEach(function(b){ b.remove(); });
+  var container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;background:#fdfaf4;padding:24px';
+  container.appendChild(clone);
+  document.body.appendChild(container);
+  var title = (clone.querySelector('.coupon-title') || {}).textContent || 'bon';
+  var slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  setTimeout(function(){
+    snapToPng(container, 'master-clash-' + slug + '.png');
+    setTimeout(function(){ document.body.removeChild(container); }, 1500);
+  }, 60);
+}
+
+// ===== CONTRATS : téléchargement PNG =====
+function downloadActiveContractPng(btn){
+  var panel = btn.closest('.contract-panel');
+  if (!panel) return;
+  var doc = panel.querySelector('.contract-doc');
+  if (!doc) return;
+  var clone = freezeContractClone(doc);
+  clone.classList.add('contract-png-export');
+  // Retirer le message "zone réservée organisateur" du PNG
+  Array.from(clone.querySelectorAll('.org-locked-msg')).forEach(function(el){ el.remove(); });
+  var container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1050px;background:#fdfaf4';
+  container.appendChild(clone);
+  document.body.appendChild(container);
+  var type = panel.id.replace('panel-', '');
+  setTimeout(function(){
+    snapToPng(container, 'master-clash-contrat-' + type + '.png');
+    setTimeout(function(){ document.body.removeChild(container); }, 1500);
+  }, 60);
+}
+function downloadContractPng(id){
+  requireOrgCode().then(function(ok){ if (!ok) return; _downloadContractPngConfirmed(id); });
+}
+function _downloadContractPngConfirmed(id){
+  var rec = getArchives().find(function(r){ return r.id === id; });
+  if (!rec) return;
+  var doc = buildArchiveDoc(rec);
+  if (!doc) return;
+  var clone = freezeContractClone(doc);
+  clone.classList.add('contract-png-export');
+  Array.from(clone.querySelectorAll('.org-locked-msg')).forEach(function(el){ el.remove(); });
+  var container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1050px;background:#fdfaf4';
+  container.appendChild(clone);
+  document.body.appendChild(container);
+  var slug = rec.partnerName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 30);
+  setTimeout(function(){
+    snapToPng(container, 'master-clash-' + rec.type + '-' + (slug || 'contrat') + '.png');
+    setTimeout(function(){ document.body.removeChild(container); }, 1500);
+  }, 60);
+}
+// Convertit les <input> et <textarea> en éléments texte pour un rendu PNG net & lisible
+function freezeContractClone(doc){
+  var clone = doc.cloneNode(true);
+  var srcInputs = Array.from(doc.querySelectorAll('input, textarea'));
+  var dstInputs = Array.from(clone.querySelectorAll('input, textarea'));
+  srcInputs.forEach(function(s, i){
+    var d = dstInputs[i];
+    if (!d) return;
+    var newEl;
+    if (s.type === 'checkbox'){
+      newEl = document.createElement('span');
+      newEl.className = 'frozen-checkbox';
+      newEl.textContent = s.checked ? '☑' : '☐';
+    } else if (s.tagName === 'TEXTAREA'){
+      newEl = document.createElement('div');
+      newEl.className = 'frozen-textarea';
+      newEl.textContent = s.value || '';
+    } else {
+      newEl = document.createElement('span');
+      newEl.className = 'frozen-input';
+      var v = s.value || '';
+      // Format date FR
+      if (s.type === 'date' && v){
+        var parts = v.split('-');
+        if (parts.length === 3) v = parts[2] + '/' + parts[1] + '/' + parts[0];
+      }
+      newEl.textContent = v;
+      // Préserver le style inline (notamment width)
+      var style = s.getAttribute('style');
+      if (style) newEl.setAttribute('style', style);
+    }
+    d.replaceWith(newEl);
+  });
+  Array.from(clone.querySelectorAll('.sig-clear')).forEach(function(b){ b.remove(); });
+  return clone;
+}
+
+updateArchivesCount();
+
+// ===== ADMIN =====
+var _showCode = false;
+function toggleShowCode(){
+  _showCode = !_showCode;
+  var el = document.getElementById('admin-current-code');
+  if (el) el.textContent = _showCode ? MC_SECRET : '••••••••';
+  var btn = el && el.nextElementSibling;
+  if (btn) btn.textContent = _showCode ? '🙈 Masquer' : '👁 Afficher';
+}
+function changeSecret(){
+  mcPrompt('Étape 1/3 — Saisissez le code actuel :', { title: '🔑 Changer le code', inputType: 'password', placeholder: 'Code actuel' })
+    .then(function(oldCode){
+      if (oldCode === null) return null;
+      if ((oldCode || '').trim().toUpperCase() !== MC_SECRET){
+        return mcAlert('⚠ Code actuel incorrect.', { title: 'Erreur' }).then(function(){ return null; });
+      }
+      return mcPrompt('Étape 2/3 — Saisissez le NOUVEAU code\n(4 caractères minimum, lettres/chiffres uniquement) :', {
+        title: '🔑 Nouveau code',
+        inputType: 'text',
+        placeholder: 'NOUVEAU-CODE',
+        validate: function(v){
+          v = (v || '').trim().toUpperCase();
+          if (v.length < 4) return 'Minimum 4 caractères.';
+          if (!/^[A-Z0-9]+$/.test(v)) return 'Lettres et chiffres uniquement.';
+          return null;
+        }
+      });
+    })
+    .then(function(newCode){
+      if (newCode === null || newCode === undefined) return null;
+      newCode = (newCode || '').trim().toUpperCase();
+      return mcPrompt('Étape 3/3 — Confirmez le nouveau code :', {
+        title: '🔑 Confirmation',
+        inputType: 'password',
+        placeholder: 'Re-saisissez le code'
+      }).then(function(confirmCode){
+        if (confirmCode === null) return null;
+        if ((confirmCode || '').trim().toUpperCase() !== newCode){
+          return mcAlert('⚠ Les codes ne correspondent pas.\nModification annulée.', { title: 'Erreur' }).then(function(){ return null; });
+        }
+        return newCode;
+      });
+    })
+    .then(function(newCode){
+      if (!newCode) return;
+      MC_SECRET = newCode;
+      try { localStorage.setItem(MC_SECRET_KEY, newCode); } catch(e){}
+      if (_showCode){
+        var el = document.getElementById('admin-current-code');
+        if (el) el.textContent = MC_SECRET;
+      }
+      mcAlert('✓ Code modifié avec succès.\n\nNouveau code : ' + newCode, { title: 'Succès' });
+    });
+}
+function resetSecret(){
+  mcConfirm('Restaurer le code par défaut (' + MC_DEFAULT_SECRET + ') ?', { title: '↺ Réinitialiser', okText: 'Restaurer' })
+    .then(function(ok){
+      if (!ok) return false;
+      return requireOrgCode('Saisissez le code actuel pour confirmer.');
+    })
+    .then(function(ok){
+      if (!ok) return;
+      MC_SECRET = MC_DEFAULT_SECRET;
+      try { localStorage.removeItem(MC_SECRET_KEY); } catch(e){}
+      if (_showCode){
+        var el = document.getElementById('admin-current-code');
+        if (el) el.textContent = MC_SECRET;
+      }
+      mcAlert('✓ Code restauré au défaut : ' + MC_DEFAULT_SECRET, { title: 'Succès' });
+    });
+}
+function lockAllSections(){
+  mcConfirm('Re-verrouiller toutes les sections ?\n\nLe code devra être ressaisi pour accéder aux sections protégées.', { title: '🔒 Re-verrouillage', okText: 'Re-verrouiller' })
+    .then(function(ok){
+      if (!ok) return;
+      try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
+      return mcAlert('✓ Sections re-verrouillées.\nLa page va se recharger.', { title: 'Succès' });
+    })
+    .then(function(){ if (arguments[0] !== undefined) setTimeout(function(){ location.reload(); }, 200); });
+}
+function clearAllArchives(){
+  mcConfirm('⚠ ATTENTION\n\nVous êtes sur le point d\'effacer TOUS les contrats archivés (en attente + validés).\n\nCette action est IRRÉVERSIBLE.\n\nContinuer ?', { title: '🗑 Effacer les archives', okText: 'Effacer' })
+    .then(function(ok){
+      if (!ok) return false;
+      return requireOrgCode('Saisissez le code pour confirmer la suppression totale.');
+    })
+    .then(function(ok){
+      if (!ok) return;
+      try { localStorage.removeItem(MC_ARCHIVE_KEY); } catch(e){}
+      updateArchivesCount();
+      refreshAdminStats();
+      if (document.getElementById('panel-archives').classList.contains('active')) renderArchivesList();
+      mcAlert('✓ Toutes les archives ont été effacées.', { title: 'Succès' });
+    });
+}
+function refreshAdminStats(){
+  var c = document.getElementById('admin-stats');
+  if (!c) return;
+  var list = getArchives();
+  var pending = list.filter(function(r){ return r.status === 'pending'; }).length;
+  var validated = list.filter(function(r){ return r.status === 'validated'; }).length;
+  var byType = {};
+  list.forEach(function(r){ byType[r.type] = (byType[r.type] || 0) + 1; });
+  var oldest = list.length ? list[list.length - 1].submittedAt || list[list.length - 1].validatedAt : null;
+  var html = ''
+    + '<div class="admin-stat"><div class="admin-stat-label">Total contrats</div><div class="admin-stat-value">' + list.length + '</div></div>'
+    + '<div class="admin-stat" style="border-left-color:#ffab40"><div class="admin-stat-label">⏳ En attente</div><div class="admin-stat-value" style="color:#ffab40">' + pending + '</div></div>'
+    + '<div class="admin-stat" style="border-left-color:#00e676"><div class="admin-stat-label">✓ Validés</div><div class="admin-stat-value" style="color:#00e676">' + validated + '</div></div>';
+  Object.keys(byType).forEach(function(t){
+    var meta = CONTRACT_LABELS[t] || { label: t, icon: '📄' };
+    html += '<div class="admin-stat"><div class="admin-stat-label">' + meta.icon + ' ' + meta.label.replace('Contrat ', '') + '</div><div class="admin-stat-value">' + byType[t] + '</div></div>';
+  });
+  c.innerHTML = html;
+}
+// Refresh stats à chaque ouverture de la section admin
+document.querySelector('a[href="admin.html"]').addEventListener('click', function(){
+  setTimeout(refreshAdminStats, 100);
+});
+refreshAdminStats();

@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accueil — MASTER CLASH</title>
+<title>Budget — MASTER CLASH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="assets/style.css">
 </head>
-<body data-page="home">
+<body data-page="budget">
 <nav class="nav">
   <a class="nav-logo" href="index.html">⚡ <span>MC</span> MASTER CLASH</a>
   <div class="nav-links">
@@ -35,65 +35,98 @@
     </div>
   </div>
 </nav>
-<header class="hero" id="top">
-  <div class="hero-badge">Document officiel — État de San Andreas</div>
-  <h1>MASTER CLASH</h1>
-  <div class="hero-tagline">« Le savoir ne suffit pas. Il faut vaincre. »</div>
-  <div class="hero-stats">
-    <div class="stat"><span class="stat-value">42</span><span class="stat-label">Participants</span></div>
-    <div class="stat"><span class="stat-value">3</span><span class="stat-label">Manches</span></div>
-    <div class="stat"><span class="stat-value">100%</span><span class="stat-label">Récompenses</span></div>
-  </div>
-</header>
+<!-- ===== SECTION 5 — BUDGET ===== -->
+<section id="budget">
+  <h2 class="section-title">Estimation Budget — À financer</h2>
+  <div class="section-subtitle">Section 5 — Chiffrage prévisionnel</div>
+<div class="locked-wrap" data-section="budget">
+<div class="locked-content locked">
 
-<section id="home-nav">
-  <h2 class="section-title">Accès rapide</h2>
-  <div class="section-subtitle">Sélectionnez la section à consulter</div>
-  <div class="home-grid">
-    <a href="gouverneur.html" class="home-card" data-perm="gouv">
-      <div class="home-card-icon">🏛️</div>
-      <div class="home-card-title">Dossier Gouverneur</div>
-      <div class="home-card-desc">Présentation officielle du projet</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="reglement.html" class="home-card">
-      <div class="home-card-icon">📜</div>
-      <div class="home-card-title">Règlement Officiel</div>
-      <div class="home-card-desc">10 articles de l'événement</div>
-    </a>
-    <a href="partenaires.html" class="home-card">
-      <div class="home-card-icon">🤝</div>
-      <div class="home-card-title">Partenaires</div>
-      <div class="home-card-desc">Devenir partenaire de Master Clash</div>
-    </a>
-    <a href="contrats.html" class="home-card">
-      <div class="home-card-icon">📋</div>
-      <div class="home-card-title">Contrats &amp; Bons</div>
-      <div class="home-card-desc">Documents de partenariat à signer</div>
-    </a>
-    <a href="questions.html" class="home-card" data-perm="ques">
-      <div class="home-card-icon">❓</div>
-      <div class="home-card-title">Banque de Questions</div>
-      <div class="home-card-desc">200 questions de l'animateur</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="budget.html" class="home-card" data-perm="budget">
-      <div class="home-card-icon">💰</div>
-      <div class="home-card-title">Budget</div>
-      <div class="home-card-desc">Estimation et financement</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="profil.html" class="home-card" id="home-card-profil" style="display:none">
-      <div class="home-card-icon">👤</div>
-      <div class="home-card-title">Mon profil</div>
-      <div class="home-card-desc">Mes informations &amp; mes contrats</div>
-    </a>
-    <a href="admin.html" class="home-card home-card-admin" id="home-card-admin" style="display:none">
-      <div class="home-card-icon">🔧</div>
-      <div class="home-card-title">Administration</div>
-      <div class="home-card-desc">Gestion utilisateurs &amp; système</div>
-    </a>
+  <h3>Manche 1 — 30 éliminés (chacun reçoit les 3 bons)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Bon</th><th>Prix unitaire</th><th>× 30</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr><td>Bon coiffure</td><td>300 $</td><td>× 30</td><td>9 000 $</td></tr>
+        <tr><td>Bon réparation</td><td>650 $</td><td>× 30</td><td>19 500 $</td></tr>
+        <tr><td>Bon repas (10 menus)</td><td>1 100 $</td><td>× 30</td><td>33 000 $</td></tr>
+        <tr class="total-row"><td>Sous-total par personne</td><td>2 050 $</td><td></td><td>61 500 $</td></tr>
+      </tbody>
+    </table>
   </div>
+
+  <h3>Manche 2 — 8 éliminés (chacun reçoit les 4 bons)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Bon</th><th>Prix unitaire</th><th>× 8</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr><td>Bon repas (10 menus)</td><td>1 100 $</td><td>× 8</td><td>8 800 $</td></tr>
+        <tr><td>Bon réparation</td><td>650 $</td><td>× 8</td><td>5 200 $</td></tr>
+        <tr><td>Bon esthétique (coiffure 300 $ + tatouage ~500 $)</td><td>~800 $</td><td>× 8</td><td>~6 400 $</td></tr>
+        <tr><td>Bon stage pilotage MFA (15 min)</td><td>1 000 $</td><td>× 8</td><td>8 000 $</td></tr>
+        <tr class="total-row"><td>Sous-total par personne</td><td>~3 550 $</td><td></td><td>~28 400 $</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Manche 3 — 4 finalistes</h3>
+  <div class="card">
+    <p>Base commune à tous : Package M2 (3 550 $) + Pass VIP GP4 (0 $ — écurie organisateur) + Baptême hélicoptère Maze Event (2 000 $) = <strong>5 550 $ par finaliste</strong></p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Rang</th><th>Détail</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr><td>4ᵉ place</td><td>Base 5 550 $</td><td>5 550 $</td></tr>
+        <tr><td>3ᵉ place</td><td>Base + prime 10 000 $</td><td>15 550 $</td></tr>
+        <tr><td>2ᵉ place</td><td>Base + prime 20 000 $</td><td>25 550 $</td></tr>
+        <tr><td>🏆 1er — Grand Vainqueur</td><td>Base + prime 40 000 $ + voiture PDM (à négocier)</td><td>45 550 $ + voiture</td></tr>
+        <tr class="total-row"><td>Total manche 3 (hors voiture)</td><td></td><td>92 200 $</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Frais production &amp; événement</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Poste</th><th>Montant</th></tr></thead>
+      <tbody>
+        <tr><td>Location studio</td><td>15 000 $</td></tr>
+        <tr><td>Réalisation &amp; production</td><td>100 000 $</td></tr>
+        <tr><td>Frais annexes (logistique, communication, imprévus)</td><td>~20 000 $</td></tr>
+        <tr class="total-row"><td>Total frais</td><td>135 000 $</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Récapitulatif général</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Poste</th><th>Montant</th></tr></thead>
+      <tbody>
+        <tr><td>Manche 1 — 30 × 3 bons</td><td>61 500 $</td></tr>
+        <tr><td>Manche 2 — 8 × 4 bons</td><td>~28 400 $</td></tr>
+        <tr><td>Manche 3 — 4 finalistes + primes cash</td><td>92 200 $</td></tr>
+        <tr><td>Frais production &amp; événement</td><td>135 000 $</td></tr>
+        <tr class="total-row"><td>TOTAL À FINANCER (hors voiture PDM)</td><td>~317 100 $</td></tr>
+        <tr><td>Pass VIP GP4</td><td>Gratuit (écurie organisateur)</td></tr>
+        <tr><td>Voiture PDM</td><td>Selon accord partenaire</td></tr>
+        <tr><td>Primes cash (3ᵉ + 2ᵉ + 1er)</td><td>70 000 $ (inclus dans M3)</td></tr>
+        <tr><td>Lots &amp; bons à démarcher partenaires</td><td>182 100 $ (inclus dans M1+M2+M3)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <blockquote>Note : le financement est prévu via partenaires privés (bons en nature) + potentiel sponsoring État / Ville de Los Santos pour les frais de production et primes cash.</blockquote>
+
+</div>
+<div class="lock-overlay" data-section="budget">
+  <div class="lock-big">🔒</div>
+  <div class="lock-msg">Accès restreint</div>
+  <div class="lock-sub">Code requis pour consulter le budget</div>
+  <button class="lock-btn">🔐 Voir comment accéder</button>
+</div>
+</div>
 </section>
 <footer>
   MASTER CLASH — Document officiel — Réservé à l'animateur — État de San Andreas

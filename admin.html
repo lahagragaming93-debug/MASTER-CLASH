@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accueil — MASTER CLASH</title>
+<title>Administration — MASTER CLASH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="assets/style.css">
 </head>
-<body data-page="home">
+<body data-page="admin">
 <nav class="nav">
   <a class="nav-logo" href="index.html">⚡ <span>MC</span> MASTER CLASH</a>
   <div class="nav-links">
@@ -35,65 +35,80 @@
     </div>
   </div>
 </nav>
-<header class="hero" id="top">
-  <div class="hero-badge">Document officiel — État de San Andreas</div>
-  <h1>MASTER CLASH</h1>
-  <div class="hero-tagline">« Le savoir ne suffit pas. Il faut vaincre. »</div>
-  <div class="hero-stats">
-    <div class="stat"><span class="stat-value">42</span><span class="stat-label">Participants</span></div>
-    <div class="stat"><span class="stat-value">3</span><span class="stat-label">Manches</span></div>
-    <div class="stat"><span class="stat-value">100%</span><span class="stat-label">Récompenses</span></div>
-  </div>
-</header>
+<!-- ===== SECTION ADMIN ===== -->
+<section id="admin">
+  <h2 class="section-title">🔧 Administration</h2>
+  <div class="section-subtitle">Réservé à l'organisateur — gestion du code &amp; des archives</div>
+<div class="locked-wrap" data-section="admin">
+<div class="locked-content locked">
 
-<section id="home-nav">
-  <h2 class="section-title">Accès rapide</h2>
-  <div class="section-subtitle">Sélectionnez la section à consulter</div>
-  <div class="home-grid">
-    <a href="gouverneur.html" class="home-card" data-perm="gouv">
-      <div class="home-card-icon">🏛️</div>
-      <div class="home-card-title">Dossier Gouverneur</div>
-      <div class="home-card-desc">Présentation officielle du projet</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="reglement.html" class="home-card">
-      <div class="home-card-icon">📜</div>
-      <div class="home-card-title">Règlement Officiel</div>
-      <div class="home-card-desc">10 articles de l'événement</div>
-    </a>
-    <a href="partenaires.html" class="home-card">
-      <div class="home-card-icon">🤝</div>
-      <div class="home-card-title">Partenaires</div>
-      <div class="home-card-desc">Devenir partenaire de Master Clash</div>
-    </a>
-    <a href="contrats.html" class="home-card">
-      <div class="home-card-icon">📋</div>
-      <div class="home-card-title">Contrats &amp; Bons</div>
-      <div class="home-card-desc">Documents de partenariat à signer</div>
-    </a>
-    <a href="questions.html" class="home-card" data-perm="ques">
-      <div class="home-card-icon">❓</div>
-      <div class="home-card-title">Banque de Questions</div>
-      <div class="home-card-desc">200 questions de l'animateur</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="budget.html" class="home-card" data-perm="budget">
-      <div class="home-card-icon">💰</div>
-      <div class="home-card-title">Budget</div>
-      <div class="home-card-desc">Estimation et financement</div>
-      <div class="home-card-lock" style="display:none">🔒 Accès restreint</div>
-    </a>
-    <a href="profil.html" class="home-card" id="home-card-profil" style="display:none">
-      <div class="home-card-icon">👤</div>
-      <div class="home-card-title">Mon profil</div>
-      <div class="home-card-desc">Mes informations &amp; mes contrats</div>
-    </a>
-    <a href="admin.html" class="home-card home-card-admin" id="home-card-admin" style="display:none">
-      <div class="home-card-icon">🔧</div>
-      <div class="home-card-title">Administration</div>
-      <div class="home-card-desc">Gestion utilisateurs &amp; système</div>
-    </a>
+  <div class="card card-yellow">
+    <h3 style="margin-top:0">🔑 Code d'accès</h3>
+    <p>Le code actuel protège l'accès aux sections sensibles : Gouverneur, Questions, Budget, Bons, validation des contrats, impression et téléchargement PNG.</p>
+    <p style="font-family:'Courier New',monospace;background:#141926;padding:8px 14px;border-radius:6px;display:inline-block;letter-spacing:3px;color:#f5c518;font-weight:700">Code actuel : <span id="admin-current-code">••••••••</span> <button class="admin-btn-mini" onclick="toggleShowCode()">👁 Afficher</button></p>
+    <div style="margin-top:14px">
+      <button class="admin-btn" onclick="changeSecret()">🔑 Changer le code</button>
+      <button class="admin-btn admin-btn-secondary" onclick="resetSecret()">↺ Restaurer le code par défaut</button>
+    </div>
   </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">📊 Statistiques</h3>
+    <div id="admin-stats">Chargement…</div>
+    <button class="admin-btn admin-btn-secondary" onclick="refreshAdminStats()">↻ Actualiser</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">🔓 Session de déblocage</h3>
+    <p>Le déblocage actuel est valide tant que le navigateur n'est pas réinitialisé.</p>
+    <button class="admin-btn admin-btn-secondary" onclick="lockAllSections()">🔒 Re-verrouiller toutes les sections</button>
+  </div>
+
+  <div class="card card-yellow">
+    <h3 style="margin-top:0;color:#f5c518">👥 Comptes utilisateurs <span id="users-count-badge" style="background:rgba(0,212,255,.18);color:#00d4ff;padding:3px 10px;border-radius:14px;font-size:12px;margin-left:6px;font-weight:700">0</span></h3>
+    <p>Tous les comptes créés (manuellement ou par auto-inscription). Cliquez sur <strong>✎ Modifier</strong> pour changer les permissions, l'avatar ou le mot de passe d'un compte.</p>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="admin-btn" onclick="openUserModal()">➕ Créer un utilisateur</button>
+      <button class="admin-btn admin-btn-secondary" onclick="renderUsersList()">↻ Actualiser la liste</button>
+    </div>
+    <div id="users-list"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">📜 Logs d'activité</h3>
+    <p>Historique complet des actions sur le site (connexions, modifications, validations…).</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="admin-btn admin-btn-secondary" onclick="renderAdminLogs()">↻ Actualiser</button>
+      <button class="admin-btn admin-btn-secondary" onclick="clearAllLogs()">🗑 Vider l'historique</button>
+    </div>
+    <div id="admin-logs-list"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">💾 Sauvegarde &amp; restauration</h3>
+    <p>Toutes les données du site (comptes utilisateurs, contrats archivés, paramètres) sont stockées dans le navigateur. Si vous changez de PC ou videz le cache, vous perdez tout. Téléchargez régulièrement une sauvegarde !</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="admin-btn" onclick="exportBackup()">💾 Télécharger une sauvegarde</button>
+      <input type="file" id="restore-file" accept=".json,application/json" style="display:none" onchange="importBackupFile(event)">
+      <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('restore-file').click()">📂 Restaurer depuis un fichier</button>
+    </div>
+    <div id="backup-info" style="margin-top:10px;font-size:11px;color:#6a7a8a"></div>
+  </div>
+
+  <div class="card card-red">
+    <h3 style="margin-top:0;color:#ff4757">⚠ Zone dangereuse</h3>
+    <p>Actions irréversibles. À utiliser avec précaution.</p>
+    <button class="admin-btn admin-btn-danger" onclick="clearAllArchives()">🗑 Effacer tous les contrats archivés</button>
+  </div>
+
+</div>
+<div class="lock-overlay" data-section="admin">
+  <div class="lock-big">🔧</div>
+  <div class="lock-msg">Administration</div>
+  <div class="lock-sub">Code requis pour accéder à l'administration</div>
+  <button class="lock-btn">🔐 Voir comment accéder</button>
+</div>
+</div>
 </section>
 <footer>
   MASTER CLASH — Document officiel — Réservé à l'animateur — État de San Andreas
