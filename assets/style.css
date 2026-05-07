@@ -547,3 +547,23 @@ body.present-active{overflow:hidden}
   60%  { opacity: 1; transform: scale(1.1) translateY(0); color: #f5c518; }
   100% { opacity: 1; transform: scale(1); }
 }
+
+/* ========== IP FLOUTÉE (anti-leak stream) ========== */
+.ip-blur {
+  display: inline-block;
+  filter: blur(4px);
+  cursor: pointer;
+  transition: filter .2s ease;
+  user-select: none;
+  font-family: monospace;
+  background: rgba(0,212,255,.08);
+  padding: 0 4px;
+  border-radius: 3px;
+}
+.ip-blur:hover { filter: blur(2px); }
+.ip-blur.revealed {
+  filter: none;
+  user-select: text;
+  background: rgba(245,197,24,.15);
+  color: #f5c518;
+}

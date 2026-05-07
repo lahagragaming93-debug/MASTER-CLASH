@@ -1783,7 +1783,7 @@ function renderParticipantsList(){
       detailLine = '<div class="user-item-perms" style="color:#aabbc8;font-size:11px">'
         + '🎮 ID: ' + escHtml(p.inGameId || '—') + ' &nbsp;·&nbsp; 📞 ' + escHtml(p.phone || '—')
         + (isAdmin ? ' &nbsp;·&nbsp; 💳 ' + escHtml(p.iban || '—') : '')
-        + (isAdmin && p.ip ? ' &nbsp;·&nbsp; 🌐 ' + escHtml(p.ip) : '')
+        + (isAdmin && p.ip ? ' &nbsp;·&nbsp; 🌐 <span class="ip-blur" onclick="this.classList.toggle(\'revealed\')" title="Cliquer pour afficher / masquer l\'IP">' + escHtml(p.ip) + '</span>' : '')
         + '</div>';
     }
     var actions = '';
