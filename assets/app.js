@@ -332,36 +332,37 @@ function doLogin(){
   setSession(user.username);
   logAction('Connexion');
   try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
-  // Auth Firebase en arrière-plan (silencieux, non-bloquant) — permet aux règles
-  // Firestore de différencier un utilisateur authentifié d'un visiteur anonyme.
+
+  function finishLogin(){
+    // Redirect vers la home pour repartir d'un état propre (sans query params hérités)
+    location.href = 'index.html';
+  }
+
   if (window.MC_FB && MC_FB.available && MC_FB.auth){
     var email = user.email || (user.username.toLowerCase() + '@masterclash.local');
     var onAuthSuccess = function(){
-      // Le compte Firebase Auth gère le password. On peut donc retirer le password
-      // en clair du doc Firestore (sécurité). On garde une copie en localStorage
-      // pour compat tant que tous les comptes ne sont pas migrés.
       if (window.MC_DATA && user.password){
-        var patch = { email: email };
-        MC_DATA.update('users', user.username, patch);
+        return MC_DATA.update('users', user.username, { email: email });
       }
     };
-    MC_FB.auth.signInWithEmailAndPassword(email, p)
-      .then(onAuthSuccess)
+    var authPromise = MC_FB.auth.signInWithEmailAndPassword(email, p)
+      .then(function(cred){ console.log('[MC_AUTH] Connecté Firebase :', user.username); return onAuthSuccess(); })
       .catch(function(err){
         if (err && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials')){
-          MC_FB.auth.createUserWithEmailAndPassword(email, p)
-            .then(function(){
-              console.log('[MC_AUTH] Compte Firebase créé pour', user.username);
-              onAuthSuccess();
-            })
-            .catch(function(e){ console.warn('[MC_AUTH] createUser error:', e && e.code); });
+          console.log('[MC_AUTH] Création du compte Firebase pour', user.username);
+          return MC_FB.auth.createUserWithEmailAndPassword(email, p)
+            .then(function(){ console.log('[MC_AUTH] Compte créé'); return onAuthSuccess(); })
+            .catch(function(e){ console.warn('[MC_AUTH] createUser error:', e && e.code, e && e.message); });
         } else if (err){
-          console.warn('[MC_AUTH] signIn error:', err.code);
+          console.warn('[MC_AUTH] signIn error:', err.code, err.message);
         }
       });
+    // On attend la fin de l'auth Firebase (max 4s) avant de rediriger
+    var timeoutPromise = new Promise(function(r){ setTimeout(r, 4000); });
+    Promise.race([authPromise, timeoutPromise]).then(finishLogin);
+  } else {
+    finishLogin();
   }
-  // Redirect vers la home pour repartir d'un état propre (sans query params hérités)
-  location.href = 'index.html';
 }
 function doLogout(){
   mcConfirm('Voulez-vous vous déconnecter ?', { okText: 'Déconnexion' }).then(function(ok){
@@ -2118,6 +2119,8 @@ function renderParticipantsList(){
 function renderGroupsDisplay(list){
   if (!list && typeof getParticipants === 'function') list = getParticipants();
   if (!list || !list.forEach) return;
+  var c = document.getElementById('groups-display');
+  if (!c) return; // l'élément n'existe que sur participants.html
   var groups = { A: [], B: [], C: [] };
   list.forEach(function(p){
     if (p.group && groups[p.group]) groups[p.group].push(p);
@@ -2126,7 +2129,6 @@ function renderGroupsDisplay(list){
     groups[g].sort(function(a, b){ return (a.position || 0) - (b.position || 0); });
   });
   var colors = { A: '#00d4ff', B: '#f5c518', C: '#00e676' };
-  var c = document.getElementById('groups-display');
   c.innerHTML = ['A', 'B', 'C'].map(function(g){
     var color = colors[g];
     return '<div style="background:#141926;border:1px solid ' + color + ';border-radius:10px;padding:14px">'
