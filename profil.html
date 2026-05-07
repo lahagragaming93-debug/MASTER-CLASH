@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body data-page="profil">
@@ -266,6 +268,21 @@
         <button type="submit" class="modal-btn modal-btn-primary" onclick="saveUserFromModal()">Enregistrer</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ===== MODAL QR CODE ===== -->
+<div class="modal-overlay" id="qr-modal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-logo">⚡ MASTER CLASH</div>
+    <div class="modal-sub">Contrat à scanner</div>
+    <h3 id="qr-modal-title">QR Code du contrat</h3>
+    <div id="qr-modal-canvas" style="display:flex;justify-content:center;background:#fff;padding:18px;border-radius:10px;margin:12px 0"></div>
+    <p id="qr-modal-url" style="font-size:11px;color:#aabbc8;word-break:break-all;font-family:monospace;text-align:center;background:#141926;padding:8px;border-radius:6px;border:1px solid rgba(0,212,255,.18)"></p>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-secondary" onclick="closeQrModal()">Fermer</button>
+      <button type="button" class="modal-btn modal-btn-primary" onclick="downloadQrPng()">⬇ Télécharger PNG</button>
+    </div>
   </div>
 </div>
 

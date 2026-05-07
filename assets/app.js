@@ -1512,6 +1512,8 @@ function renderArchivesList(){
         + '<button class="vi-btn vi-btn-view" onclick="presentArchive(\'' + r.id + '\')">🖥 Présenter</button>'
         + '<button class="vi-btn vi-btn-print" onclick="printArchive(\'' + r.id + '\')">🖨 Imprimer</button>'
         + '<button class="vi-btn vi-btn-print" onclick="downloadContractPng(\'' + r.id + '\')">⬇ PNG</button>'
+        + '<button class="vi-btn vi-btn-print" onclick="downloadContractPdf(\'' + r.id + '\')">📄 PDF</button>'
+        + '<button class="vi-btn vi-btn-view" onclick="showQRCode(\'' + r.id + '\')">📱 QR</button>'
         + reassignBtn
         + '<button class="vi-btn vi-btn-del" onclick="deleteArchive(\'' + r.id + '\')">🗑 Supprimer</button>'
       + '</div>'
@@ -1654,6 +1656,8 @@ function _openArchiveView(rec, isPending){
         '<button class="vi-btn vi-btn-view" onclick="closeViewModal();presentArchive(\'' + rec.id + '\')">🖥 Présenter</button>'
       + '<button class="vi-btn vi-btn-print" onclick="printValidated()">🖨 Imprimer</button>'
       + '<button class="vi-btn vi-btn-print" onclick="downloadContractPng(\'' + rec.id + '\')">⬇ PNG</button>'
+      + '<button class="vi-btn vi-btn-print" onclick="downloadContractPdf(\'' + rec.id + '\')">📄 PDF</button>'
+      + '<button class="vi-btn vi-btn-view" onclick="showQRCode(\'' + rec.id + '\')">📱 QR</button>'
       + '<button class="vi-btn vi-btn-view" onclick="closeViewModal()">✕ Fermer</button>';
   }
   document.getElementById('view-modal').classList.add('active');
@@ -1734,6 +1738,128 @@ document.addEventListener('keydown', function(e){
     if (ov && ov.classList.contains('active')) closePresent();
   }
 });
+
+// ===========================================================
+// EXPORT PDF (jsPDF + html2canvas)
+// ===========================================================
+function downloadContractPdf(id){
+  requireOrgCode().then(function(ok){ if (!ok) return; _downloadContractPdfConfirmed(id); });
+}
+function _downloadContractPdfConfirmed(id){
+  if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined'){
+    mcAlert('⚠ Modules d\'export PDF non chargés.\nVérifiez votre connexion internet.', { title: 'Erreur' });
+    return;
+  }
+  var rec = getArchives().find(function(r){ return r.id === id; });
+  if (!rec) return;
+  var doc = buildArchiveDoc(rec);
+  if (!doc) return;
+  var clone = freezeContractClone(doc);
+  clone.classList.add('contract-png-export');
+  Array.from(clone.querySelectorAll('.org-locked-msg')).forEach(function(el){ el.remove(); });
+  var container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1050px;background:#fdfaf4';
+  container.appendChild(clone);
+  document.body.appendChild(container);
+  setTimeout(function(){
+    html2canvas(container, { backgroundColor: '#fdfaf4', scale: 2, useCORS: true, logging: false }).then(function(canvas){
+      var jsPDF = window.jspdf.jsPDF;
+      // A4 portrait : 210 x 297 mm
+      var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      var pageW = 210, pageH = 297, margin = 8;
+      var availW = pageW - margin * 2;
+      var availH = pageH - margin * 2;
+      var imgRatio = canvas.height / canvas.width;
+      var imgH = availW * imgRatio;
+      var imgData = canvas.toDataURL('image/jpeg', 0.92);
+      if (imgH <= availH){
+        // Tient sur 1 page
+        pdf.addImage(imgData, 'JPEG', margin, margin, availW, imgH);
+      } else {
+        // Multi-pages : on découpe verticalement
+        var pages = Math.ceil(imgH / availH);
+        var sliceHpx = canvas.height / pages;
+        for (var i = 0; i < pages; i++){
+          if (i > 0) pdf.addPage();
+          // Créer un canvas temporaire pour cette tranche
+          var tmp = document.createElement('canvas');
+          tmp.width = canvas.width;
+          tmp.height = sliceHpx;
+          var ctx = tmp.getContext('2d');
+          ctx.drawImage(canvas, 0, -i * sliceHpx);
+          pdf.addImage(tmp.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, availW, availH);
+        }
+      }
+      var slug = (rec.partnerName || 'contrat').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 30);
+      pdf.save('master-clash-' + rec.type + '-' + (slug || 'contrat') + '.pdf');
+      document.body.removeChild(container);
+    }).catch(function(err){
+      mcAlert('Erreur génération PDF : ' + err, { title: 'Erreur' });
+      try { document.body.removeChild(container); } catch(_){}
+    });
+  }, 80);
+}
+
+// ===========================================================
+// QR CODE — pointe vers l'URL du contrat
+// ===========================================================
+var _qrLastDataUrl = null;
+var _qrLastFilename = 'qr-code.png';
+function showQRCode(id){
+  if (typeof qrcode === 'undefined'){
+    mcAlert('⚠ Module QR Code non chargé.\nVérifiez votre connexion internet.', { title: 'Erreur' });
+    return;
+  }
+  var rec = getArchives().find(function(r){ return r.id === id; });
+  if (!rec) return;
+  // URL du contrat (basée sur l'origin actuel)
+  var base = location.origin + location.pathname.replace(/[^/]*$/, '');
+  var url = base + 'contrats.html?view=' + rec.id;
+  var meta = (typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS[rec.type]) || { label: rec.type };
+  document.getElementById('qr-modal-title').textContent = meta.label + ' — ' + (rec.partnerName || '');
+  document.getElementById('qr-modal-url').textContent = url;
+  // Génération du QR (level H = haute correction d'erreur)
+  var qr = qrcode(0, 'H');
+  qr.addData(url);
+  qr.make();
+  // Création canvas
+  var size = 280;
+  var modules = qr.getModuleCount();
+  var cellSize = Math.floor(size / modules);
+  var realSize = cellSize * modules;
+  var canvas = document.createElement('canvas');
+  canvas.width = realSize;
+  canvas.height = realSize;
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, realSize, realSize);
+  ctx.fillStyle = '#0a0e1a';
+  for (var r = 0; r < modules; r++){
+    for (var c = 0; c < modules; c++){
+      if (qr.isDark(r, c)) ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+    }
+  }
+  // Ajouter le canvas dans la modale
+  var container = document.getElementById('qr-modal-canvas');
+  container.innerHTML = '';
+  container.appendChild(canvas);
+  _qrLastDataUrl = canvas.toDataURL('image/png');
+  var slug = (rec.partnerName || 'contrat').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 30);
+  _qrLastFilename = 'qr-master-clash-' + rec.type + '-' + (slug || 'contrat') + '.png';
+  document.getElementById('qr-modal').classList.add('active');
+}
+function closeQrModal(){
+  document.getElementById('qr-modal').classList.remove('active');
+}
+function downloadQrPng(){
+  if (!_qrLastDataUrl) return;
+  var a = document.createElement('a');
+  a.href = _qrLastDataUrl;
+  a.download = _qrLastFilename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 
 function deleteArchive(id){
   requireOrgCode('Code requis pour supprimer ce contrat.').then(function(ok){
