@@ -78,8 +78,7 @@ function buildContractHTML(tpl){
   // Header (logo + meta)
   h += '<div class="contract-header">';
   h +=   '<div class="contract-logo-block">';
-  h +=     '<div class="cl-line1"><span class="bolt">⚡</span> MASTER</div>';
-  h +=     '<div class="cl-line2">CL<span class="chevron">▲</span>SH</div>';
+  h +=     '<img src="assets/logo-mc.png" alt="Master Clash" class="cl-img">';
   h +=     '<div class="cl-tag">Le savoir ne suffit pas. Il faut vaincre.</div>';
   h +=   '</div>';
   h +=   '<div class="contract-meta">';
