@@ -12,6 +12,7 @@ var PAGE_PERMS = {
   ques: 'ques',
   budget: 'budget',
   profil: 'login',
+  participants: 'login',  // accessible aux user connectés (admin = full droits)
   admin: 'admin'
 };
 
@@ -24,6 +25,15 @@ var MC_SESSION_KEY = 'mc_session_v1';
 var MC_LOGS_KEY = 'mc_logs_v1';
 var MC_MESSAGES_KEY = 'mc_messages_v1';
 var MC_TEMPLATES_KEY = 'mc_templates_v1';
+var MC_PARTICIPANTS_KEY = 'mc_participants_v1';
+var MC_REGISTRATIONS_OPEN_KEY = 'mc_registrations_open';
+var PARTICIPANTS_LIMIT = 42;
+var STATUS_LABELS = {
+  pending: '⏳ En attente',
+  confirmed: '✓ Confirmé',
+  absent: '✕ Absent',
+  qualified: '🏆 Qualifié'
+};
 
 // ===========================================================
 // TEMPLATES DE CONTRATS (système éditable)
@@ -1466,6 +1476,411 @@ function resetTplsToDefault(){
 (function(){
   if (document.body.dataset.page === 'admin'){
     setTimeout(renderTemplatesList, 200);
+  }
+})();
+
+// ===========================================================
+// PARTICIPANTS — inscription, liste, tirage Manche 1
+// ===========================================================
+function getParticipants(){
+  try { return JSON.parse(localStorage.getItem(MC_PARTICIPANTS_KEY) || '[]'); } catch(e){ return []; }
+}
+function saveParticipants(list){ localStorage.setItem(MC_PARTICIPANTS_KEY, JSON.stringify(list)); }
+
+function getRegistrationsOpen(){
+  var v = localStorage.getItem(MC_REGISTRATIONS_OPEN_KEY);
+  return v === '1';  // fermé par défaut
+}
+function setRegistrationsOpen(open){
+  localStorage.setItem(MC_REGISTRATIONS_OPEN_KEY, open ? '1' : '0');
+  if (typeof logAction === 'function') logAction('Inscriptions ' + (open ? 'ouvertes' : 'fermées'));
+  // Refresh éventuellement la page participants si on y est
+  if (typeof renderParticipantsList === 'function') renderParticipantsList();
+}
+function getMyParticipantInscription(){
+  var u = getCurrentUser();
+  if (!u) return null;
+  return getParticipants().find(function(p){ return p.username === u.username; }) || null;
+}
+
+var _editingParticipantId = null;
+function openParticipantModal(id){
+  _editingParticipantId = id || null;
+  var modal = document.getElementById('participant-modal');
+  if (!modal) return;
+  var u = getCurrentUser();
+  if (!u){ mcAlert('Vous devez être connecté pour vous inscrire.', { title: 'Connexion requise' }); return; }
+  var isAdmin = userIsAdmin();
+  document.getElementById('part-error').textContent = '';
+  // Section admin (statut + notes) visible uniquement pour admin
+  document.getElementById('part-admin-section').style.display = isAdmin ? '' : 'none';
+  if (id){
+    var p = getParticipants().find(function(x){ return x.id === id; });
+    if (!p) return;
+    // Vérifier permissions : admin OU c'est sa propre inscription
+    if (!isAdmin && p.username !== u.username){
+      mcAlert('🚫 Vous ne pouvez modifier que votre propre inscription.', { title: 'Accès refusé' });
+      return;
+    }
+    document.getElementById('part-modal-sub').textContent = 'Modifier l\'inscription';
+    document.getElementById('part-modal-title').textContent = 'Édition de l\'inscription';
+    document.getElementById('part-real-firstname').value = p.realFirstName || '';
+    document.getElementById('part-real-lastname').value = p.realLastName || '';
+    document.getElementById('part-birthdate').value = p.birthDate || '';
+    document.getElementById('part-ingameid').value = p.inGameId || '';
+    document.getElementById('part-firstname').value = p.firstName || '';
+    document.getElementById('part-lastname').value = p.lastName || '';
+    document.getElementById('part-phone').value = p.phone || '';
+    document.getElementById('part-iban').value = p.iban || '';
+    document.getElementById('part-status').value = p.status || 'pending';
+    document.getElementById('part-notes').value = p.notes || '';
+  } else {
+    // Nouveau : vérifier inscriptions ouvertes (sauf admin) + pas déjà inscrit
+    if (!isAdmin && !getRegistrationsOpen()){
+      mcAlert('🔒 Les inscriptions ne sont pas encore ouvertes.\n\nL\'organisateur les ouvrira au moment voulu. Restez à l\'écoute !', { title: 'Inscriptions fermées' });
+      return;
+    }
+    var existing = getMyParticipantInscription();
+    if (existing && !isAdmin){
+      mcAlert('Vous êtes déjà inscrit. Vous pouvez modifier vos informations à tout moment.', { title: 'Déjà inscrit' });
+      _editingParticipantId = existing.id;
+      return openParticipantModal(existing.id);
+    }
+    var list = getParticipants();
+    if (list.length >= PARTICIPANTS_LIMIT){
+      mcAlert('⚠ Les ' + PARTICIPANTS_LIMIT + ' places sont déjà attribuées.\n\nL\'organisateur peut désinscrire un participant absent.', { title: 'Inscriptions complètes' });
+      return;
+    }
+    document.getElementById('part-modal-sub').textContent = isAdmin ? 'Inscrire un participant' : 'Mon inscription au quiz';
+    document.getElementById('part-modal-title').textContent = 'Nouvelle inscription';
+    document.getElementById('part-real-firstname').value = '';
+    document.getElementById('part-real-lastname').value = '';
+    document.getElementById('part-birthdate').value = '';
+    document.getElementById('part-ingameid').value = '';
+    document.getElementById('part-firstname').value = '';
+    document.getElementById('part-lastname').value = '';
+    document.getElementById('part-phone').value = '';
+    document.getElementById('part-iban').value = '';
+    document.getElementById('part-status').value = isAdmin ? 'confirmed' : 'pending';
+    document.getElementById('part-notes').value = '';
+  }
+  modal.classList.add('active');
+  setTimeout(function(){ document.getElementById('part-real-firstname').focus(); }, 60);
+}
+function closeParticipantModal(){
+  var m = document.getElementById('participant-modal');
+  if (m) m.classList.remove('active');
+}
+function saveParticipant(){
+  var u = getCurrentUser();
+  if (!u){ mcAlert('Connexion requise.'); return; }
+  var isAdmin = userIsAdmin();
+  var rf = (document.getElementById('part-real-firstname').value || '').trim();
+  var rl = (document.getElementById('part-real-lastname').value || '').trim();
+  var bd = document.getElementById('part-birthdate').value || '';
+  var ig = (document.getElementById('part-ingameid').value || '').trim();
+  var fn = (document.getElementById('part-firstname').value || '').trim();
+  var ln = (document.getElementById('part-lastname').value || '').trim();
+  var ph = (document.getElementById('part-phone').value || '').trim();
+  var ib = (document.getElementById('part-iban').value || '').trim().replace(/\s+/g, '');
+  var st = document.getElementById('part-status').value;
+  var nt = (document.getElementById('part-notes').value || '').trim();
+  var err = document.getElementById('part-error');
+  if (!rf || !rl){ err.textContent = '⚠ Prénom et nom (IRL) sont obligatoires.'; return; }
+  if (!bd){ err.textContent = '⚠ Date de naissance obligatoire.'; return; }
+  if (!ig){ err.textContent = '⚠ ID en jeu obligatoire.'; return; }
+  if (!fn || !ln){ err.textContent = '⚠ Prénom et nom in-game obligatoires.'; return; }
+  if (!ph){ err.textContent = '⚠ Téléphone in-game obligatoire.'; return; }
+  if (!ib){ err.textContent = '⚠ IBAN obligatoire (pour les récompenses).'; return; }
+  var list = getParticipants();
+  if (_editingParticipantId){
+    var idx = list.findIndex(function(x){ return x.id === _editingParticipantId; });
+    if (idx === -1) return;
+    list[idx].realFirstName = rf;
+    list[idx].realLastName = rl;
+    list[idx].birthDate = bd;
+    list[idx].inGameId = ig;
+    list[idx].firstName = fn;
+    list[idx].lastName = ln;
+    list[idx].phone = ph;
+    list[idx].iban = ib;
+    if (isAdmin){
+      list[idx].status = st;
+      list[idx].notes = nt;
+    }
+  } else {
+    if (list.length >= PARTICIPANTS_LIMIT){ err.textContent = '⚠ Les ' + PARTICIPANTS_LIMIT + ' places sont déjà prises.'; return; }
+    list.push({
+      id: 'P' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      username: u.username,
+      realFirstName: rf,
+      realLastName: rl,
+      birthDate: bd,
+      inGameId: ig,
+      firstName: fn,
+      lastName: ln,
+      phone: ph,
+      iban: ib,
+      status: isAdmin ? st : 'pending',
+      notes: isAdmin ? nt : '',
+      registeredAt: new Date().toISOString(),
+      registeredBy: u.username,
+      group: null,
+      position: null
+    });
+  }
+  saveParticipants(list);
+  if (typeof logAction === 'function') logAction(_editingParticipantId ? 'Inscription modifiée' : 'Inscription au quiz', rf + ' ' + rl);
+  closeParticipantModal();
+  renderParticipantsList();
+  if (!_editingParticipantId){
+    mcAlert('✓ Inscription enregistrée !\n\nVotre place est réservée. L\'organisateur vous contactera pour confirmer.', { title: 'Inscription réussie' });
+  }
+}
+function deleteParticipant(id){
+  var p = getParticipants().find(function(x){ return x.id === id; });
+  if (!p) return;
+  mcConfirm('Désinscrire « ' + p.fullName + ' » ?\n\nCette action est irréversible.', { title: '🗑 Désinscrire', okText: 'Désinscrire' }).then(function(ok){
+    if (!ok) return;
+    var list = getParticipants().filter(function(x){ return x.id !== id; });
+    saveParticipants(list);
+    if (typeof logAction === 'function') logAction('Participant désinscrit', p.fullName);
+    renderParticipantsList();
+  });
+}
+function renderPartButtons(){
+  var bar = document.getElementById('part-buttons-bar');
+  if (!bar) return;
+  var u = getCurrentUser();
+  var isAdmin = userIsAdmin();
+  var open = getRegistrationsOpen();
+  var mine = u ? getMyParticipantInscription() : null;
+  var html = '';
+  if (!u){
+    html = '<button class="admin-btn admin-btn-secondary" onclick="openLoginModal()">🔐 Se connecter pour s\'inscrire</button>';
+  } else if (isAdmin){
+    html = '<button class="admin-btn" onclick="openParticipantModal()">➕ Inscrire un participant</button>'
+         + '<button class="admin-btn admin-btn-secondary" onclick="launchDrawAnimation()">🎲 Lancer le tirage Manche 1</button>';
+    // Toggle inscriptions ouvertes
+    html += '<label style="display:inline-flex;align-items:center;gap:8px;background:#141926;padding:8px 14px;border-radius:8px;border:1px solid ' + (open ? '#00e676' : '#ff4757') + ';color:' + (open ? '#00e676' : '#ff4757') + ';font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:Montserrat,sans-serif">'
+         + '<input type="checkbox" ' + (open ? 'checked' : '') + ' onchange="setRegistrationsOpen(this.checked);renderPartButtons()" style="cursor:pointer;width:18px;height:18px">'
+         + (open ? '🟢 Inscriptions ouvertes' : '🔴 Inscriptions fermées')
+         + '</label>';
+  } else if (mine){
+    html = '<button class="admin-btn" onclick="openParticipantModal(\'' + mine.id + '\')">✎ Modifier mes infos</button>'
+         + '<div style="display:inline-flex;align-items:center;padding:8px 14px;background:rgba(0,230,118,.12);border:1px solid #00e676;border-radius:8px;color:#00e676;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase">✓ Inscrit ' + (mine.group ? '— Groupe ' + mine.group : '') + '</div>';
+  } else if (open){
+    html = '<button class="admin-btn" onclick="openParticipantModal()">➕ S\'inscrire au quiz</button>';
+  } else {
+    html = '<div style="padding:14px 18px;background:rgba(255,71,87,.08);border:1px dashed #ff4757;border-radius:8px;color:#ff4757;font-weight:700">🔒 Les inscriptions ne sont pas encore ouvertes. Restez à l\'écoute !</div>';
+  }
+  bar.innerHTML = html;
+}
+
+function renderParticipantsList(){
+  renderPartButtons();
+  var c = document.getElementById('participants-list');
+  if (!c) return;
+  var list = getParticipants();
+  // Maj barre de progression
+  var bar = document.getElementById('part-progress-bar');
+  var txt = document.getElementById('part-progress-text');
+  if (bar && txt){
+    var pct = Math.min(100, (list.length / PARTICIPANTS_LIMIT) * 100);
+    bar.style.width = pct + '%';
+    txt.textContent = list.length + ' / ' + PARTICIPANTS_LIMIT;
+  }
+  // Filtres
+  var s = (document.getElementById('part-search') || {}).value || '';
+  var fStatus = (document.getElementById('part-filter-status') || {}).value || '';
+  var fGroup = (document.getElementById('part-filter-group') || {}).value || '';
+  var filtered = list.filter(function(p){
+    if (s){
+      var q = s.toLowerCase();
+      if ((p.fullName || '').toLowerCase().indexOf(q) === -1 && (p.pseudo || '').toLowerCase().indexOf(q) === -1) return false;
+    }
+    if (fStatus && p.status !== fStatus) return false;
+    if (fGroup === 'none' && p.group) return false;
+    if (fGroup && fGroup !== 'none' && p.group !== fGroup) return false;
+    return true;
+  });
+  if (filtered.length === 0){
+    c.innerHTML = '<div class="validated-empty">' + (list.length === 0 ? 'Aucun inscrit pour le moment.' : 'Aucun participant ne correspond aux filtres.') + '</div>';
+    return;
+  }
+  // Affichage des groupes si tirage fait
+  var hasGroups = list.some(function(p){ return !!p.group; });
+  if (hasGroups){
+    document.getElementById('groups-display-card').style.display = '';
+    renderGroupsDisplay(list);
+  } else {
+    document.getElementById('groups-display-card').style.display = 'none';
+  }
+  var isAdmin = userIsAdmin();
+  var u = getCurrentUser();
+  c.innerHTML = '<div class="users-list">' + filtered.map(function(p, idx){
+    var isOwn = u && p.username === u.username;
+    var groupBadge = p.group ? '<span class="status-badge" style="background:rgba(0,212,255,.15);color:#00d4ff;border:1px solid rgba(0,212,255,.4);margin-left:6px">Groupe ' + p.group + (p.position ? ' #' + p.position : '') + '</span>' : '';
+    var statusBadge = '<span class="status-badge" style="margin-left:6px;background:rgba(245,197,24,.12);color:#f5c518;border:1px solid rgba(245,197,24,.3)">' + (STATUS_LABELS[p.status] || p.status) + '</span>';
+    var ownBadge = isOwn ? '<span class="status-badge" style="margin-left:6px;background:rgba(0,230,118,.15);color:#00e676;border:1px solid rgba(0,230,118,.4)">⭐ vous</span>' : '';
+    var displayName = isAdmin || isOwn
+      ? escHtml(p.realFirstName + ' ' + p.realLastName) + ' <span style="color:#6a7a8a;font-weight:400;font-size:11px">(IG: ' + escHtml(p.firstName + ' ' + p.lastName) + ')</span>'
+      : escHtml(p.firstName + ' ' + p.lastName);  // les autres ne voient que l'identité IG
+    var detailLine = '';
+    if (isAdmin || isOwn){
+      detailLine = '<div class="user-item-perms" style="color:#aabbc8;font-size:11px">'
+        + '🎮 ID: ' + escHtml(p.inGameId || '—') + ' &nbsp;·&nbsp; 📞 ' + escHtml(p.phone || '—')
+        + (isAdmin ? ' &nbsp;·&nbsp; 💳 ' + escHtml(p.iban || '—') : '')
+        + '</div>';
+    }
+    var actions = '';
+    if (isAdmin){
+      actions = '<button class="user-item-btn edit" onclick="openParticipantModal(\'' + p.id + '\')">✎ Modifier</button>'
+              + '<button class="user-item-btn del" onclick="deleteParticipant(\'' + p.id + '\')">🗑</button>';
+    } else if (isOwn){
+      actions = '<button class="user-item-btn edit" onclick="openParticipantModal(\'' + p.id + '\')">✎ Modifier mes infos</button>';
+    }
+    return '<div class="user-item' + (isOwn ? ' admin-item' : '') + '">'
+      + '<div class="user-item-avatar" style="display:flex;align-items:center;justify-content:center;font-size:18px;background:#0f1420;border:1px solid rgba(0,212,255,.4);color:#00d4ff;font-weight:700">' + (idx+1) + '</div>'
+      + '<div class="user-item-info">'
+        + '<div class="user-item-name">' + displayName + statusBadge + groupBadge + ownBadge + '</div>'
+        + detailLine
+        + (p.notes && isAdmin ? '<div class="user-item-perms" style="color:#aabbc8;font-style:italic">📝 ' + escHtml(p.notes) + '</div>' : '')
+      + '</div>'
+      + (actions ? '<div class="user-item-actions">' + actions + '</div>' : '')
+    + '</div>';
+  }).join('') + '</div>';
+}
+function renderGroupsDisplay(list){
+  var groups = { A: [], B: [], C: [] };
+  list.forEach(function(p){
+    if (p.group && groups[p.group]) groups[p.group].push(p);
+  });
+  Object.keys(groups).forEach(function(g){
+    groups[g].sort(function(a, b){ return (a.position || 0) - (b.position || 0); });
+  });
+  var colors = { A: '#00d4ff', B: '#f5c518', C: '#00e676' };
+  var c = document.getElementById('groups-display');
+  c.innerHTML = ['A', 'B', 'C'].map(function(g){
+    var color = colors[g];
+    return '<div style="background:#141926;border:1px solid ' + color + ';border-radius:10px;padding:14px">'
+      + '<h4 style="color:' + color + ';margin:0 0 10px;text-align:center;letter-spacing:2px;font-size:18px">GROUPE ' + g + ' <span style="font-size:11px;color:#aabbc8">(' + groups[g].length + ')</span></h4>'
+      + '<ol style="margin:0;padding-left:24px;color:#dce4f0;font-size:13px">'
+      + groups[g].map(function(p){ return '<li style="margin-bottom:4px">' + escHtml(p.fullName) + (p.pseudo ? ' <span style="color:#6a7a8a">(' + escHtml(p.pseudo) + ')</span>' : '') + '</li>'; }).join('')
+      + '</ol>'
+    + '</div>';
+  }).join('');
+}
+
+// ===== TIRAGE M1 — animation et répartition =====
+function launchDrawAnimation(){
+  if (!userIsAdmin()){
+    mcAlert('🚫 Le tirage est réservé à l\'administrateur.', { title: 'Accès refusé' });
+    return;
+  }
+  var list = getParticipants();
+  // Ne tire que les confirmés (ou tous si rien marqué)
+  var pool = list.filter(function(p){ return p.status === 'confirmed' || p.status === 'pending'; });
+  if (pool.length < 3){
+    mcAlert('⚠ Il faut au moins 3 participants pour faire le tirage.\nActuellement : ' + pool.length + '.', { title: 'Pas assez de participants' });
+    return;
+  }
+  mcConfirm('🎲 Lancer le tirage des groupes Manche 1 ?\n\n' + pool.length + ' participant(s) seront répartis en 3 groupes (A, B, C) de manière aléatoire.\n\nUn tirage existant sera écrasé.', { title: 'Tirage Manche 1', okText: 'Lancer' }).then(function(ok){
+    if (!ok) return;
+    runDrawAnimation(pool);
+  });
+}
+function runDrawAnimation(pool){
+  // Mélanger
+  var shuffled = pool.slice().sort(function(){ return Math.random() - 0.5; });
+  // Répartir en 3 groupes équilibrés (round-robin)
+  var groups = { A: [], B: [], C: [] };
+  shuffled.forEach(function(p, i){
+    var g = ['A', 'B', 'C'][i % 3];
+    p.group = g;
+    p.position = groups[g].length + 1;
+    groups[g].push(p);
+  });
+  // Sauvegarder
+  var fullList = getParticipants();
+  fullList.forEach(function(p){
+    var inPool = pool.find(function(x){ return x.id === p.id; });
+    if (inPool){ p.group = inPool.group; p.position = inPool.position; }
+  });
+  saveParticipants(fullList);
+  if (typeof logAction === 'function') logAction('Tirage Manche 1 effectué', pool.length + ' participants');
+  // Animation : afficher les noms qui défilent puis se fixent
+  showDrawOverlay(groups);
+}
+function showDrawOverlay(groups){
+  // Crée un overlay plein écran avec animation
+  var ov = document.createElement('div');
+  ov.id = 'draw-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,14,26,.97);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;overflow-y:auto;backdrop-filter:blur(8px)';
+  ov.innerHTML = '<div style="text-align:center;margin-bottom:30px">'
+    + '<h1 style="font-size:36px;background:linear-gradient(135deg,#00d4ff,#f5c518);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;letter-spacing:3px">🎲 TIRAGE EN COURS</h1>'
+    + '<p style="color:#aabbc8;font-size:14px" id="draw-status">Mélange des participants…</p>'
+    + '</div>'
+    + '<div id="draw-groups" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1000px;width:100%"></div>'
+    + '<button id="draw-close-btn" style="margin-top:30px;padding:14px 32px;background:linear-gradient(135deg,#00e676,#00d4ff);color:#0a0e1a;border:none;border-radius:10px;font-weight:800;font-size:14px;letter-spacing:2px;cursor:pointer;font-family:inherit;text-transform:uppercase;display:none" onclick="closeDrawOverlay()">✓ Voir les groupes</button>';
+  document.body.appendChild(ov);
+  var colors = { A: '#00d4ff', B: '#f5c518', C: '#00e676' };
+  var c = document.getElementById('draw-groups');
+  c.innerHTML = ['A', 'B', 'C'].map(function(g){
+    var color = colors[g];
+    return '<div style="background:#141926;border:2px solid ' + color + ';border-radius:14px;padding:18px;min-height:200px">'
+      + '<h2 style="color:' + color + ';text-align:center;margin:0 0 14px;letter-spacing:3px;font-size:24px;text-shadow:0 0 12px ' + color + '40">GROUPE ' + g + '</h2>'
+      + '<ol id="draw-list-' + g + '" style="margin:0;padding-left:24px;color:#dce4f0;font-size:13px;min-height:120px"></ol>'
+    + '</div>';
+  }).join('');
+  // Animation : ajouter les noms un par un avec délai
+  var allParticipants = [];
+  ['A', 'B', 'C'].forEach(function(g){
+    groups[g].forEach(function(p){ allParticipants.push({ p: p, g: g }); });
+  });
+  // Mélanger pour ordre d'apparition aléatoire
+  allParticipants.sort(function(){ return Math.random() - 0.5; });
+  var i = 0;
+  var status = document.getElementById('draw-status');
+  function tick(){
+    if (i >= allParticipants.length){
+      status.textContent = '✓ Tirage terminé — ' + allParticipants.length + ' participants répartis';
+      var btn = document.getElementById('draw-close-btn');
+      if (btn) btn.style.display = '';
+      return;
+    }
+    var item = allParticipants[i];
+    var li = document.createElement('li');
+    li.style.cssText = 'margin-bottom:5px;animation:draw-pop .4s ease-out';
+    li.textContent = item.p.fullName + (item.p.pseudo ? ' (' + item.p.pseudo + ')' : '');
+    document.getElementById('draw-list-' + item.g).appendChild(li);
+    status.textContent = '→ ' + item.p.fullName + ' rejoint le Groupe ' + item.g + '…';
+    i++;
+    setTimeout(tick, 250 + Math.random() * 150);
+  }
+  setTimeout(tick, 600);
+}
+function closeDrawOverlay(){
+  var ov = document.getElementById('draw-overlay');
+  if (ov) ov.remove();
+  renderParticipantsList();
+}
+function resetDraw(){
+  if (!userIsAdmin()) return;
+  mcConfirm('Réinitialiser le tirage ?\nLes participants ne seront plus assignés à un groupe.', { okText: 'Réinitialiser' }).then(function(ok){
+    if (!ok) return;
+    var list = getParticipants();
+    list.forEach(function(p){ p.group = null; p.position = null; });
+    saveParticipants(list);
+    renderParticipantsList();
+    if (typeof logAction === 'function') logAction('Tirage Manche 1 réinitialisé');
+  });
+}
+
+// Init participants
+(function(){
+  if (document.body.dataset.page === 'participants'){
+    setTimeout(renderParticipantsList, 100);
   }
 })();
 

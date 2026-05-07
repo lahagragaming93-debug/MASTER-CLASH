@@ -22,6 +22,7 @@
     <a href="contrats.html" class="locked-link" data-section="contrats"><span class="lock-icon">🔒</span>Contrats</a>
     <a href="questions.html" class="locked-link" data-section="ques"><span class="lock-icon">🔒</span>Questions</a>
     <a href="budget.html" class="locked-link" data-section="budget"><span class="lock-icon">🔒</span>Budget</a>
+    <a href="participants.html" class="locked-link" data-section="participants"><span class="lock-icon">🎯</span>Participants</a>
     <a href="profil.html" id="nav-profil-link" style="display:none">👤 Mon profil</a>
     <a href="admin.html" class="locked-link" data-section="admin"><span class="lock-icon">🔧</span>Admin</a>
   </div>
@@ -451,6 +452,69 @@
         <button type="submit" class="modal-btn modal-btn-primary" onclick="saveUserFromModal()">Enregistrer</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ===== MODAL PARTICIPANT (création/édition) ===== -->
+<div class="modal-overlay" id="participant-modal" style="align-items:flex-start;padding:30px 20px;overflow-y:auto">
+  <div class="modal" style="max-width:560px;text-align:left">
+    <div class="modal-logo" style="text-align:center">⚡ MASTER CLASH</div>
+    <div class="modal-sub" style="text-align:center" id="part-modal-sub">Inscription au quiz</div>
+    <h3 style="text-align:center" id="part-modal-title">Nouveau participant</h3>
+    <p style="text-align:center;color:#aabbc8;font-size:13px">Renseignez vos informations. Ces données restent confidentielles et ne servent qu'à l'organisation du quiz et au versement des récompenses.</p>
+
+    <div style="margin-top:14px;padding:10px 14px;background:rgba(0,212,255,.06);border-left:3px solid #00d4ff;border-radius:6px">
+      <strong style="color:#00d4ff;font-size:11px;letter-spacing:1px;text-transform:uppercase">▸ Identité réelle (Joueur)</strong>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="flex:1;min-width:160px">
+        <label class="auth-label">Prénom (IRL)</label>
+        <input type="text" id="part-real-firstname" class="auth-input" placeholder="Prénom du joueur" autocomplete="off">
+      </div>
+      <div style="flex:1;min-width:160px">
+        <label class="auth-label">Nom (IRL)</label>
+        <input type="text" id="part-real-lastname" class="auth-input" placeholder="Nom du joueur" autocomplete="off">
+      </div>
+    </div>
+    <label class="auth-label">📅 Date de naissance</label>
+    <input type="date" id="part-birthdate" class="auth-input">
+
+    <div style="margin-top:14px;padding:10px 14px;background:rgba(245,197,24,.06);border-left:3px solid #f5c518;border-radius:6px">
+      <strong style="color:#f5c518;font-size:11px;letter-spacing:1px;text-transform:uppercase">▸ Identité in-game (RP)</strong>
+    </div>
+    <label class="auth-label">🎮 ID en jeu</label>
+    <input type="text" id="part-ingameid" class="auth-input" placeholder="ex: 1234" autocomplete="off">
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="flex:1;min-width:160px">
+        <label class="auth-label">Prénom (in-game)</label>
+        <input type="text" id="part-firstname" class="auth-input" placeholder="Prénom RP" autocomplete="off">
+      </div>
+      <div style="flex:1;min-width:160px">
+        <label class="auth-label">Nom (in-game)</label>
+        <input type="text" id="part-lastname" class="auth-input" placeholder="Nom RP" autocomplete="off">
+      </div>
+    </div>
+    <label class="auth-label">📞 Téléphone (in-game)</label>
+    <input type="text" id="part-phone" class="auth-input" placeholder="ex: 555-1234" autocomplete="off">
+    <label class="auth-label">💳 IBAN (in-game) — pour récompenses</label>
+    <input type="text" id="part-iban" class="auth-input" placeholder="ex: FR76..." autocomplete="off">
+
+    <div id="part-admin-section" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(0,212,255,.15)">
+      <label class="auth-label">⚙ Statut (admin uniquement)</label>
+      <select id="part-status" class="auth-input">
+        <option value="pending">⏳ En attente de confirmation</option>
+        <option value="confirmed">✓ Confirmé</option>
+        <option value="absent">✕ Absent</option>
+        <option value="qualified">🏆 Qualifié</option>
+      </select>
+      <label class="auth-label">📝 Notes (admin)</label>
+      <textarea id="part-notes" class="auth-input" placeholder="Notes internes..." style="min-height:60px;resize:vertical;font-family:inherit"></textarea>
+    </div>
+    <div class="modal-error" id="part-error"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-secondary" onclick="closeParticipantModal()">Annuler</button>
+      <button type="button" class="modal-btn modal-btn-primary" onclick="saveParticipant()">Valider mon inscription</button>
+    </div>
   </div>
 </div>
 

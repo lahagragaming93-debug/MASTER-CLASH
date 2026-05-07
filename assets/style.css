@@ -540,3 +540,10 @@ body.present-active{overflow:hidden}
 .tpl-mini-btn.tpl-mini-del{color:#ff4757;border-color:rgba(255,71,87,.4)}
 .tpl-mini-btn.tpl-mini-del:hover:not(:disabled){background:rgba(255,71,87,.15);border-color:#ff4757}
 .tpl-add-block{margin-top:14px;padding:14px;background:#141926;border:1px dashed rgba(0,212,255,.4);border-radius:8px;text-align:center}
+
+/* ========== TIRAGE ANIMATION ========== */
+@keyframes draw-pop {
+  0%   { opacity: 0; transform: scale(.5) translateY(-10px); }
+  60%  { opacity: 1; transform: scale(1.1) translateY(0); color: #f5c518; }
+  100% { opacity: 1; transform: scale(1); }
+}
