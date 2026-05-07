@@ -30,15 +30,15 @@
 <nav class="nav">
   <a class="nav-logo" href="index.html"><img src="assets/logo-mc.png" alt="Master Clash" class="nav-logo-img"><span class="nav-logo-text">MASTER CLASH</span></a>
   <div class="nav-links">
-    <a href="gouverneur.html" class="locked-link" data-section="gouv"><span class="lock-icon">🔒</span>Gouverneur</a>
-    <a href="reglement.html">Règlement</a>
-    <a href="partenaires.html">Partenaires</a>
-    <a href="contrats.html" class="locked-link" data-section="contrats"><span class="lock-icon">🔒</span>Contrats</a>
-    <a href="questions.html" class="locked-link" data-section="ques"><span class="lock-icon">🔒</span>Questions</a>
-    <a href="budget.html" class="locked-link" data-section="budget"><span class="lock-icon">🔒</span>Budget</a>
-    <a href="participants.html" id="nav-participants-link" style="display:none">🎯 Participants</a>
-    <a href="profil.html" id="nav-profil-link" style="display:none">👤 Mon profil</a>
-    <a href="admin.html" class="locked-link" data-section="admin"><span class="lock-icon">🔧</span>Admin</a>
+    <a href="gouverneur.html" class="locked-link" data-section="gouv" title="Dossier Gouverneur"><span class="lock-icon">🔒</span><span class="nav-icon">🏛️</span><span class="nav-text">Gouverneur</span></a>
+    <a href="reglement.html" title="Règlement Officiel"><span class="nav-icon">📜</span><span class="nav-text">Règlement</span></a>
+    <a href="partenaires.html" title="Partenaires"><span class="nav-icon">🤝</span><span class="nav-text">Partenaires</span></a>
+    <a href="contrats.html" class="locked-link" data-section="contrats" title="Contrats &amp; Bons"><span class="lock-icon">🔒</span><span class="nav-icon">📋</span><span class="nav-text">Contrats</span></a>
+    <a href="questions.html" class="locked-link" data-section="ques" title="Banque de Questions"><span class="lock-icon">🔒</span><span class="nav-icon">❓</span><span class="nav-text">Questions</span></a>
+    <a href="budget.html" class="locked-link" data-section="budget" title="Budget"><span class="lock-icon">🔒</span><span class="nav-icon">💰</span><span class="nav-text">Budget</span></a>
+    <a href="participants.html" id="nav-participants-link" style="display:none" title="Participants"><span class="nav-icon">🎯</span><span class="nav-text">Participants</span></a>
+    <a href="profil.html" id="nav-profil-link" style="display:none" title="Mon profil"><span class="nav-icon">👤</span><span class="nav-text">Profil</span></a>
+    <a href="admin.html" class="locked-link" data-section="admin" title="Administration"><span class="lock-icon">🔒</span><span class="nav-icon">🔧</span><span class="nav-text">Admin</span></a>
   </div>
   <div class="nav-user" id="nav-user">
     <button class="nav-msg-btn" id="nav-msg-btn" onclick="openMessageModal()" style="display:none" title="Contacter l'organisateur">📨</button><div class="nav-notif-wrap" id="nav-notif-wrap" style="display:none"><button class="nav-bell" id="nav-bell" onclick="toggleNotifs(event)">🔔<span class="nav-notif-count" id="nav-notif-count">0</span></button><div class="nav-notif-dropdown" id="nav-notif-dropdown"><div class="nav-notif-head"><strong>Notifications</strong><button class="nav-notif-mark" onclick="markAllNotifsRead()">✓ Tout marquer lu</button></div><div class="nav-notif-list" id="nav-notif-list"></div></div></div><button class="nav-login-btn" id="nav-login-btn" onclick="openLoginModal()">🔐 Connexion</button>
