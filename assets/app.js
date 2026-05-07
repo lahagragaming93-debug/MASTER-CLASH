@@ -39,6 +39,13 @@ function saveTemplates(list){ localStorage.setItem(MC_TEMPLATES_KEY, JSON.string
 function getTemplate(id){
   return getTemplates().find(function(t){ return t.id === id; }) || null;
 }
+// Récupère les méta (label, icon, ref) à jour pour un type de contrat — toujours frais depuis les templates
+function getContractMeta(typeId){
+  var t = getTemplate(typeId);
+  if (t) return { label: t.label, icon: t.icon, ref: t.ref };
+  if (typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS[typeId]) return CONTRACT_LABELS[typeId];
+  return { label: typeId, icon: '📄', ref: '' };
+}
 function resetTemplatesToDefault(){
   localStorage.removeItem(MC_TEMPLATES_KEY);
 }
