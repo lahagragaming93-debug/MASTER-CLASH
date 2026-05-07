@@ -1508,35 +1508,48 @@ function renderThreadView(){
   if (err) err.textContent = '';
 }
 function sendReply(){
-  var u = getCurrentUser();
-  if (!u || !_currentThreadId) return;
-  var bodyEl = document.getElementById('msg-reply-body');
-  var err = document.getElementById('msg-reply-error');
-  var body = (bodyEl.value || '').trim();
-  if (!body){ err.textContent = '⚠ Saisissez un message.'; return; }
-  var list = getMessages();
-  var idx = list.findIndex(function(t){ return t.id === _currentThreadId; });
-  if (idx === -1) return;
-  var now = new Date().toISOString();
-  var subject = list[idx].subject;
-  list[idx].entries.push({
-    from: u.username,
-    fromDisplay: u.displayName || u.username,
-    fromAvatar: u.avatar || defaultAvatar(u.displayName || u.username),
-    body: body,
-    at: now,
-    readBy: [u.username]
-  });
-  list[idx].lastActivityAt = now;
-  list[idx].lastFrom = u.username;
-  if (list[idx].participants.indexOf(u.username) === -1) list[idx].participants.push(u.username);
-  saveMessages(list);
-  if (typeof logAction === 'function') logAction('Réponse envoyée', subject);
-  // Fermer la modal et notifier l'utilisateur
-  closeMsgViewModal();
-  if (typeof renderInbox === 'function') renderInbox();
-  if (typeof renderMessagesList === 'function') renderMessagesList();
-  mcAlert('✓ Réponse envoyée.\n\nVotre interlocuteur recevra une notification.', { title: 'Message envoyé' });
+  console.log('[MC] sendReply() appelée, threadId=', _currentThreadId);
+  try {
+    var u = getCurrentUser();
+    if (!u){ console.warn('[MC] sendReply: pas de user'); return; }
+    if (!_currentThreadId){ console.warn('[MC] sendReply: pas de threadId'); window.alert('⚠ Aucune conversation active. Rouvrez la conversation.'); return; }
+    var bodyEl = document.getElementById('msg-reply-body');
+    var err = document.getElementById('msg-reply-error');
+    if (!bodyEl){ console.error('[MC] sendReply: msg-reply-body introuvable'); window.alert('⚠ Erreur interne (champ introuvable). Rechargez la page.'); return; }
+    var body = (bodyEl.value || '').trim();
+    if (!body){ if (err) err.textContent = '⚠ Saisissez un message.'; return; }
+    var list = getMessages();
+    var idx = list.findIndex(function(t){ return t.id === _currentThreadId; });
+    if (idx === -1){ console.warn('[MC] thread introuvable'); return; }
+    var now = new Date().toISOString();
+    var subject = list[idx].subject;
+    list[idx].entries.push({
+      from: u.username,
+      fromDisplay: u.displayName || u.username,
+      fromAvatar: u.avatar || defaultAvatar(u.displayName || u.username),
+      body: body,
+      at: now,
+      readBy: [u.username]
+    });
+    list[idx].lastActivityAt = now;
+    list[idx].lastFrom = u.username;
+    if (list[idx].participants.indexOf(u.username) === -1) list[idx].participants.push(u.username);
+    saveMessages(list);
+    if (typeof logAction === 'function') logAction('Réponse envoyée', subject);
+    closeMsgViewModal();
+    if (typeof renderInbox === 'function') renderInbox();
+    if (typeof renderMessagesList === 'function') renderMessagesList();
+    // Feedback : essaie mcAlert, fallback alert natif
+    try {
+      mcAlert('✓ Réponse envoyée.\n\nVotre interlocuteur recevra une notification.', { title: 'Message envoyé' });
+    } catch(e){
+      console.error('[MC] mcAlert a planté:', e);
+      window.alert('✓ Réponse envoyée.');
+    }
+  } catch(e){
+    console.error('[MC] sendReply ERREUR:', e);
+    window.alert('⚠ Erreur lors de l\'envoi : ' + e.message);
+  }
 }
 function closeMsgViewModal(){
   document.getElementById('msg-view-modal').classList.remove('active');
