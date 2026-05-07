@@ -1527,9 +1527,6 @@ function openParticipantModal(id){
     }
     document.getElementById('part-modal-sub').textContent = 'Modifier l\'inscription';
     document.getElementById('part-modal-title').textContent = 'Édition de l\'inscription';
-    document.getElementById('part-real-firstname').value = p.realFirstName || '';
-    document.getElementById('part-real-lastname').value = p.realLastName || '';
-    document.getElementById('part-birthdate').value = p.birthDate || '';
     document.getElementById('part-ingameid').value = p.inGameId || '';
     document.getElementById('part-firstname').value = p.firstName || '';
     document.getElementById('part-lastname').value = p.lastName || '';
@@ -1556,9 +1553,6 @@ function openParticipantModal(id){
     }
     document.getElementById('part-modal-sub').textContent = isAdmin ? 'Inscrire un participant' : 'Mon inscription au quiz';
     document.getElementById('part-modal-title').textContent = 'Nouvelle inscription';
-    document.getElementById('part-real-firstname').value = '';
-    document.getElementById('part-real-lastname').value = '';
-    document.getElementById('part-birthdate').value = '';
     document.getElementById('part-ingameid').value = '';
     document.getElementById('part-firstname').value = '';
     document.getElementById('part-lastname').value = '';
@@ -1568,19 +1562,37 @@ function openParticipantModal(id){
     document.getElementById('part-notes').value = '';
   }
   modal.classList.add('active');
-  setTimeout(function(){ document.getElementById('part-real-firstname').focus(); }, 60);
+  setTimeout(function(){ document.getElementById('part-ingameid').focus(); }, 60);
 }
 function closeParticipantModal(){
   var m = document.getElementById('participant-modal');
   if (m) m.classList.remove('active');
 }
+function fetchPublicIP(){
+  // Renvoie une promesse résolue avec l'IP publique, ou null si échec.
+  return new Promise(function(resolve){
+    try {
+      var done = false;
+      var timer = setTimeout(function(){ if (!done){ done = true; resolve(null); } }, 4000);
+      fetch('https://api.ipify.org?format=json', { cache: 'no-store' })
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(j){
+          if (done) return;
+          done = true; clearTimeout(timer);
+          resolve(j && j.ip ? j.ip : null);
+        })
+        .catch(function(){
+          if (done) return;
+          done = true; clearTimeout(timer);
+          resolve(null);
+        });
+    } catch (e){ resolve(null); }
+  });
+}
 function saveParticipant(){
   var u = getCurrentUser();
   if (!u){ mcAlert('Connexion requise.'); return; }
   var isAdmin = userIsAdmin();
-  var rf = (document.getElementById('part-real-firstname').value || '').trim();
-  var rl = (document.getElementById('part-real-lastname').value || '').trim();
-  var bd = document.getElementById('part-birthdate').value || '';
   var ig = (document.getElementById('part-ingameid').value || '').trim();
   var fn = (document.getElementById('part-firstname').value || '').trim();
   var ln = (document.getElementById('part-lastname').value || '').trim();
@@ -1589,56 +1601,77 @@ function saveParticipant(){
   var st = document.getElementById('part-status').value;
   var nt = (document.getElementById('part-notes').value || '').trim();
   var err = document.getElementById('part-error');
-  if (!rf || !rl){ err.textContent = '⚠ Prénom et nom (IRL) sont obligatoires.'; return; }
-  if (!bd){ err.textContent = '⚠ Date de naissance obligatoire.'; return; }
   if (!ig){ err.textContent = '⚠ ID en jeu obligatoire.'; return; }
   if (!fn || !ln){ err.textContent = '⚠ Prénom et nom in-game obligatoires.'; return; }
   if (!ph){ err.textContent = '⚠ Téléphone in-game obligatoire.'; return; }
+  // Validation format téléphone XXX-XXXX
+  if (!/^\d{3}-\d{4}$/.test(ph)){ err.textContent = '⚠ Format téléphone invalide. Attendu : XXX-XXXX (ex: 555-1234).'; return; }
   if (!ib){ err.textContent = '⚠ IBAN obligatoire (pour les récompenses).'; return; }
   var list = getParticipants();
-  if (_editingParticipantId){
-    var idx = list.findIndex(function(x){ return x.id === _editingParticipantId; });
-    if (idx === -1) return;
-    list[idx].realFirstName = rf;
-    list[idx].realLastName = rl;
-    list[idx].birthDate = bd;
-    list[idx].inGameId = ig;
-    list[idx].firstName = fn;
-    list[idx].lastName = ln;
-    list[idx].phone = ph;
-    list[idx].iban = ib;
-    if (isAdmin){
-      list[idx].status = st;
-      list[idx].notes = nt;
+  // Sécurité supplémentaire : 1 inscription par compte (sauf admin qui inscrit pour quelqu'un d'autre)
+  if (!_editingParticipantId && !isAdmin){
+    var existing = list.find(function(x){ return x.username === u.username; });
+    if (existing){
+      err.textContent = '⚠ Vous avez déjà une inscription. Modifiez-la au lieu d\'en créer une nouvelle.';
+      return;
     }
-  } else {
-    if (list.length >= PARTICIPANTS_LIMIT){ err.textContent = '⚠ Les ' + PARTICIPANTS_LIMIT + ' places sont déjà prises.'; return; }
-    list.push({
-      id: 'P' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-      username: u.username,
-      realFirstName: rf,
-      realLastName: rl,
-      birthDate: bd,
-      inGameId: ig,
-      firstName: fn,
-      lastName: ln,
-      phone: ph,
-      iban: ib,
-      status: isAdmin ? st : 'pending',
-      notes: isAdmin ? nt : '',
-      registeredAt: new Date().toISOString(),
-      registeredBy: u.username,
-      group: null,
-      position: null
-    });
   }
-  saveParticipants(list);
-  if (typeof logAction === 'function') logAction(_editingParticipantId ? 'Inscription modifiée' : 'Inscription au quiz', rf + ' ' + rl);
-  closeParticipantModal();
-  renderParticipantsList();
-  if (!_editingParticipantId){
-    mcAlert('✓ Inscription enregistrée !\n\nVotre place est réservée. L\'organisateur vous contactera pour confirmer.', { title: 'Inscription réussie' });
-  }
+  err.textContent = '';
+  // Récupère l'IP publique (anti-multi-comptes), puis enregistre.
+  fetchPublicIP().then(function(ip){
+    var list2 = getParticipants();
+    // Anti-multi-comptes : 1 inscription par IP (sauf admin)
+    if (!_editingParticipantId && !isAdmin && ip){
+      var sameIP = list2.find(function(x){ return x.ip === ip; });
+      if (sameIP){
+        err.textContent = '⚠ Une inscription existe déjà depuis cette adresse IP. Une seule inscription est autorisée par foyer/connexion.';
+        return;
+      }
+    }
+    var fullName = fn + ' ' + ln;
+    if (_editingParticipantId){
+      var idx = list2.findIndex(function(x){ return x.id === _editingParticipantId; });
+      if (idx === -1) return;
+      list2[idx].inGameId = ig;
+      list2[idx].firstName = fn;
+      list2[idx].lastName = ln;
+      list2[idx].fullName = fullName;
+      list2[idx].pseudo = ig;
+      list2[idx].phone = ph;
+      list2[idx].iban = ib;
+      if (isAdmin){
+        list2[idx].status = st;
+        list2[idx].notes = nt;
+      }
+    } else {
+      if (list2.length >= PARTICIPANTS_LIMIT){ err.textContent = '⚠ Les ' + PARTICIPANTS_LIMIT + ' places sont déjà prises.'; return; }
+      list2.push({
+        id: 'P' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        username: u.username,
+        inGameId: ig,
+        firstName: fn,
+        lastName: ln,
+        fullName: fullName,
+        pseudo: ig,
+        phone: ph,
+        iban: ib,
+        ip: ip || null,
+        status: isAdmin ? st : 'pending',
+        notes: isAdmin ? nt : '',
+        registeredAt: new Date().toISOString(),
+        registeredBy: u.username,
+        group: null,
+        position: null
+      });
+    }
+    saveParticipants(list2);
+    if (typeof logAction === 'function') logAction(_editingParticipantId ? 'Inscription modifiée' : 'Inscription au quiz', fullName);
+    closeParticipantModal();
+    renderParticipantsList();
+    if (!_editingParticipantId){
+      mcAlert('✓ Inscription enregistrée !\n\nVotre place est en attente de validation par l\'organisateur. Vous serez inclus(e) dans le tirage une fois validé(e).', { title: 'Inscription reçue' });
+    }
+  });
 }
 function deleteParticipant(id){
   var p = getParticipants().find(function(x){ return x.id === id; });
@@ -1648,6 +1681,20 @@ function deleteParticipant(id){
     var list = getParticipants().filter(function(x){ return x.id !== id; });
     saveParticipants(list);
     if (typeof logAction === 'function') logAction('Participant désinscrit', p.fullName);
+    renderParticipantsList();
+  });
+}
+function confirmParticipant(id){
+  if (!userIsAdmin()){ mcAlert('🚫 Action réservée à l\'administrateur.'); return; }
+  var list = getParticipants();
+  var p = list.find(function(x){ return x.id === id; });
+  if (!p) return;
+  mcConfirm('✓ Confirmer l\'inscription de « ' + p.fullName + ' » ?\n\nCe participant sera inclus dans le prochain tirage.', { title: 'Confirmer l\'inscription', okText: 'Confirmer' }).then(function(ok){
+    if (!ok) return;
+    p.status = 'confirmed';
+    p.confirmedAt = Date.now();
+    saveParticipants(list);
+    if (typeof logAction === 'function') logAction('Inscription confirmée', p.fullName);
     renderParticipantsList();
   });
 }
@@ -1724,21 +1771,27 @@ function renderParticipantsList(){
   c.innerHTML = '<div class="users-list">' + filtered.map(function(p, idx){
     var isOwn = u && p.username === u.username;
     var groupBadge = p.group ? '<span class="status-badge" style="background:rgba(0,212,255,.15);color:#00d4ff;border:1px solid rgba(0,212,255,.4);margin-left:6px">Groupe ' + p.group + (p.position ? ' #' + p.position : '') + '</span>' : '';
-    var statusBadge = '<span class="status-badge" style="margin-left:6px;background:rgba(245,197,24,.12);color:#f5c518;border:1px solid rgba(245,197,24,.3)">' + (STATUS_LABELS[p.status] || p.status) + '</span>';
+    var statusColor = p.status === 'confirmed' ? 'rgba(0,230,118,.15);color:#00e676;border:1px solid rgba(0,230,118,.4)'
+                    : p.status === 'pending' ? 'rgba(245,197,24,.12);color:#f5c518;border:1px solid rgba(245,197,24,.3)'
+                    : p.status === 'absent' ? 'rgba(255,82,82,.12);color:#ff5252;border:1px solid rgba(255,82,82,.3)'
+                    : 'rgba(0,212,255,.12);color:#00d4ff;border:1px solid rgba(0,212,255,.3)';
+    var statusBadge = '<span class="status-badge" style="margin-left:6px;background:' + statusColor + '">' + (STATUS_LABELS[p.status] || p.status) + '</span>';
     var ownBadge = isOwn ? '<span class="status-badge" style="margin-left:6px;background:rgba(0,230,118,.15);color:#00e676;border:1px solid rgba(0,230,118,.4)">⭐ vous</span>' : '';
-    var displayName = isAdmin || isOwn
-      ? escHtml(p.realFirstName + ' ' + p.realLastName) + ' <span style="color:#6a7a8a;font-weight:400;font-size:11px">(IG: ' + escHtml(p.firstName + ' ' + p.lastName) + ')</span>'
-      : escHtml(p.firstName + ' ' + p.lastName);  // les autres ne voient que l'identité IG
+    var displayName = escHtml(p.firstName + ' ' + p.lastName);
     var detailLine = '';
     if (isAdmin || isOwn){
       detailLine = '<div class="user-item-perms" style="color:#aabbc8;font-size:11px">'
         + '🎮 ID: ' + escHtml(p.inGameId || '—') + ' &nbsp;·&nbsp; 📞 ' + escHtml(p.phone || '—')
         + (isAdmin ? ' &nbsp;·&nbsp; 💳 ' + escHtml(p.iban || '—') : '')
+        + (isAdmin && p.ip ? ' &nbsp;·&nbsp; 🌐 ' + escHtml(p.ip) : '')
         + '</div>';
     }
     var actions = '';
     if (isAdmin){
-      actions = '<button class="user-item-btn edit" onclick="openParticipantModal(\'' + p.id + '\')">✎ Modifier</button>'
+      if (p.status === 'pending'){
+        actions += '<button class="user-item-btn edit" style="background:rgba(0,230,118,.15);border-color:rgba(0,230,118,.5);color:#00e676" onclick="confirmParticipant(\'' + p.id + '\')">✓ Confirmer</button>';
+      }
+      actions += '<button class="user-item-btn edit" onclick="openParticipantModal(\'' + p.id + '\')">✎ Modifier</button>'
               + '<button class="user-item-btn del" onclick="deleteParticipant(\'' + p.id + '\')">🗑</button>';
     } else if (isOwn){
       actions = '<button class="user-item-btn edit" onclick="openParticipantModal(\'' + p.id + '\')">✎ Modifier mes infos</button>';
@@ -1782,13 +1835,17 @@ function launchDrawAnimation(){
     return;
   }
   var list = getParticipants();
-  // Ne tire que les confirmés (ou tous si rien marqué)
-  var pool = list.filter(function(p){ return p.status === 'confirmed' || p.status === 'pending'; });
+  // Ne tire que les confirmés (les pending doivent être validés par l'admin avant)
+  var pool = list.filter(function(p){ return p.status === 'confirmed'; });
+  var pendingCount = list.filter(function(p){ return p.status === 'pending'; }).length;
   if (pool.length < 3){
-    mcAlert('⚠ Il faut au moins 3 participants pour faire le tirage.\nActuellement : ' + pool.length + '.', { title: 'Pas assez de participants' });
+    var msg = '⚠ Il faut au moins 3 participants confirmés pour faire le tirage.\nActuellement : ' + pool.length + ' confirmé(s).';
+    if (pendingCount > 0) msg += '\n\n⏳ ' + pendingCount + ' inscription(s) en attente de validation. Cliquez sur ✓ Confirmer pour les valider.';
+    mcAlert(msg, { title: 'Pas assez de participants confirmés' });
     return;
   }
-  mcConfirm('🎲 Lancer le tirage des groupes Manche 1 ?\n\n' + pool.length + ' participant(s) seront répartis en 3 groupes (A, B, C) de manière aléatoire.\n\nUn tirage existant sera écrasé.', { title: 'Tirage Manche 1', okText: 'Lancer' }).then(function(ok){
+  var extra = pendingCount > 0 ? '\n\n⚠ ' + pendingCount + ' inscription(s) en attente NE seront PAS incluses (à confirmer avant).' : '';
+  mcConfirm('🎲 Lancer le tirage des groupes Manche 1 ?\n\n' + pool.length + ' participant(s) confirmé(s) seront répartis en 3 groupes (A, B, C) de manière aléatoire.' + extra + '\n\nUn tirage existant sera écrasé.', { title: 'Tirage Manche 1', okText: 'Lancer' }).then(function(ok){
     if (!ok) return;
     runDrawAnimation(pool);
   });
