@@ -98,13 +98,37 @@
 
     // Blocs
     html += '<div class="tpl-section"><h3>🧱 Blocs du contrat <span style="font-size:12px;color:#6a7a8a;font-weight:400">(' + current.blocks.length + ')</span></h3>';
-    html += '<p style="font-size:12px;color:#aabbc8;margin-bottom:12px">L\'ajout/suppression/réorganisation des blocs sera disponible au prochain commit. Pour l\'instant, vous pouvez modifier le contenu de chaque bloc existant.</p>';
+    html += '<p style="font-size:12px;color:#aabbc8;margin-bottom:12px">Modifiez le contenu, réorganisez (↑↓), supprimez (🗑) ou ajoutez de nouveaux blocs.</p>';
     current.blocks.forEach(function(b, i){
       html += '<div class="tpl-block" data-idx="' + i + '">';
-      html += '<div class="tpl-block-head"><strong>#' + (i+1) + ' — ' + b.type + '</strong>' + (b.optional ? ' <span class="tpl-badge-opt">optionnel</span>' : '') + '</div>';
+      html += '<div class="tpl-block-head">';
+      html +=   '<strong>#' + (i+1) + ' — ' + b.type + '</strong>';
+      html +=   (b.optional ? ' <span class="tpl-badge-opt">optionnel</span>' : '');
+      html +=   '<div class="tpl-block-actions">';
+      html +=     '<button class="tpl-mini-btn" onclick="window.moveBlockUp(' + i + ')" ' + (i === 0 ? 'disabled' : '') + ' title="Monter">↑</button>';
+      html +=     '<button class="tpl-mini-btn" onclick="window.moveBlockDown(' + i + ')" ' + (i === current.blocks.length - 1 ? 'disabled' : '') + ' title="Descendre">↓</button>';
+      html +=     '<button class="tpl-mini-btn" onclick="window.toggleBlockOptional(' + i + ')" title="' + (b.optional ? 'Marquer comme requis' : 'Marquer comme optionnel') + '">' + (b.optional ? '✓' : '?') + '</button>';
+      html +=     '<button class="tpl-mini-btn tpl-mini-del" onclick="window.deleteBlock(' + i + ')" title="Supprimer ce bloc">🗑</button>';
+      html +=   '</div>';
+      html += '</div>';
       html += renderBlockEditor(b, i);
       html += '</div>';
     });
+    // Bouton ajouter
+    html += '<div class="tpl-add-block">';
+    html += '  <select id="tpl-new-block-type" class="auth-input" style="display:inline-block;width:auto;margin-right:8px">';
+    html += '    <option value="h3">📌 Titre de section (h3)</option>';
+    html += '    <option value="h4">📍 Sous-titre (h4)</option>';
+    html += '    <option value="p">📝 Paragraphe (p)</option>';
+    html += '    <option value="fieldRow">📋 Ligne de champs (fieldRow)</option>';
+    html += '    <option value="inlineP">✏️ Paragraphe avec champs intégrés (inlineP)</option>';
+    html += '    <option value="ul">• Liste à puces (ul)</option>';
+    html += '    <option value="checkboxes">☑ Cases à cocher</option>';
+    html += '    <option value="textarea">📄 Zone de texte (textarea)</option>';
+    html += '    <option value="fieldLabel">🏷 Label seul (fieldLabel)</option>';
+    html += '  </select>';
+    html += '  <button class="admin-btn" onclick="window.addBlock()">➕ Ajouter ce bloc</button>';
+    html += '</div>';
     html += '</div>';
 
     f.innerHTML = html;
@@ -266,6 +290,91 @@
 
   function escAttr(s){
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ===== Manipulation des blocs =====
+  window.moveBlockUp = function(i){
+    if (i <= 0 || i >= current.blocks.length) return;
+    var tmp = current.blocks[i];
+    current.blocks[i] = current.blocks[i-1];
+    current.blocks[i-1] = tmp;
+    renderForm();
+    refreshPreview();
+  };
+  window.moveBlockDown = function(i){
+    if (i < 0 || i >= current.blocks.length - 1) return;
+    var tmp = current.blocks[i];
+    current.blocks[i] = current.blocks[i+1];
+    current.blocks[i+1] = tmp;
+    renderForm();
+    refreshPreview();
+  };
+  window.deleteBlock = function(i){
+    if (i < 0 || i >= current.blocks.length) return;
+    var b = current.blocks[i];
+    var preview = (b.text || b.html || ('bloc ' + b.type)).slice(0, 60);
+    mcConfirm('Supprimer ce bloc ?\n\n« ' + preview + '… »\n\nCette action est immédiate (mais pas encore sauvegardée).', { title: '🗑 Supprimer bloc', okText: 'Supprimer' }).then(function(ok){
+      if (!ok) return;
+      current.blocks.splice(i, 1);
+      renderForm();
+      refreshPreview();
+    });
+  };
+  window.toggleBlockOptional = function(i){
+    if (!current.blocks[i]) return;
+    current.blocks[i].optional = !current.blocks[i].optional;
+    // Propager le flag sur les inputs si besoin
+    var b = current.blocks[i];
+    if (b.optional){
+      if (b.input) b.input.optional = true;
+      if (b.fields) b.fields.forEach(function(f){ if (f.input) f.input.optional = true; });
+      if (b.segments) b.segments.forEach(function(s){ if (s.input) s.input.optional = true; });
+    } else {
+      if (b.input) delete b.input.optional;
+      if (b.fields) b.fields.forEach(function(f){ if (f.input) delete f.input.optional; });
+      if (b.segments) b.segments.forEach(function(s){ if (s.input) delete s.input.optional; });
+    }
+    renderForm();
+    refreshPreview();
+  };
+  window.addBlock = function(){
+    var type = document.getElementById('tpl-new-block-type').value;
+    var newBlock = createNewBlock(type);
+    if (!newBlock) return;
+    current.blocks.push(newBlock);
+    renderForm();
+    refreshPreview();
+    // Scroll vers le nouveau bloc
+    setTimeout(function(){
+      var blocks = document.querySelectorAll('.tpl-block');
+      if (blocks.length){
+        blocks[blocks.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 80);
+  };
+  function createNewBlock(type){
+    switch(type){
+      case 'h3': return { type: 'h3', text: 'Nouveau titre de section' };
+      case 'h4': return { type: 'h4', text: 'Nouveau sous-titre' };
+      case 'p': return { type: 'p', html: 'Nouveau paragraphe à modifier.' };
+      case 'fieldLabel': return { type: 'fieldLabel', text: 'Nouveau label' };
+      case 'textarea': return { type: 'textarea', input: { placeholder: 'Saisir ici...' } };
+      case 'fieldRow': return { type: 'fieldRow', fields: [
+        { label: 'Champ 1', input: { type: 'text', placeholder: 'Saisir...' } },
+        { label: 'Champ 2', input: { type: 'text', placeholder: 'Saisir...' } }
+      ]};
+      case 'inlineP': return { type: 'inlineP', segments: [
+        { kind: 'text', value: 'Texte avant ' },
+        { kind: 'input', input: { type: 'text', placeholder: 'champ' } },
+        { kind: 'text', value: ' texte après.' }
+      ]};
+      case 'ul': return { type: 'ul', items: ['Premier item', 'Deuxième item', 'Troisième item'] };
+      case 'checkboxes': return { type: 'checkboxes', items: [
+        { label: 'Option 1', checked: false },
+        { label: 'Option 2', checked: false }
+      ]};
+      default: return null;
+    }
   }
 
   // ===== Sauvegarde =====

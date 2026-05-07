@@ -530,3 +530,13 @@ body.present-active{overflow:hidden}
   .tpl-editor-split{grid-template-columns:1fr}
   .tpl-editor-preview{position:relative;top:auto;max-height:none}
 }
+
+/* ========== TEMPLATE EDITOR — boutons mini d'actions sur les blocs ========== */
+.tpl-block-head{justify-content:space-between!important}
+.tpl-block-actions{display:flex;gap:4px;margin-left:auto}
+.tpl-mini-btn{width:28px;height:28px;border-radius:6px;background:#0f1420;border:1px solid rgba(0,212,255,.3);color:#00d4ff;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s}
+.tpl-mini-btn:hover:not(:disabled){background:rgba(0,212,255,.15);border-color:#00d4ff;transform:scale(1.05)}
+.tpl-mini-btn:disabled{opacity:.3;cursor:not-allowed}
+.tpl-mini-btn.tpl-mini-del{color:#ff4757;border-color:rgba(255,71,87,.4)}
+.tpl-mini-btn.tpl-mini-del:hover:not(:disabled){background:rgba(255,71,87,.15);border-color:#ff4757}
+.tpl-add-block{margin-top:14px;padding:14px;background:#141926;border:1px dashed rgba(0,212,255,.4);border-radius:8px;text-align:center}
