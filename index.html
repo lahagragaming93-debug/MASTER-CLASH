@@ -21,10 +21,10 @@
     <a href="questions.html" class="locked-link" data-section="ques"><span class="lock-icon">🔒</span>Questions</a>
     <a href="budget.html" class="locked-link" data-section="budget"><span class="lock-icon">🔒</span>Budget</a>
     <a href="profil.html" id="nav-profil-link" style="display:none">👤 Mon profil</a>
-    <a href="admin.html" class="locked-link" data-section="admin"><span class="lock-icon">🔧</span>Admin<span id="admin-notif-badge" class="admin-notif-badge" style="display:none">0</span></a>
+    <a href="admin.html" class="locked-link" data-section="admin"><span class="lock-icon">🔧</span>Admin</a>
   </div>
   <div class="nav-user" id="nav-user">
-    <button class="nav-login-btn" id="nav-login-btn" onclick="openLoginModal()">🔐 Connexion</button>
+    <div class="nav-notif-wrap" id="nav-notif-wrap" style="display:none"><button class="nav-bell" id="nav-bell" onclick="toggleNotifs(event)">🔔<span class="nav-notif-count" id="nav-notif-count">0</span></button><div class="nav-notif-dropdown" id="nav-notif-dropdown"><div class="nav-notif-head"><strong>Notifications</strong><button class="nav-notif-mark" onclick="markAllNotifsRead()">✓ Tout marquer lu</button></div><div class="nav-notif-list" id="nav-notif-list"></div></div></div><button class="nav-login-btn" id="nav-login-btn" onclick="openLoginModal()">🔐 Connexion</button>
     <div class="nav-user-box" id="nav-user-box" style="display:none">
       <img class="nav-avatar" id="nav-avatar" src="" alt="">
       <div class="nav-user-text">

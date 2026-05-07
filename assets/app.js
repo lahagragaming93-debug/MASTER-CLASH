@@ -632,44 +632,123 @@ function generateRandomPassword(){
 // ===========================================================
 // NOTIFICATIONS ADMIN (badges sur l'onglet Admin)
 // ===========================================================
-function refreshAdminNotifications(){
-  if (!userIsAdmin()) {
-    var b = document.getElementById('admin-notif-badge');
-    if (b) b.style.display = 'none';
-    return;
-  }
-  var archives = getArchives();
-  var pending = archives.filter(function(r){ return r.status === 'pending'; }).length;
-  var users = getUsers();
-  // Comptes auto-inscrits non encore "vus" : on garde la liste des dernières dates de visite admin
+function getNotifsList(){
+  var notifs = [];
+  if (!userIsAdmin()) return notifs;
   var lastSeen = parseInt(localStorage.getItem('mc_admin_last_seen') || '0', 10);
-  var newUsers = users.filter(function(u){
-    if (u.username === 'BoulaTV') return false;
-    if (!u.createdAt) return false;
-    return new Date(u.createdAt).getTime() > lastSeen;
-  }).length;
-  var total = pending + newUsers;
-  var badge = document.getElementById('admin-notif-badge');
-  if (badge){
-    if (total > 0){
-      badge.textContent = total;
-      badge.style.display = '';
-      badge.title = pending + ' contrat(s) en attente, ' + newUsers + ' nouveau(x) compte(s)';
+  // Pending contracts
+  getArchives().filter(function(r){ return r.status === 'pending'; }).forEach(function(r){
+    var meta = (typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS[r.type]) || { label: r.type, icon: '📋' };
+    var ts = r.submittedAt ? new Date(r.submittedAt).getTime() : 0;
+    notifs.push({
+      type: 'pending',
+      icon: '⏳',
+      title: 'Contrat en attente de validation',
+      desc: r.partnerName + ' — ' + meta.label,
+      at: r.submittedAt || r.validatedAt,
+      target: 'contrats.html?view=' + r.id,
+      isNew: ts > lastSeen
+    });
+  });
+  // New users
+  getUsers().forEach(function(u){
+    if (u.username === 'BoulaTV' || !u.createdAt) return;
+    var ts = new Date(u.createdAt).getTime();
+    if (ts <= lastSeen - 7 * 24 * 3600 * 1000) return; // limite à 7 jours pour ne pas saturer
+    notifs.push({
+      type: 'user',
+      icon: '👤',
+      title: 'Nouveau compte créé',
+      desc: u.displayName + ' (@' + u.username + ')',
+      at: u.createdAt,
+      target: 'admin.html#users-list',
+      isNew: ts > lastSeen
+    });
+  });
+  // Tri par date décroissante
+  notifs.sort(function(a, b){ return new Date(b.at) - new Date(a.at); });
+  return notifs;
+}
+
+function refreshAdminNotifications(){
+  var wrap = document.getElementById('nav-notif-wrap');
+  if (!userIsAdmin()){ if (wrap) wrap.style.display = 'none'; return; }
+  if (wrap) wrap.style.display = '';
+  var notifs = getNotifsList();
+  var newCount = notifs.filter(function(n){ return n.isNew; }).length;
+  var countEl = document.getElementById('nav-notif-count');
+  if (countEl){
+    if (newCount > 0){
+      countEl.textContent = newCount > 99 ? '99+' : newCount;
+      countEl.classList.remove('empty');
     } else {
-      badge.style.display = 'none';
+      countEl.classList.add('empty');
     }
   }
 }
-// Quand admin clique sur l'onglet Admin, marquer comme "vu"
+
+function toggleNotifs(ev){
+  if (ev) ev.stopPropagation();
+  var dd = document.getElementById('nav-notif-dropdown');
+  if (!dd) return;
+  if (dd.classList.contains('open')){
+    dd.classList.remove('open');
+  } else {
+    renderNotifsDropdown();
+    dd.classList.add('open');
+  }
+}
+
+function renderNotifsDropdown(){
+  var c = document.getElementById('nav-notif-list');
+  if (!c) return;
+  var notifs = getNotifsList();
+  if (notifs.length === 0){
+    c.innerHTML = '<div class="notif-empty">Aucune notification 📭</div>';
+    return;
+  }
+  c.innerHTML = notifs.map(function(n){
+    return '<a class="notif-item' + (n.isNew ? ' is-new' : '') + '" href="' + escHtml(n.target) + '">'
+      + '<div class="notif-icon">' + n.icon + '</div>'
+      + '<div class="notif-info">'
+        + '<div class="notif-title">' + escHtml(n.title) + '</div>'
+        + '<div class="notif-desc">' + escHtml(n.desc) + '</div>'
+        + '<div class="notif-time">' + (typeof fmtDate === 'function' ? fmtDate(n.at) : n.at) + '</div>'
+      + '</div>'
+    + '</a>';
+  }).join('');
+}
+
+function markAllNotifsRead(){
+  localStorage.setItem('mc_admin_last_seen', String(Date.now()));
+  refreshAdminNotifications();
+  renderNotifsDropdown();
+}
+
+// Fermer le dropdown au clic en dehors
+document.addEventListener('click', function(e){
+  var wrap = document.getElementById('nav-notif-wrap');
+  var dd = document.getElementById('nav-notif-dropdown');
+  if (!wrap || !dd) return;
+  if (!wrap.contains(e.target)) dd.classList.remove('open');
+});
+
+// Si on arrive sur contrats.html?view=ID, ouvrir directement la modale du contrat
 (function(){
-  var adminLink = document.querySelector('.nav-links a[href="admin.html"]');
-  if (adminLink) adminLink.addEventListener('click', function(){
-    if (userIsAdmin()){
-      localStorage.setItem('mc_admin_last_seen', String(Date.now()));
-      setTimeout(refreshAdminNotifications, 200);
-    }
-  });
+  if (location.pathname.indexOf('contrats.html') === -1 && document.body.dataset.page !== 'contrats') return;
+  var params = new URLSearchParams(location.search);
+  var viewId = params.get('view');
+  if (!viewId) return;
+  // Marquer comme vu pour les notifs
+  localStorage.setItem('mc_admin_last_seen', String(Date.now()));
+  // Aller sur l'onglet archives + ouvrir la modale
+  setTimeout(function(){
+    var archTab = document.querySelector('.contract-tab[data-tab="archives"]');
+    if (archTab) archTab.click();
+    setTimeout(function(){ if (typeof viewArchive === 'function') viewArchive(viewId); }, 200);
+  }, 400);
 })();
+// Plus de marquage auto au clic sur Admin : c'est la cloche qui gère "marquer comme lu"
 
 // ===========================================================
 // LOGS D'ACTIVITÉ
