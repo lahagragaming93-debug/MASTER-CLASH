@@ -7,7 +7,7 @@ var PAGE_PERMS = {
   home: null,
   regl: null,
   part: null,
-  contrats: null,
+  contrats: 'contrats',
   gouv: 'gouv',
   ques: 'ques',
   budget: 'budget',
