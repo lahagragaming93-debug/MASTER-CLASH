@@ -439,7 +439,8 @@ function doRegister(){
     displayName: dn,
     avatar: _regAvatarDataURL || defaultAvatar(dn),
     isAdmin: false,
-    perms: ['regl', 'part', 'contrats'],
+    isPartner: false, // BoulaTV doit valider l'utilisateur en partenaire
+    perms: ['regl', 'part'], // règlement + voir page partenaires uniquement (pas les contrats)
     secretQuestion: sq,
     secretAnswer: sa,
     createdAt: new Date().toISOString()
@@ -566,8 +567,16 @@ function applyAuthState(){
     document.getElementById('nav-avatar').src = user.avatar || defaultAvatar(user.displayName || user.username);
     document.getElementById('nav-username').textContent = user.displayName || user.username;
     var roleEl = document.getElementById('nav-userrole');
-    roleEl.textContent = user.isAdmin ? '👑 Admin' : 'Partenaire';
-    roleEl.className = 'nav-userrole' + (user.isAdmin ? ' admin' : '');
+    if (user.isAdmin){
+      roleEl.textContent = '👑 Admin';
+      roleEl.className = 'nav-userrole admin';
+    } else if (user.isPartner){
+      roleEl.textContent = '🤝 Partenaire';
+      roleEl.className = 'nav-userrole partner';
+    } else {
+      roleEl.textContent = '👤 Utilisateur';
+      roleEl.className = 'nav-userrole user';
+    }
   } else {
     loginBtn.style.display = '';
     userBox.style.display = 'none';
@@ -575,22 +584,26 @@ function applyAuthState(){
 
   // Liste de toutes les sections / panels protégés
   var protectedItems = [
-    { sectionId: 'gouv', perm: 'gouv', linkSelector: '.nav-links a[href="gouverneur.html"]' },
-    { sectionId: 'ques', perm: 'ques', linkSelector: '.nav-links a[href="questions.html"]' },
-    { sectionId: 'budget', perm: 'budget', linkSelector: '.nav-links a[href="budget.html"]' }
+    { sectionId: 'gouv',     perm: 'gouv',     linkSelector: '.nav-links a[href="gouverneur.html"]' },
+    { sectionId: 'contrats', perm: 'contrats', linkSelector: '.nav-links a[href="contrats.html"]' },
+    { sectionId: 'ques',     perm: 'ques',     linkSelector: '.nav-links a[href="questions.html"]' },
+    { sectionId: 'budget',   perm: 'budget',   linkSelector: '.nav-links a[href="budget.html"]' }
   ];
   protectedItems.forEach(function(item){
-    var section = document.getElementById(item.sectionId);
-    if (!section) return;
-    var content = section.querySelector('.locked-content');
-    var overlay = section.querySelector('.lock-overlay');
     var hasAccess = userIsAdmin() || userHasPerm(item.perm);
-    if (content){
-      if (hasAccess) content.classList.remove('locked');
-      else content.classList.add('locked');
+    // 1) Mise à jour de la section interne (uniquement si elle est dans le DOM)
+    var section = document.getElementById(item.sectionId);
+    if (section){
+      var content = section.querySelector('.locked-content');
+      var overlay = section.querySelector('.lock-overlay');
+      if (content){
+        if (hasAccess) content.classList.remove('locked');
+        else content.classList.add('locked');
+      }
+      if (overlay) overlay.style.display = hasAccess ? 'none' : '';
     }
-    if (overlay) overlay.style.display = hasAccess ? 'none' : '';
-    // Mise à jour visuelle du lien dans la nav (retirer le cadenas si accès)
+    // 2) Mise à jour du lien dans la nav — TOUJOURS, même si la section n'est pas
+    // sur la page courante (la nav est globale).
     var link = document.querySelector(item.linkSelector);
     if (link){
       var icon = link.querySelector('.lock-icon');
