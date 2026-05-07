@@ -1358,6 +1358,7 @@ function validateContract(type){
     partnerName: partnerName,
     createdBy: creator ? creator.username : null,
     createdByDisplay: creator ? (creator.displayName || creator.username) : null,
+    creatorAvatar: creator ? (creator.avatar || defaultAvatar(creator.displayName || creator.username)) : null,
     status: 'pending',
     submittedAt: new Date().toISOString(),
     validatedAt: null,
@@ -1508,6 +1509,7 @@ function renderArchivesList(){
       + '</div>'
       + '<div class="vi-actions">'
         + '<button class="vi-btn vi-btn-view" onclick="viewArchive(\'' + r.id + '\')">👁 Voir</button>'
+        + '<button class="vi-btn vi-btn-view" onclick="presentArchive(\'' + r.id + '\')">🖥 Présenter</button>'
         + '<button class="vi-btn vi-btn-print" onclick="printArchive(\'' + r.id + '\')">🖨 Imprimer</button>'
         + '<button class="vi-btn vi-btn-print" onclick="downloadContractPng(\'' + r.id + '\')">⬇ PNG</button>'
         + reassignBtn
@@ -1535,6 +1537,20 @@ function buildArchiveDoc(record, opts){
   if (!srcPanel) return null;
   var srcDoc = srcPanel.querySelector('.contract-doc');
   var clone = srcDoc.cloneNode(true);
+  // Injecter le logo de l'entreprise du partenaire dans l'en-tête (si avatar disponible)
+  var avatar = record.creatorAvatar;
+  if (avatar){
+    var header = clone.querySelector('.contract-header');
+    var meta = clone.querySelector('.contract-meta');
+    if (header && meta && !clone.querySelector('.contract-partner-logo')){
+      var partnerLogo = document.createElement('div');
+      partnerLogo.className = 'contract-partner-logo';
+      partnerLogo.innerHTML = '<img src="' + avatar + '" alt="Logo partenaire">'
+                            + '<div class="cpl-label">Partenaire</div>'
+                            + '<div class="cpl-name">' + escHtml(record.createdByDisplay || record.partnerName || '') + '</div>';
+      header.insertBefore(partnerLogo, meta);
+    }
+  }
   // Identifier les inputs de la zone Organisateur (1ère signature-col)
   var firstSigCol = clone.querySelector('.signature-block .signature-col:first-child');
   var orgInputs = firstSigCol ? Array.from(firstSigCol.querySelectorAll('input, textarea')) : [];
@@ -1635,7 +1651,8 @@ function _openArchiveView(rec, isPending){
       + '<button class="vi-btn vi-btn-view" onclick="closeViewModal()">✕ Fermer</button>';
   } else {
     actions.innerHTML =
-        '<button class="vi-btn vi-btn-print" onclick="printValidated()">🖨 Imprimer</button>'
+        '<button class="vi-btn vi-btn-view" onclick="closeViewModal();presentArchive(\'' + rec.id + '\')">🖥 Présenter</button>'
+      + '<button class="vi-btn vi-btn-print" onclick="printValidated()">🖨 Imprimer</button>'
       + '<button class="vi-btn vi-btn-print" onclick="downloadContractPng(\'' + rec.id + '\')">⬇ PNG</button>'
       + '<button class="vi-btn vi-btn-view" onclick="closeViewModal()">✕ Fermer</button>';
   }
@@ -1684,6 +1701,40 @@ function _printArchiveConfirmed(id){
     }, 200);
   }, 80);
 }
+// ===========================================================
+// MODE PRÉSENTATION PLEIN ÉCRAN
+// ===========================================================
+function presentArchive(id){
+  var rec = getArchives().find(function(r){ return r.id === id; });
+  if (!rec) return;
+  var meta = (typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS[rec.type]) || { label: rec.type, icon: '📄' };
+  var ov = document.getElementById('present-overlay');
+  if (!ov) return;
+  document.getElementById('present-icon').textContent = meta.icon;
+  document.getElementById('present-title').textContent = meta.label + ' — ' + (rec.partnerName || '');
+  document.getElementById('present-subtitle').textContent = 'Validé le ' + (typeof fmtDate === 'function' ? fmtDate(rec.validatedAt) : rec.validatedAt);
+  var doc = buildArchiveDoc(rec);
+  var content = document.getElementById('present-content');
+  content.innerHTML = '';
+  if (doc) content.appendChild(doc);
+  ov.classList.add('active');
+  document.body.classList.add('present-active');
+}
+function closePresent(){
+  var ov = document.getElementById('present-overlay');
+  if (ov) ov.classList.remove('active');
+  document.body.classList.remove('present-active');
+  var content = document.getElementById('present-content');
+  if (content) content.innerHTML = '';
+}
+// Touche Échap pour fermer la présentation
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){
+    var ov = document.getElementById('present-overlay');
+    if (ov && ov.classList.contains('active')) closePresent();
+  }
+});
+
 function deleteArchive(id){
   requireOrgCode('Code requis pour supprimer ce contrat.').then(function(ok){
     if (!ok) return;
