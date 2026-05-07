@@ -703,13 +703,14 @@ function toggleNotifs(ev){
 function renderNotifsDropdown(){
   var c = document.getElementById('nav-notif-list');
   if (!c) return;
-  var notifs = getNotifsList();
+  // On n'affiche que les notifications NON-LUES dans le dropdown
+  var notifs = getNotifsList().filter(function(n){ return n.isNew; });
   if (notifs.length === 0){
-    c.innerHTML = '<div class="notif-empty">Aucune notification 📭</div>';
+    c.innerHTML = '<div class="notif-empty">📭 Aucune nouvelle notification</div>';
     return;
   }
   c.innerHTML = notifs.map(function(n){
-    return '<a class="notif-item' + (n.isNew ? ' is-new' : '') + '" href="' + escHtml(n.target) + '">'
+    return '<a class="notif-item is-new" href="' + escHtml(n.target) + '">'
       + '<div class="notif-icon">' + n.icon + '</div>'
       + '<div class="notif-info">'
         + '<div class="notif-title">' + escHtml(n.title) + '</div>'
