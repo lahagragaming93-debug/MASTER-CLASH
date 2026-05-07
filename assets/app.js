@@ -1764,32 +1764,27 @@ function _downloadContractPdfConfirmed(id){
   setTimeout(function(){
     html2canvas(container, { backgroundColor: '#fdfaf4', scale: 2, useCORS: true, logging: false }).then(function(canvas){
       var jsPDF = window.jspdf.jsPDF;
-      // A4 portrait : 210 x 297 mm
+      // A4 portrait : 210 x 297 mm — on force 1 seule page (scale-down si nécessaire)
       var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      var pageW = 210, pageH = 297, margin = 8;
+      var pageW = 210, pageH = 297, margin = 6;
       var availW = pageW - margin * 2;
       var availH = pageH - margin * 2;
       var imgRatio = canvas.height / canvas.width;
-      var imgH = availW * imgRatio;
       var imgData = canvas.toDataURL('image/jpeg', 0.92);
-      if (imgH <= availH){
-        // Tient sur 1 page
-        pdf.addImage(imgData, 'JPEG', margin, margin, availW, imgH);
+      var w, h, x, y;
+      // On calcule la taille qui tient à la fois en largeur ET en hauteur (fit to page)
+      if (availW * imgRatio <= availH){
+        // Limité par la largeur
+        w = availW;
+        h = availW * imgRatio;
       } else {
-        // Multi-pages : on découpe verticalement
-        var pages = Math.ceil(imgH / availH);
-        var sliceHpx = canvas.height / pages;
-        for (var i = 0; i < pages; i++){
-          if (i > 0) pdf.addPage();
-          // Créer un canvas temporaire pour cette tranche
-          var tmp = document.createElement('canvas');
-          tmp.width = canvas.width;
-          tmp.height = sliceHpx;
-          var ctx = tmp.getContext('2d');
-          ctx.drawImage(canvas, 0, -i * sliceHpx);
-          pdf.addImage(tmp.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, availW, availH);
-        }
+        // Limité par la hauteur (cas du contrat long)
+        h = availH;
+        w = availH / imgRatio;
       }
+      x = (pageW - w) / 2; // centré horizontalement
+      y = margin;          // collé en haut
+      pdf.addImage(imgData, 'JPEG', x, y, w, h);
       var slug = (rec.partnerName || 'contrat').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 30);
       pdf.save('master-clash-' + rec.type + '-' + (slug || 'contrat') + '.pdf');
       document.body.removeChild(container);
