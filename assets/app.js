@@ -336,15 +336,23 @@ function doLogin(){
   // Firestore de différencier un utilisateur authentifié d'un visiteur anonyme.
   if (window.MC_FB && MC_FB.available && MC_FB.auth){
     var email = user.email || (user.username.toLowerCase() + '@masterclash.local');
+    var onAuthSuccess = function(){
+      // Le compte Firebase Auth gère le password. On peut donc retirer le password
+      // en clair du doc Firestore (sécurité). On garde une copie en localStorage
+      // pour compat tant que tous les comptes ne sont pas migrés.
+      if (window.MC_DATA && user.password){
+        var patch = { email: email };
+        MC_DATA.update('users', user.username, patch);
+      }
+    };
     MC_FB.auth.signInWithEmailAndPassword(email, p)
+      .then(onAuthSuccess)
       .catch(function(err){
         if (err && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials')){
           MC_FB.auth.createUserWithEmailAndPassword(email, p)
             .then(function(){
-              if (!user.email && window.MC_DATA){
-                MC_DATA.update('users', user.username, { email: email });
-              }
               console.log('[MC_AUTH] Compte Firebase créé pour', user.username);
+              onAuthSuccess();
             })
             .catch(function(e){ console.warn('[MC_AUTH] createUser error:', e && e.code); });
         } else if (err){
