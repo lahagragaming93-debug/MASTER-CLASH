@@ -101,12 +101,13 @@
   }
 
   // Wrapper de saveUsers pour propager vers Firestore
-  // Patche au load complet, car saveUsers est défini dans app.js qui charge en bas du body
-  window.addEventListener('DOMContentLoaded', function(){
+  // saveUsers est défini dans app.js qui charge plus tard. On poll jusqu'à dispo.
+  function tryWrapSaveUsers(){
     if (typeof window.saveUsers !== 'function'){
-      console.warn('[MC_USERS] saveUsers non trouvée — pas de wrapping Firestore');
+      setTimeout(tryWrapSaveUsers, 50);
       return;
     }
+    if (window.saveUsers._mcWrapped) return;
     var orig = window.saveUsers;
     window.saveUsers = function(list){
       // 1. Comportement legacy : écrire dans localStorage (et faire les notifs UI)
@@ -121,12 +122,29 @@
           if (u && u.username) MC_DATA.set(COLLECTION, u.username, u);
         });
         toDelete.forEach(function(k){ MC_DATA.delete(COLLECTION, k); });
-        // Update cache local pour cohérence immédiate (le watcher confirmera)
         MC_USERS.cache = list.slice();
       } catch(e){ console.error('[MC_USERS] saveUsers wrapper error', e); }
     };
+    window.saveUsers._mcWrapped = true;
     console.log('[MC_USERS] saveUsers wrappé pour Firestore');
-  });
+
+    // Re-sync forcée : si app.js a déjà créé des users en localStorage avant que
+    // le wrapper soit en place (cas de initAdminUser au boot), on les pousse
+    // vers Firestore maintenant.
+    setTimeout(function(){
+      if (!window.MC_FB || !MC_FB.available) return;
+      var local = getLocalUsers();
+      if (local.length === 0) return;
+      // Compare avec ce qui est dans le cache cloud
+      var cloudKeys = MC_USERS.cache.map(function(u){ return u.username; });
+      var missing = local.filter(function(u){ return cloudKeys.indexOf(u.username) === -1; });
+      if (missing.length > 0){
+        console.log('[MC_USERS] Re-sync : ' + missing.length + ' user(s) localStorage → Firestore');
+        missing.forEach(function(u){ if (u.username) MC_DATA.set(COLLECTION, u.username, u); });
+      }
+    }, 800);
+  }
+  tryWrapSaveUsers();
 
   // API publique pour manipulations directes (à privilégier dans le futur)
   MC_USERS.upsert = function(user){
