@@ -35,6 +35,12 @@
   try {
     window.MC_FB.app = firebase.initializeApp(firebaseConfig);
     window.MC_FB.db = firebase.firestore();
+    // CEF (tablette FiveM) : le transport WebChannel de Firestore échoue souvent en webview,
+    // ce qui empêche la synchro des comptes en jeu (repli localStorage local). On force le
+    // long-polling (HTTP simple) pour que lectures/écritures passent aussi en jeu.
+    // settings() DOIT être appelé avant toute opération Firestore (donc avant enablePersistence).
+    try { window.MC_FB.db.settings({ experimentalForceLongPolling: true }); }
+    catch (e) { console.warn('[MC_FB] settings long-polling non appliqué :', e); }
     window.MC_FB.auth = firebase.auth();
     window.MC_FB.available = true;
     // Persistance offline : Firestore conserve un cache local pour fonctionner
