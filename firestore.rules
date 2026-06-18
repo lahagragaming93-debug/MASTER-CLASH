@@ -3,7 +3,10 @@
 // À copier dans Firebase Console → Firestore Database → onglet "Règles"
 //
 // Stratégie :
-// - L'admin (BoulaTV) a tous les droits → identifié par son email Firebase
+// - L'admin (A.Beauchamp / alias BoulaTV) a tous les droits → identifié par son email Firebase
+// - Reconnaît les DEUX emails admin pour assurer la transition :
+//   - 'a.beauchamp@masterclash.local' (nouveau, post-NOVA)
+//   - 'boulatv@masterclash.local' (legacy, conservé pour rétro-compatibilité des données)
 // - Les utilisateurs nommés (non-anonymes) peuvent agir sur leurs propres
 //   données uniquement
 // - Les utilisateurs anonymes ont le minimum (juste lire l'index utilisateurs
@@ -25,7 +28,10 @@ service cloud.firestore {
       return isAuth() && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
     function isAdmin() {
-      return isNamed() && request.auth.token.email == 'boulatv@masterclash.local';
+      return isNamed() && (
+        request.auth.token.email == 'a.beauchamp@masterclash.local'
+        || request.auth.token.email == 'boulatv@masterclash.local'
+      );
     }
     function isOwner(username) {
       return isNamed()

@@ -292,15 +292,17 @@ function defaultAvatar(name){
   return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
 }
 
-// Initialisation : créer le compte admin BoulaTV au 1er lancement
+// Initialisation : créer le compte admin au 1er lancement
+// Identité unifiée avec NOVA : A.Beauchamp / BoulaTV2026
+// (alias historique BoulaTV conservé pour rétro-compatibilité des threads de messages)
 function initAdminUser(){
   var users = getUsers();
   if (users.length === 0){
     users.push({
-      username: 'BoulaTV',
+      username: 'A.Beauchamp',
       password: 'BoulaTV2026',
-      displayName: 'BoulaTV (Organisateur)',
-      avatar: defaultAvatar('BT'),
+      displayName: 'A.Beauchamp (Président NOVA)',
+      avatar: defaultAvatar('AB'),
       isAdmin: true,
       perms: ['regl','part','contrats','gouv','ques','budget','bons','validate','print'],
       createdAt: new Date().toISOString()
@@ -3893,3 +3895,89 @@ document.querySelector('a[href="admin.html"]').addEventListener('click', functio
   setTimeout(refreshAdminStats, 100);
 });
 refreshAdminStats();
+
+// ============================================================================
+// === INTÉGRATIONS NOVA === (injectées dynamiquement sur toutes les pages MC)
+// ============================================================================
+// Master Clash est un projet de l'Association NOVA. Ce bloc applique partout :
+//   1. Bouton "← Retour NOVA" en haut de la nav
+//   2. Footer NOVA en bas de chaque page (bandeau institutionnel)
+//   3. Mise à jour de la mention "demande à BoulaTV" pour citer NOVA
+// ============================================================================
+(function(){
+  var NOVA_URL = 'https://lahagragaming93-debug.github.io/NOVA/'; // URL à ajuster lors du déploiement
+
+  // 1. Bouton "Retour NOVA" dans la nav
+  function injectReturnNovaBtn(){
+    var nav = document.querySelector('.nav-links');
+    if (!nav || nav.querySelector('.nav-back-nova')) return;
+    var a = document.createElement('a');
+    a.href = NOVA_URL;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.className = 'nav-back-nova';
+    a.title = 'Retour vers le site officiel de l\'association NOVA';
+    a.style.cssText = 'background:linear-gradient(135deg,#1f2d4a,#16223C);color:#fbf9f3;padding:6px 14px;border-radius:4px;border:1px solid #b89c5e;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:600;letter-spacing:0.5px;';
+    a.innerHTML = '<span class="nav-icon" style="font-size:14px;">←</span><span class="nav-text">Retour NOVA</span>';
+    nav.insertBefore(a, nav.firstChild);
+  }
+
+  // 2. Footer NOVA sur toutes les pages
+  function injectNovaFooter(){
+    if (document.querySelector('.nova-footer-banner')) return;
+    var banner = document.createElement('footer');
+    banner.className = 'nova-footer-banner';
+    banner.style.cssText = 'background:linear-gradient(135deg,#1f2d4a 0%,#16223C 100%);color:#fbf9f3;padding:24px 20px;text-align:center;border-top:2px solid #b89c5e;font-family:\'EB Garamond\',\'Times New Roman\',serif;font-size:13px;letter-spacing:0.5px;line-height:1.65;margin-top:60px;';
+    banner.innerHTML =
+      '<div style="max-width:780px;margin:0 auto;">'
+      + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;letter-spacing:5px;color:#fbf9f3;margin-bottom:6px;font-weight:700;">'
+      + 'MASTER CLASH <span style="color:#b89c5e;margin:0 8px;">×</span> <span style="color:#b89c5e;">NOVA</span>'
+      + '</div>'
+      + '<div style="font-style:italic;color:#aabbc8;margin-bottom:10px;">'
+      + 'Master Clash est un événement organisé et porté par l\'<strong style="color:#fbf9f3;font-style:normal;">Association NOVA</strong> — <em>Nouvelle Organisation Vie Associative</em>.<br>'
+      + 'Association à but non lucratif déclarée auprès du département de la Vie Civile, conforme au Code des Taxes, du Travail et des Entreprises (T.T.E. — Chap. VIII).'
+      + '</div>'
+      + '<div style="margin:14px 0 8px 0;color:#b89c5e;font-size:11px;letter-spacing:2px;font-variant:small-caps;">État de San Andreas — Los Santos</div>'
+      + '<a href="' + NOVA_URL + '" target="_blank" rel="noopener" '
+      +   'style="display:inline-block;margin-top:8px;background:transparent;color:#b89c5e;border:1px solid #b89c5e;padding:6px 16px;border-radius:3px;text-decoration:none;font-size:11.5px;letter-spacing:1.5px;font-variant:small-caps;transition:all 0.25s;" '
+      +   'onmouseover="this.style.background=\'#b89c5e\';this.style.color=\'#1f2d4a\';" '
+      +   'onmouseout="this.style.background=\'transparent\';this.style.color=\'#b89c5e\';">'
+      + '→ Découvrir l\'association NOVA'
+      + '</a>'
+      + '</div>';
+    document.body.appendChild(banner);
+  }
+
+  // 3. Reformulation des mentions "demande à BoulaTV" pour citer NOVA
+  function updateBoulaTVMentions(){
+    document.querySelectorAll('p, span, div').forEach(function(el){
+      // ne pas re-traiter ; et ne traiter que les nodes texte directs
+      if (el.dataset && el.dataset.novaUpdated) return;
+      if (el.children.length > 0 && !el.querySelector('strong, em, b, i')) {
+        // Si l'élément a des enfants complexes, on évite d'écraser
+      }
+      // Cherche le texte exact
+      var html = el.innerHTML;
+      if (html.indexOf('demande à BoulaTV') !== -1 && el.children.length === 0) {
+        el.innerHTML = html.replace(
+          /demande à BoulaTV\s*\.?/g,
+          'demande à <strong style="color:#b89c5e;">BoulaTV</strong>, président fondateur de l\'<strong style="color:#b89c5e;">Association NOVA</strong>.'
+        );
+        if (el.dataset) el.dataset.novaUpdated = '1';
+      }
+    });
+  }
+
+  function injectAll(){
+    try { injectReturnNovaBtn(); } catch(e) { console.error('NOVA btn err:', e); }
+    try { injectNovaFooter();    } catch(e) { console.error('NOVA footer err:', e); }
+    try { updateBoulaTVMentions();} catch(e) { console.error('NOVA mention err:', e); }
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', injectAll);
+  } else {
+    injectAll();
+  }
+})();
+

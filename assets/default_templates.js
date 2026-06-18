@@ -46,7 +46,7 @@ var DEFAULT_CONTRACT_TEMPLATES = [
     ],
     blocks: [
       { type: 'h3', text: 'Préambule' },
-      { type: 'p',  html: 'Le présent contrat est conclu entre l\'Organisation <strong>Master Clash</strong> (ci-après « l\'Organisateur ») et le Partenaire ci-après désigné, en vue de la fourniture de prestations esthétiques (coiffure, tatouage, soins) dans le cadre de l\'événement Master Clash.' },
+      { type: 'p',  html: 'Le présent contrat est conclu entre l\'<strong>Association NOVA</strong> (Nouvelle Organisation Vie Associative), organisatrice de l\'événement <strong>Master Clash</strong> (ci-après « l\'Organisateur ») et le Partenaire ci-après désigné, en vue de la fourniture de prestations esthétiques (coiffure, tatouage, soins) dans le cadre de l\'événement Master Clash.' },
 
       { type: 'h3', text: 'Identification du partenaire' },
       { type: 'fieldRow', fields: [
@@ -104,10 +104,10 @@ var DEFAULT_CONTRACT_TEMPLATES = [
       ]}
     ],
     signature: {
-      organizerLabel: 'Pour l\'Organisateur',
+      organizerLabel: 'Pour l\'Association NOVA (Organisateur)',
       partnerLabel:   'Pour le Partenaire'
     },
-    footer: 'MASTER CLASH — Document officiel — Réf. MC-EST-2026 — État de San Andreas'
+    footer: 'MASTER CLASH × ASSOCIATION NOVA — Document officiel — Réf. MC-EST-2026 — État de San Andreas'
   },
 
   /* =====================================================================
@@ -124,7 +124,7 @@ var DEFAULT_CONTRACT_TEMPLATES = [
     ],
     blocks: [
       { type: 'h3', text: 'Préambule' },
-      { type: 'p',  html: 'Le présent contrat est conclu entre l\'Organisation <strong>Master Clash</strong> et le Partenaire ci-après désigné, en vue de la fourniture de prestations de réparation, entretien et tuning automobile dans le cadre de l\'événement Master Clash.' },
+      { type: 'p',  html: 'Le présent contrat est conclu entre l\'<strong>Association NOVA</strong> (Nouvelle Organisation Vie Associative), organisatrice de l\'événement <strong>Master Clash</strong> et le Partenaire ci-après désigné, en vue de la fourniture de prestations de réparation, entretien et tuning automobile dans le cadre de l\'événement Master Clash.' },
 
       { type: 'h3', text: 'Identification du partenaire' },
       { type: 'fieldRow', fields: [
@@ -183,10 +183,10 @@ var DEFAULT_CONTRACT_TEMPLATES = [
       ]}
     ],
     signature: {
-      organizerLabel: 'Pour l\'Organisateur',
+      organizerLabel: 'Pour l\'Association NOVA (Organisateur)',
       partnerLabel:   'Pour le Partenaire'
     },
-    footer: 'MASTER CLASH — Document officiel — Réf. MC-GAR-2026 — État de San Andreas'
+    footer: 'MASTER CLASH × ASSOCIATION NOVA — Document officiel — Réf. MC-GAR-2026 — État de San Andreas'
   },
 
   /* =====================================================================
@@ -203,7 +203,7 @@ var DEFAULT_CONTRACT_TEMPLATES = [
     ],
     blocks: [
       { type: 'h3', text: 'Préambule' },
-      { type: 'p',  html: 'Le présent contrat est conclu entre l\'Organisation <strong>Master Clash</strong> et l\'Établissement de restauration ci-après désigné, en vue de la fourniture de bons repas dans le cadre de l\'événement Master Clash.' },
+      { type: 'p',  html: 'Le présent contrat est conclu entre l\'<strong>Association NOVA</strong> (Nouvelle Organisation Vie Associative), organisatrice de l\'événement <strong>Master Clash</strong> et l\'Établissement de restauration ci-après désigné, en vue de la fourniture de bons repas dans le cadre de l\'événement Master Clash.' },
 
       { type: 'h3', text: 'Identification de l\'établissement' },
       { type: 'fieldRow', fields: [
@@ -259,10 +259,10 @@ var DEFAULT_CONTRACT_TEMPLATES = [
       ]}
     ],
     signature: {
-      organizerLabel: 'Pour l\'Organisateur',
+      organizerLabel: 'Pour l\'Association NOVA (Organisateur)',
       partnerLabel:   'Pour l\'Établissement'
     },
-    footer: 'MASTER CLASH — Document officiel — Réf. MC-RES-2026 — État de San Andreas'
+    footer: 'MASTER CLASH × ASSOCIATION NOVA — Document officiel — Réf. MC-RES-2026 — État de San Andreas'
   },
 
   /* =====================================================================
@@ -279,7 +279,7 @@ var DEFAULT_CONTRACT_TEMPLATES = [
     ],
     blocks: [
       { type: 'h3', text: 'Préambule' },
-      { type: 'p',  html: 'Le présent contrat est conclu entre l\'Organisation <strong>Master Clash</strong> et la société <strong>Maze Event</strong>, en vue de la fourniture de baptêmes hélicoptère destinés aux finalistes de l\'événement Master Clash.' },
+      { type: 'p',  html: 'Le présent contrat est conclu entre l\'<strong>Association NOVA</strong> (Nouvelle Organisation Vie Associative), organisatrice de l\'événement <strong>Master Clash</strong> et la société <strong>Maze Event</strong>, en vue de la fourniture de baptêmes hélicoptère destinés aux finalistes de l\'événement Master Clash.' },
 
       { type: 'h3', text: 'Identification de Maze Event' },
       { type: 'fieldRow', fields: [
@@ -341,10 +341,10 @@ var DEFAULT_CONTRACT_TEMPLATES = [
       { type: 'p',  html: '<strong>Maze Event est seule responsable</strong> de la conduite, de la sécurité et de l\'assurance des vols. L\'Organisateur ne saurait être tenu responsable d\'incidents survenus pendant les sessions.' }
     ],
     signature: {
-      organizerLabel: 'Pour l\'Organisateur',
+      organizerLabel: 'Pour l\'Association NOVA (Organisateur)',
       partnerLabel:   'Pour Maze Event'
     },
-    footer: 'MASTER CLASH — Document officiel — Réf. MC-MAZE-2026 — État de San Andreas'
+    footer: 'MASTER CLASH × ASSOCIATION NOVA — Document officiel — Réf. MC-MAZE-2026 — État de San Andreas'
   },
 
   /* =====================================================================
@@ -361,7 +361,7 @@ var DEFAULT_CONTRACT_TEMPLATES = [
     ],
     blocks: [
       { type: 'h3', text: 'Préambule' },
-      { type: 'p',  html: 'Le présent contrat est conclu entre l\'Organisation <strong>Master Clash</strong> et l\'écurie <strong>MFA (Motorsport / Pilotage)</strong>, en vue de la fourniture de stages de pilotage automobile destinés aux qualifiés de Manche 2 et finalistes de l\'événement Master Clash.' },
+      { type: 'p',  html: 'Le présent contrat est conclu entre l\'<strong>Association NOVA</strong> (Nouvelle Organisation Vie Associative), organisatrice de l\'événement <strong>Master Clash</strong> et l\'écurie <strong>MFA (Motorsport / Pilotage)</strong>, en vue de la fourniture de stages de pilotage automobile destinés aux qualifiés de Manche 2 et finalistes de l\'événement Master Clash.' },
 
       { type: 'h3', text: 'Identification de la MFA' },
       { type: 'fieldRow', fields: [
@@ -426,10 +426,10 @@ var DEFAULT_CONTRACT_TEMPLATES = [
       { type: 'p',  html: '<strong>La MFA est seule responsable</strong> de l\'encadrement, de la sécurité et de l\'assurance des sessions de pilotage. L\'Organisateur ne saurait être tenu responsable d\'incidents survenus pendant les stages.' }
     ],
     signature: {
-      organizerLabel: 'Pour l\'Organisateur',
+      organizerLabel: 'Pour l\'Association NOVA (Organisateur)',
       partnerLabel:   'Pour la MFA'
     },
-    footer: 'MASTER CLASH — Document officiel — Réf. MC-MFA-2026 — État de San Andreas'
+    footer: 'MASTER CLASH × ASSOCIATION NOVA — Document officiel — Réf. MC-MFA-2026 — État de San Andreas'
   }
 
 ];
