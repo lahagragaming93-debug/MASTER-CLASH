@@ -22,10 +22,18 @@ service cloud.firestore {
     function isAuth() { return request.auth != null; }
     function isNamed() { return isAuth() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
     function callerId() { return request.auth.token.email.replace('@masterclash.local', ''); }
-    function isAdmin() { return isNamed() && request.auth.token.email == '122653@masterclash.local'; }
+    function myDocPath() { return /databases/$(database)/documents/users_v2/$(callerId()); }
+    // Super-admin RACINE (ID 122653, valable avant même que son doc existe) + tout compte
+    // explicitement marqué isAdmin par un admin (ex : les 2 personnes du Life en accès total).
+    function isAdmin() {
+      return isNamed() && (
+        request.auth.token.email == '122653@masterclash.local'
+        || (exists(myDocPath()) && get(myDocPath()).data.isAdmin == true)
+      );
+    }
     function isOwner(idIG) { return isNamed() && callerId() == idIG; }
     // Permissions de l'appelant, lues depuis SON doc users_v2 (get() ignore les règles de read)
-    function myPerms() { return get(/databases/$(database)/documents/users_v2/$(callerId())).data.perms; }
+    function myPerms() { return get(myDocPath()).data.perms; }
     function hasPerm(p) { return isNamed() && myPerms().hasAny([p]); }
     // Un compte "sûr" = ni admin, ni doté d'une permission sensible
     function acctSafe(d) { return d.isAdmin == false && !d.perms.hasAny(['ques', 'gestion']); }

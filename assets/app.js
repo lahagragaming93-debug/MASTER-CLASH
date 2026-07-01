@@ -3935,10 +3935,8 @@ refreshAdminStats();
 // ===========================================================
 function buildQCard(q){
   var typeBadge = q.type === 'qcm' ? '<span class="badge b-qcm">QCM</span>'
-               : q.type === 'libre' ? '<span class="badge b-libre">Libre</span>'
-               : '<span class="badge b-blind">Blind</span>';
-  var ptsBadge = q.points === 'v' ? '<span class="badge b-pts-v">15s</span>'
-               : '<span class="badge b-pts-' + q.points + '">' + q.points + (q.points > 1 ? ' pts' : ' pt') + '</span>';
+               : '<span class="badge b-libre">Libre</span>';
+  var ptsBadge = '<span class="badge b-pts-' + q.points + '">' + q.points + (q.points > 1 ? ' pts' : ' pt') + '</span>';
   var head = '<div class="q-head"><span class="q-num">' + q.id + '</span><span class="q-cat">' + (q.cat || '') + '</span>' + typeBadge + ptsBadge + '</div>';
   var body;
   if (q.type === 'qcm'){
@@ -3971,19 +3969,24 @@ function renderQuestionsBank(){
     show(loading, false); show(denied, false);
     if (!list.length){ show(empty, true); return; }
     show(empty, false);
-    var groups = { easy: [], medium: [], hard: [], blind: [] };
+    var groups = { easy: [], medium: [], hard: [] };  // blind test retiré du projet
     list.forEach(function(q){ if (groups[q.difficulty]) groups[q.difficulty].push(q); });
-    var map = { easy: 'q-list-easy', medium: 'q-list-med', hard: 'q-list-hard', blind: 'q-list-blind' };
+    var map = { easy: 'q-list-easy', medium: 'q-list-med', hard: 'q-list-hard' };
+    var total = 0;
     Object.keys(map).forEach(function(k){
-      groups[k].sort(function(a, b){ return _qNum(a.id) - _qNum(b.id); });
+      // Tri : QCM d'abord, puis Libre ; par numéro à l'intérieur de chaque type
+      groups[k].sort(function(a, b){
+        var ta = a.type === 'qcm' ? 0 : 1, tb = b.type === 'qcm' ? 0 : 1;
+        return (ta - tb) || (_qNum(a.id) - _qNum(b.id));
+      });
+      total += groups[k].length;
       var el = document.getElementById(map[k]);
       if (el) el.innerHTML = groups[k].map(buildQCard).join('\n');
     });
     _setQCount('q-cnt-easy', groups.easy.length);
     _setQCount('q-cnt-med', groups.medium.length);
     _setQCount('q-cnt-hard', groups.hard.length);
-    _setQCount('q-cnt-blind', groups.blind.length);
-    var tc = document.getElementById('q-total-count'); if (tc) tc.textContent = list.length;
+    var tc = document.getElementById('q-total-count'); if (tc) tc.textContent = total;
   }).catch(function(e){
     console.warn('[MC_QUES] chargement banque :', e && e.code);
     show(loading, false); show(empty, false); show(denied, true);
