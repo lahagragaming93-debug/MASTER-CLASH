@@ -9,7 +9,7 @@
  * l'installe en arrière-plan, et active la nouvelle version au prochain reload.
  * ============================================================================ */
 
-var CACHE_VERSION = 'mc-v1';
+var CACHE_VERSION = 'mc-v3';
 var ASSET_CACHE = 'mc-assets-' + CACHE_VERSION;
 
 // Préchargement minimal : on laisse le runtime cache faire le reste

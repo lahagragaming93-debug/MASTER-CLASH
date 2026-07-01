@@ -15,8 +15,16 @@
  * pour le prochain commit.
  * ============================================================================ */
 (function(){
-  var COLLECTION = 'users';
-  var STORAGE_KEY = 'mc_users_v1'; // doit matcher MC_USERS_KEY dans app.js
+  var COLLECTION = 'users_v2';    // v2 : édition entreprises — repart sur une collection vierge (les anciens comptes ne sont plus lus)
+  var STORAGE_KEY = 'mc_users_v2'; // doit matcher MC_USERS_KEY dans app.js
+
+  // Retire les champs sensibles (mot de passe, réponse secrète) avant écriture cloud.
+  // Le mot de passe est géré par Firebase Auth ; il ne doit JAMAIS finir dans Firestore.
+  function cloudSafe(u){
+    var c = {};
+    Object.keys(u || {}).forEach(function(k){ if (k !== 'password' && k !== 'secretAnswer') c[k] = u[k]; });
+    return c;
+  }
 
   window.MC_USERS = {
     cache: [],
@@ -70,7 +78,7 @@
         // Migration initiale : push localStorage vers Firestore
         console.log('[MC_USERS] Migration initiale : ' + local.length + ' users vers Firestore...');
         Promise.all(local.map(function(u){
-          return MC_DATA.set(COLLECTION, u.username, u);
+          return MC_DATA.set(COLLECTION, u.username, cloudSafe(u));
         })).then(function(){
           console.log('[MC_USERS] Migration terminée');
           startWatcher();
@@ -118,8 +126,14 @@
         var prevKeys = MC_USERS.cache.map(function(u){ return u.username; });
         var newKeys  = list.map(function(u){ return u.username; });
         var toDelete = prevKeys.filter(function(k){ return newKeys.indexOf(k) === -1; });
+        // Ne pousser QUE les docs réellement modifiés (évite les écritures refusées pour les comptes non-admin)
+        var prevByKey = {};
+        MC_USERS.cache.forEach(function(u){ if (u && u.username) prevByKey[u.username] = JSON.stringify(cloudSafe(u)); });
         list.forEach(function(u){
-          if (u && u.username) MC_DATA.set(COLLECTION, u.username, u);
+          if (u && u.username){
+            var nu = cloudSafe(u);
+            if (prevByKey[u.username] !== JSON.stringify(nu)) MC_DATA.set(COLLECTION, u.username, nu);
+          }
         });
         toDelete.forEach(function(k){ MC_DATA.delete(COLLECTION, k); });
         MC_USERS.cache = list.slice();
@@ -140,7 +154,7 @@
       var missing = local.filter(function(u){ return cloudKeys.indexOf(u.username) === -1; });
       if (missing.length > 0){
         console.log('[MC_USERS] Re-sync : ' + missing.length + ' user(s) localStorage → Firestore');
-        missing.forEach(function(u){ if (u.username) MC_DATA.set(COLLECTION, u.username, u); });
+        missing.forEach(function(u){ if (u.username) MC_DATA.set(COLLECTION, u.username, cloudSafe(u)); });
       }
     }, 800);
   }
@@ -149,7 +163,7 @@
   // API publique pour manipulations directes (à privilégier dans le futur)
   MC_USERS.upsert = function(user){
     if (!user || !user.username) return Promise.reject(new Error('username manquant'));
-    return MC_DATA.set(COLLECTION, user.username, user);
+    return MC_DATA.set(COLLECTION, user.username, cloudSafe(user));
   };
   MC_USERS.remove = function(username){
     if (!username) return Promise.reject(new Error('username manquant'));

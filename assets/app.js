@@ -5,28 +5,26 @@
 // Permissions requises par page (clé = data-page sur <body>)
 var PAGE_PERMS = {
   home: null,
-  regl: null,
-  part: null,
-  contrats: 'contrats',
-  gouv: 'gouv',
-  ques: 'ques',
-  budget: 'budget',
-  profil: 'login',
-  participants: 'login',  // accessible aux user connectés (admin = full droits)
-  admin: 'admin'
+  regl: null,            // Règlement : public (sans compte)
+  ques: 'ques',          // Banque de questions : verrouillée, accordable
+  profil: 'login',       // Mon profil : tout compte connecté
+  participants: 'participants', // Inscriptions : géré par le Life (permission dédiée)
+  admin: 'admin'         // super-admin (isAdmin) OU permission 'gestion'
 };
 
 var MC_DEFAULT_SECRET = 'MASTER2026';
 var MC_SECRET_KEY = 'mc_secret_v1';
 var MC_UNLOCK_KEY = 'mc_unlocked_v1';
 var MC_ARCHIVE_KEY = 'mc_archives_v1';
-var MC_USERS_KEY = 'mc_users_v1';
-var MC_SESSION_KEY = 'mc_session_v1';
+var MC_USERS_KEY = 'mc_users_v2';   // v2 : édition entreprises — repart sur des comptes vierges (supprime les comptes de l'ancienne édition)
+var MC_SESSION_KEY = 'mc_session_v2';
 var MC_LOGS_KEY = 'mc_logs_v1';
 var MC_MESSAGES_KEY = 'mc_messages_v1';
 var MC_TEMPLATES_KEY = 'mc_templates_v1';
 var MC_PARTICIPANTS_KEY = 'mc_participants_v1';
 var MC_REGISTRATIONS_OPEN_KEY = 'mc_registrations_open';
+var MC_ADMIN_ID = '122653';          // ID en jeu du super-admin (organisateur BLA)
+var MC_AUTHPW_KEY = 'mc_authpw_v2';   // mot de passe de session, DEVICE-ONLY (re-auth CEF) — jamais dans Firestore ni le code
 var PARTICIPANTS_LIMIT = 42;
 var STATUS_LABELS = {
   pending: '⏳ En attente',
@@ -292,85 +290,108 @@ function defaultAvatar(name){
   return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
 }
 
-// Initialisation : créer le compte admin au 1er lancement
-// Identité unifiée avec NOVA : A.Beauchamp / BoulaTV2026
-// (alias historique BoulaTV conservé pour rétro-compatibilité des threads de messages)
-function initAdminUser(){
+// ===========================================================
+// LOCKDOWN AUTH — Firebase Auth = seule autorité du mot de passe.
+// Aucun mot de passe dans le code ni dans Firestore. Il ne vit que dans
+// Firebase Auth (secret, côté serveur) + une clé localStorage device-only
+// (pour la re-auth silencieuse en CEF). Le doc super-admin est créé à sa
+// 1re connexion (voir _finishLoginAuthed), plus aucun seed en clair.
+// ===========================================================
+function _getAuthPw(){ try { return JSON.parse(localStorage.getItem(MC_AUTHPW_KEY) || 'null'); } catch(e){ return null; } }
+function _setAuthPw(idIG, password){ try { localStorage.setItem(MC_AUTHPW_KEY, JSON.stringify({ idIG: String(idIG), password: password })); } catch(e){} }
+function _clearAuthPw(){ try { localStorage.removeItem(MC_AUTHPW_KEY); } catch(e){} }
+// Retire les champs sensibles avant toute écriture cloud
+function sanitizeForCloud(u){ var c = {}; Object.keys(u || {}).forEach(function(k){ if (k !== 'password' && k !== 'secretAnswer') c[k] = u[k]; }); return c; }
+// Écrit un user dans le cache localStorage (sans repasser par le saveUsers wrappé)
+function _upsertLocalUser(u){
   var users = getUsers();
-  if (users.length === 0){
-    users.push({
-      username: 'A.Beauchamp',
-      password: 'BoulaTV2026',
-      displayName: 'A.Beauchamp (Président NOVA)',
-      avatar: defaultAvatar('AB'),
-      isAdmin: true,
-      perms: ['regl','part','contrats','gouv','ques','budget','bons','validate','print'],
-      createdAt: new Date().toISOString()
-    });
-    saveUsers(users);
-  }
+  var key = String(u.idIG || u.username);
+  var idx = users.findIndex(function(x){ return String(x.idIG || x.username) === key; });
+  if (idx === -1) users.push(u); else users[idx] = u;
+  try { localStorage.setItem(MC_USERS_KEY, JSON.stringify(users)); } catch(e){}
 }
-initAdminUser();
 
 // ----- LOGIN -----
 function openLoginModal(){
   document.getElementById('login-modal').classList.add('active');
   document.getElementById('login-error').textContent = '';
-  document.getElementById('login-username').value = '';
+  document.getElementById('login-nom').value = '';
+  document.getElementById('login-prenom').value = '';
+  document.getElementById('login-idig').value = '';
   document.getElementById('login-password').value = '';
-  setTimeout(function(){ document.getElementById('login-username').focus(); }, 60);
+  setTimeout(function(){ document.getElementById('login-nom').focus(); }, 60);
 }
 function closeLoginModal(){ document.getElementById('login-modal').classList.remove('active'); }
 function doLogin(){
-  var u = (document.getElementById('login-username').value || '').trim();
+  var nom = (document.getElementById('login-nom').value || '').trim();
+  var prenom = (document.getElementById('login-prenom').value || '').trim();
+  var idig = (document.getElementById('login-idig').value || '').trim().toLowerCase(); // casse alignée avec l'email Firebase + la clé du doc
   var p = document.getElementById('login-password').value || '';
-  if (!u || !p){ document.getElementById('login-error').textContent = 'Saisissez votre identifiant et votre mot de passe.'; return; }
-  var users = getUsers();
-  var user = users.find(function(x){ return x.username.toLowerCase() === u.toLowerCase(); });
-  if (!user || user.password !== p){
-    document.getElementById('login-error').textContent = '⚠ Identifiants incorrects.';
-    return;
-  }
-  setSession(user.username);
-  logAction('Connexion');
-  try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
-
-  function finishLogin(){
-    // Redirect vers la home pour repartir d'un état propre (sans query params hérités)
+  var errEl = document.getElementById('login-error');
+  if (!nom || !prenom || !idig || !p){ errEl.textContent = 'Renseignez nom, prénom, ID en jeu et mot de passe.'; return; }
+  // Firebase Auth = seule autorité du mot de passe (validation côté serveur)
+  if (!(window.MC_FB && MC_FB.available && MC_FB.auth)){ errEl.textContent = '⚠ Connexion au cloud indisponible — réessayez dans un instant.'; return; }
+  errEl.textContent = 'Connexion…';
+  var email = String(idig) + '@masterclash.local';
+  MC_FB.auth.signInWithEmailAndPassword(email, p)
+    .then(function(){ return _finishLoginAuthed(idig, nom, prenom, p, errEl); })
+    .catch(function(err){
+      if (err && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials')){
+        // 1re connexion de ce compte : on crée sa session Firebase avec le mot de passe saisi
+        MC_FB.auth.createUserWithEmailAndPassword(email, p)
+          .then(function(){ return _finishLoginAuthed(idig, nom, prenom, p, errEl); })
+          .catch(function(e){ console.warn('[MC_AUTH] create:', e && e.code); errEl.textContent = '⚠ Identifiants incorrects.'; });
+      } else {
+        console.warn('[MC_AUTH] signIn:', err && err.code);
+        errEl.textContent = '⚠ Identifiants incorrects.';
+      }
+    });
+}
+// Post-authentification Firebase réussie : récupère/complète le compte users_v2, met en cache, ouvre la session.
+function _finishLoginAuthed(idig, nom, prenom, p, errEl){
+  // Ouvre la session locale à partir d'un doc résolu (identité, cache, mot de passe device-only)
+  function openSession(d){
+    if ((d.nom && (d.nom || '').toLowerCase() !== nom.toLowerCase()) ||
+        (d.prenom && (d.prenom || '').toLowerCase() !== prenom.toLowerCase())){
+      if (MC_FB.auth) MC_FB.auth.signOut();
+      errEl.textContent = '⚠ Identifiants incorrects.';
+      return;
+    }
+    var cache = {}; Object.keys(d).forEach(function(k){ cache[k] = d[k]; });
+    cache.username = idig; cache.idIG = idig;
+    _upsertLocalUser(cache);
+    _setAuthPw(idig, p);           // mot de passe device-only (re-auth CEF)
+    setSession(idig);
+    logAction('Connexion');
+    try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
     location.href = 'index.html';
   }
-
-  if (window.MC_FB && MC_FB.available && MC_FB.auth){
-    var email = user.email || (user.username.toLowerCase() + '@masterclash.local');
-    var onAuthSuccess = function(){
-      if (window.MC_DATA && user.password){
-        return MC_DATA.update('users', user.username, { email: email });
-      }
-    };
-    var authPromise = MC_FB.auth.signInWithEmailAndPassword(email, p)
-      .then(function(cred){ console.log('[MC_AUTH] Connecté Firebase :', user.username); return onAuthSuccess(); })
-      .catch(function(err){
-        if (err && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials')){
-          console.log('[MC_AUTH] Création du compte Firebase pour', user.username);
-          return MC_FB.auth.createUserWithEmailAndPassword(email, p)
-            .then(function(){ console.log('[MC_AUTH] Compte créé'); return onAuthSuccess(); })
-            .catch(function(e){ console.warn('[MC_AUTH] createUser error:', e && e.code, e && e.message); });
-        } else if (err){
-          console.warn('[MC_AUTH] signIn error:', err.code, err.message);
-        }
-      });
-    // On attend la fin de l'auth Firebase (max 4s) avant de rediriger
-    var timeoutPromise = new Promise(function(r){ setTimeout(r, 4000); });
-    Promise.race([authPromise, timeoutPromise]).then(finishLogin);
-  } else {
-    finishLogin();
-  }
+  // Lecture DIRECTE (rejette sur erreur → on distingue "doc absent" d'une coupure réseau transitoire)
+  return MC_FB.db.collection('users_v2').doc(idig).get().then(function(snap){
+    if (snap.exists){ openSession(snap.data()); return; }
+    // Doc réellement absent
+    if (idig === MC_ADMIN_ID){
+      var adminDoc = { username: idig, idIG: idig, nom: nom, prenom: prenom, displayName: prenom + ' ' + nom, email: idig + '@masterclash.local', isAdmin: true, perms: ['ques', 'participants', 'gestion'], createdAt: new Date().toISOString() };
+      return MC_FB.db.collection('users_v2').doc(idig).set(sanitizeForCloud(adminDoc))
+        .catch(function(err){ console.warn('[MC_AUTH] doc admin non persisté :', err && err.code); })
+        .then(function(){ openSession(adminDoc); });
+    }
+    if (MC_FB.auth) MC_FB.auth.signOut();
+    errEl.textContent = '⚠ Aucun compte pour cet ID. Contactez l\'organisateur.';
+  }).catch(function(e){
+    // ERREUR de lecture (transitoire : token nominal en cours de propagation, coupure CEF) → NE PAS dire "aucun compte"
+    console.warn('[MC_AUTH] lecture doc :', e && e.code);
+    var local = getUsers().find(function(x){ return String(x.idIG || x.username) === idig; });
+    if (local){ openSession(local); }
+    else { if (MC_FB.auth) MC_FB.auth.signOut(); errEl.textContent = '⚠ Connexion instable — réessaie dans un instant.'; }
+  });
 }
 function doLogout(){
   mcConfirm('Voulez-vous vous déconnecter ?', { okText: 'Déconnexion' }).then(function(ok){
     if (!ok) return;
     logAction('Déconnexion');
     clearSession();
+    _clearAuthPw();
     try { localStorage.removeItem(MC_UNLOCK_KEY); } catch(e){}
     // Déconnexion Firebase (sans bloquer)
     if (window.MC_FB && MC_FB.available && MC_FB.auth){
@@ -490,10 +511,8 @@ function userIsAdmin(){
 // Sections : selon les perms du user, on affiche/masque le contenu
 // Sans login : Règlement et Partenaires accessibles en lecture seule
 var SECTION_PERMS = {
-  gouv: 'gouv',
   ques: 'ques',
-  budget: 'budget',
-  admin: null // admin only via isAdmin
+  admin: null // super-admin (isAdmin) ou perm 'gestion'
 };
 
 // Vérifie l'accès à la page courante. Si l'user n'a pas la perm, redirige vers index.
@@ -513,9 +532,9 @@ function checkPageAccess(){
     return false;
   }
   if (requiredPerm === 'admin'){
-    if (user && user.isAdmin) return true;
+    if (user && (user.isAdmin || (user.perms || []).indexOf('gestion') !== -1)) return true;
     setTimeout(function(){
-      mcAlert('🚫 Cette page est réservée à l\'administrateur.', { title: 'Accès refusé' }).then(function(){
+      mcAlert('🚫 Cette page est réservée à l\'organisation.', { title: 'Accès refusé' }).then(function(){
         location.replace('index.html');
       });
     }, 100);
@@ -543,17 +562,21 @@ function applyAuthState(){
 
   // Onglet "Mon profil" visible uniquement si connecté
   if (profilLink) profilLink.style.display = user ? '' : 'none';
-  // Onglet Participants visible si connecté
+  // Onglet + carte Participants : visibles pour qui gère les inscriptions
+  var canParticipants = !!(user && (user.isAdmin || (user.perms || []).indexOf('participants') !== -1));
   var participantsLink = document.getElementById('nav-participants-link');
-  if (participantsLink) participantsLink.style.display = user ? '' : 'none';
+  if (participantsLink) participantsLink.style.display = canParticipants ? '' : 'none';
   if (profilSection){
     if (user){ profilSection.style.display = ''; if (typeof showProfilSection === 'function') showProfilSection(); }
     else { profilSection.style.display = 'none'; }
   }
 
   // Page home : afficher/masquer les cards selon les perms
+  var canAdminHome = !!(user && (user.isAdmin || (user.perms || []).indexOf('gestion') !== -1));
   var homeAdminCard = document.getElementById('home-card-admin');
-  if (homeAdminCard) homeAdminCard.style.display = (user && user.isAdmin) ? '' : 'none';
+  if (homeAdminCard) homeAdminCard.style.display = canAdminHome ? '' : 'none';
+  var homePartCard = document.getElementById('home-card-participants');
+  if (homePartCard) homePartCard.style.display = canParticipants ? '' : 'none';
   var homeProfilCard = document.getElementById('home-card-profil');
   if (homeProfilCard) homeProfilCard.style.display = user ? '' : 'none';
   document.querySelectorAll('.home-card[data-perm]').forEach(function(card){
@@ -572,11 +595,11 @@ function applyAuthState(){
     if (user.isAdmin){
       roleEl.textContent = '👑 Admin';
       roleEl.className = 'nav-userrole admin';
-    } else if (user.isPartner){
-      roleEl.textContent = '🤝 Partenaire';
+    } else if ((user.perms || []).indexOf('gestion') !== -1){
+      roleEl.textContent = '🎯 Organisateur';
       roleEl.className = 'nav-userrole partner';
     } else {
-      roleEl.textContent = '👤 Utilisateur';
+      roleEl.textContent = '👤 Staff';
       roleEl.className = 'nav-userrole user';
     }
   } else {
@@ -586,10 +609,7 @@ function applyAuthState(){
 
   // Liste de toutes les sections / panels protégés
   var protectedItems = [
-    { sectionId: 'gouv',     perm: 'gouv',     linkSelector: '.nav-links a[href="gouverneur.html"]' },
-    { sectionId: 'contrats', perm: 'contrats', linkSelector: '.nav-links a[href="contrats.html"]' },
-    { sectionId: 'ques',     perm: 'ques',     linkSelector: '.nav-links a[href="questions.html"]' },
-    { sectionId: 'budget',   perm: 'budget',   linkSelector: '.nav-links a[href="budget.html"]' }
+    { sectionId: 'ques',     perm: 'ques',     linkSelector: '.nav-links a[href="questions.html"]' }
   ];
   protectedItems.forEach(function(item){
     var hasAccess = userIsAdmin() || userHasPerm(item.perm);
@@ -620,28 +640,13 @@ function applyAuthState(){
     }
   });
 
-  // Bons (panel à l'intérieur de Contrats)
-  var bonsPanel = document.getElementById('panel-bons');
-  if (bonsPanel){
-    var bc = bonsPanel.querySelector('.locked-content');
-    var bo = bonsPanel.querySelector('.lock-overlay');
-    var bonsAccess = userIsAdmin() || userHasPerm('bons');
-    if (bc){
-      if (bonsAccess) bc.classList.remove('locked');
-      else bc.classList.add('locked');
-    }
-    if (bo) bo.style.display = bonsAccess ? 'none' : '';
-    // Mise à jour de l'onglet "🔒 Bons Officiels"
-    var bonsTab = document.querySelector('.contract-tab[data-tab="bons"]');
-    if (bonsTab) bonsTab.innerHTML = bonsAccess ? 'Bons Officiels' : '🔒 Bons Officiels';
-  }
-
-  // Admin
+  // Admin : accessible au super-admin OU aux organisateurs (perm 'gestion')
+  var canAdmin = userIsAdmin() || userHasPerm('gestion');
   var adminLink = document.querySelector('.nav-links a[href="admin.html"]');
   var adminSection = document.getElementById('admin');
   var ac = adminSection && adminSection.querySelector('.locked-content');
   var ao = adminSection && adminSection.querySelector('.lock-overlay');
-  if (userIsAdmin()){
+  if (canAdmin){
     if (adminLink){
       adminLink.style.display = '';
       var icon = adminLink.querySelector('.lock-icon');
@@ -649,13 +654,23 @@ function applyAuthState(){
     }
     if (ac) ac.classList.remove('locked');
     if (ao) ao.style.display = 'none';
+    if (typeof applyAdminScope === 'function') applyAdminScope();
     renderUsersList();
   } else {
-    // Non-admin : on cache complètement l'onglet Admin de la nav (inutile)
+    // Ni super-admin ni organisateur : on cache complètement l'onglet Admin
     if (adminLink) adminLink.style.display = 'none';
     if (ac) ac.classList.add('locked');
     if (ao) ao.style.display = '';
   }
+}
+
+// Limite ce que voit un organisateur (perm 'gestion') dans l'admin :
+// il ne gère que les comptes. Les cartes réservées au super-admin sont masquées.
+function applyAdminScope(){
+  var superAdmin = userIsAdmin();
+  document.querySelectorAll('.admin-super-card').forEach(function(el){
+    el.style.display = superAdmin ? '' : 'none';
+  });
 }
 
 // ----- GESTION UTILISATEURS (modale création/édition) -----
@@ -667,17 +682,24 @@ function openUserModal(editUsername){
   _userAvatarDataURL = '';
   var modal = document.getElementById('user-modal');
   document.getElementById('user-error').textContent = '';
-  document.getElementById('user-modal-title').textContent = editUsername ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur';
-  document.getElementById('user-modal-sub').textContent = editUsername ? 'Édition utilisateur' : 'Créer un utilisateur';
+  document.getElementById('user-modal-title').textContent = editUsername ? 'Modifier le compte' : 'Nouveau compte';
+  document.getElementById('user-modal-sub').textContent = editUsername ? 'Édition compte' : 'Créer un compte';
   document.getElementById('user-pw-label').textContent = editUsername ? 'Mot de passe (laisser vide pour ne pas changer)' : 'Mot de passe';
+
+  // Un organisateur (perm 'gestion' sans isAdmin) ne peut pas accorder les droits sensibles
+  var superAdmin = userIsAdmin();
+  document.querySelectorAll('#user-modal [data-super]').forEach(function(el){
+    el.style.display = superAdmin ? '' : 'none';
+  });
 
   if (editUsername){
     var users = getUsers();
     var u = users.find(function(x){ return x.username === editUsername; });
     if (!u) return;
-    document.getElementById('user-username').value = u.username;
-    document.getElementById('user-username').disabled = true;
-    document.getElementById('user-displayname').value = u.displayName || '';
+    document.getElementById('user-idig').value = u.idIG || u.username;
+    document.getElementById('user-idig').disabled = true;
+    document.getElementById('user-nom').value = u.nom || '';
+    document.getElementById('user-prenom').value = u.prenom || '';
     document.getElementById('user-password').value = '';
     document.getElementById('user-avatar-preview').src = u.avatar || defaultAvatar(u.displayName || u.username);
     _userAvatarDataURL = u.avatar || '';
@@ -686,14 +708,15 @@ function openUserModal(editUsername){
       cb.checked = (u.perms || []).indexOf(cb.dataset.perm) !== -1;
     });
   } else {
-    document.getElementById('user-username').value = '';
-    document.getElementById('user-username').disabled = false;
-    document.getElementById('user-displayname').value = '';
+    document.getElementById('user-idig').value = '';
+    document.getElementById('user-idig').disabled = false;
+    document.getElementById('user-nom').value = '';
+    document.getElementById('user-prenom').value = '';
     document.getElementById('user-password').value = '';
     document.getElementById('user-avatar-preview').src = defaultAvatar('?');
     document.getElementById('user-isadmin').checked = false;
     document.querySelectorAll('.perm-cb').forEach(function(cb){
-      cb.checked = ['regl','part','contrats'].indexOf(cb.dataset.perm) !== -1;
+      cb.checked = ['participants'].indexOf(cb.dataset.perm) !== -1;
     });
   }
   modal.classList.add('active');
@@ -716,40 +739,56 @@ function handleAvatarUpload(ev){
 }
 function clearAvatarPreview(){
   _userAvatarDataURL = '';
-  var name = document.getElementById('user-displayname').value || '?';
+  var nomEl = document.getElementById('user-nom'), prEl = document.getElementById('user-prenom');
+  var name = ((((prEl && prEl.value) || '') + ' ' + ((nomEl && nomEl.value) || '')).trim()) || '?';
   document.getElementById('user-avatar-preview').src = defaultAvatar(name);
 }
 
 function saveUserFromModal(){
-  var username = (document.getElementById('user-username').value || '').trim();
-  var displayName = (document.getElementById('user-displayname').value || '').trim();
+  var idig = (document.getElementById('user-idig').value || '').trim().toLowerCase(); // casse alignée avec l'email Firebase + les règles
+  var nom = (document.getElementById('user-nom').value || '').trim();
+  var prenom = (document.getElementById('user-prenom').value || '').trim();
   var password = document.getElementById('user-password').value || '';
   var isAdmin = document.getElementById('user-isadmin').checked;
   var perms = Array.from(document.querySelectorAll('.perm-cb')).filter(function(cb){ return cb.checked; }).map(function(cb){ return cb.dataset.perm; });
   var err = document.getElementById('user-error');
 
-  if (!username){ err.textContent = '⚠ Saisissez un nom d\'utilisateur.'; return; }
-  if (!/^[a-zA-Z0-9._-]+$/.test(username)){ err.textContent = '⚠ Nom d\'utilisateur : lettres, chiffres, points, tirets seulement.'; return; }
-  if (!displayName){ err.textContent = '⚠ Saisissez un nom affiché.'; return; }
+  if (!idig){ err.textContent = '⚠ Saisissez l\'ID en jeu.'; return; }
+  if (!/^[a-zA-Z0-9._-]+$/.test(idig)){ err.textContent = '⚠ ID en jeu : lettres, chiffres, points, tirets seulement.'; return; }
+  if (!nom || !prenom){ err.textContent = '⚠ Saisissez le nom et le prénom RP.'; return; }
   if (!_userEditingUsername && !password){ err.textContent = '⚠ Saisissez un mot de passe.'; return; }
   if (password && password.length < 4){ err.textContent = '⚠ Le mot de passe doit faire au moins 4 caractères.'; return; }
 
+  // Garde-fou anti-leak : un organisateur (non super-admin) ne peut jamais accorder
+  // ADMIN, la banque de questions, ni la gestion des comptes.
+  if (!userIsAdmin()){
+    isAdmin = false;
+    perms = perms.filter(function(p){ return p !== 'ques' && p !== 'gestion'; });
+  }
+
+  var displayName = prenom + ' ' + nom;
   var users = getUsers();
   if (_userEditingUsername){
     var idx = users.findIndex(function(x){ return x.username === _userEditingUsername; });
-    if (idx === -1){ err.textContent = 'Utilisateur introuvable.'; return; }
+    if (idx === -1){ err.textContent = 'Compte introuvable.'; return; }
+    users[idx].nom = nom;
+    users[idx].prenom = prenom;
     users[idx].displayName = displayName;
     if (password) users[idx].password = password;
     users[idx].avatar = _userAvatarDataURL || defaultAvatar(displayName);
     users[idx].isAdmin = isAdmin;
     users[idx].perms = perms;
   } else {
-    var exists = users.find(function(x){ return x.username.toLowerCase() === username.toLowerCase(); });
-    if (exists){ err.textContent = '⚠ Ce nom d\'utilisateur existe déjà.'; return; }
+    var exists = users.find(function(x){ return String(x.idIG || x.username) === idig; });
+    if (exists){ err.textContent = '⚠ Un compte avec cet ID en jeu existe déjà.'; return; }
     users.push({
-      username: username,
-      password: password,
+      username: idig,
+      idIG: idig,
+      nom: nom,
+      prenom: prenom,
       displayName: displayName,
+      email: idig + '@masterclash.local',
+      password: password,
       avatar: _userAvatarDataURL || defaultAvatar(displayName),
       isAdmin: isAdmin,
       perms: perms,
@@ -774,11 +813,18 @@ function saveUserFromModal(){
 }
 
 function deleteUser(username){
-  if (username === 'BoulaTV'){
-    mcAlert('⚠ Le compte BoulaTV ne peut pas être supprimé.', { title: 'Erreur' });
+  var target = getUsers().find(function(x){ return x.username === username; });
+  var current = getCurrentUser();
+  if (target && target.isAdmin){
+    mcAlert('⚠ Un compte administrateur ne peut pas être supprimé.', { title: 'Erreur' });
     return;
   }
-  mcConfirm('Supprimer le compte « ' + username + ' » ?\n\nCette action est irréversible.', { title: '🗑 Supprimer', okText: 'Supprimer' })
+  if (current && current.username === username){
+    mcAlert('⚠ Vous ne pouvez pas supprimer votre propre compte.', { title: 'Erreur' });
+    return;
+  }
+  var label = target ? (target.displayName || username) : username;
+  mcConfirm('Supprimer le compte « ' + label + ' » ?\n\nCette action est irréversible.', { title: '🗑 Supprimer', okText: 'Supprimer' })
     .then(function(ok){
       if (!ok) return;
       var users = getUsers().filter(function(x){ return x.username !== username; });
@@ -795,9 +841,7 @@ function deleteUser(username){
 }
 
 var PERM_LABELS = {
-  regl: 'Règlement', part: 'Partenaires', contrats: 'Contrats',
-  gouv: 'Gouverneur', ques: 'Questions', budget: 'Budget', bons: 'Bons',
-  validate: 'Validation', print: 'Impression/PNG', all_contracts: 'Voir tous les contrats'
+  participants: 'Inscriptions', ques: 'Banque de questions', gestion: 'Gestion des comptes'
 };
 function renderUsersList(){
   var c = document.getElementById('users-list');
@@ -816,12 +860,12 @@ function renderUsersList(){
       + '<img class="user-item-avatar" src="' + (u.avatar || defaultAvatar(u.displayName || u.username)) + '" alt="">'
       + '<div class="user-item-info">'
         + '<div class="user-item-name">' + escHtml(u.displayName || u.username) + (date ? ' <span style="color:#6a7a8a;font-size:10px;font-weight:400">— créé le ' + date + '</span>' : '') + '</div>'
-        + '<div class="user-item-login">@' + escHtml(u.username) + '</div>'
+        + '<div class="user-item-login">🎮 ID ' + escHtml(u.username) + (u.perms && u.perms.indexOf('ques') !== -1 ? ' · ❓ questions' : '') + '</div>'
         + '<div class="user-item-perms' + (u.isAdmin ? ' admin' : '') + '">' + escHtml(permsLabel) + '</div>'
       + '</div>'
       + '<div class="user-item-actions">'
         + '<button class="user-item-btn edit" onclick="openUserModal(\'' + u.username + '\')">✎ Modifier</button>'
-        + (u.username === 'BoulaTV' ? '' : '<button class="user-item-btn del" onclick="deleteUser(\'' + u.username + '\')">🗑 Supprimer</button>')
+        + (u.isAdmin ? '' : '<button class="user-item-btn del" onclick="deleteUser(\'' + u.username + '\')">🗑 Supprimer</button>')
       + '</div>'
     + '</div>';
   }).join('') + '</div>';
@@ -926,48 +970,19 @@ function getNotifsList(){
   var notifs = [];
   if (!userIsAdmin()) return notifs;
   var lastSeen = parseInt(localStorage.getItem('mc_admin_last_seen') || '0', 10);
-  // Pending contracts
-  getArchives().filter(function(r){ return r.status === 'pending'; }).forEach(function(r){
-    var meta = (typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS[r.type]) || { label: r.type, icon: '📋' };
-    var ts = r.submittedAt ? new Date(r.submittedAt).getTime() : 0;
-    notifs.push({
-      type: 'pending',
-      icon: '⏳',
-      title: 'Contrat en attente de validation',
-      desc: r.partnerName + ' — ' + meta.label,
-      at: r.submittedAt || r.validatedAt,
-      target: 'contrats.html?view=' + r.id,
-      isNew: ts > lastSeen
-    });
-  });
-  // New users
+  // Nouveaux comptes créés (hors comptes admin)
   getUsers().forEach(function(u){
-    if (u.username === 'BoulaTV' || !u.createdAt) return;
+    if (u.isAdmin || !u.createdAt) return;
     var ts = new Date(u.createdAt).getTime();
     if (ts <= lastSeen - 7 * 24 * 3600 * 1000) return; // limite à 7 jours pour ne pas saturer
     notifs.push({
       type: 'user',
       icon: '👤',
       title: 'Nouveau compte créé',
-      desc: u.displayName + ' (@' + u.username + ')',
+      desc: u.displayName + ' (ID ' + u.username + ')',
       at: u.createdAt,
       target: 'admin.html#users-list',
       isNew: ts > lastSeen
-    });
-  });
-  // Threads avec entries non lues par l'admin
-  getMessages().forEach(function(t){
-    var unread = threadUnreadCountFor(t, 'BoulaTV');
-    if (unread === 0) return;
-    var lastEntry = t.entries[t.entries.length - 1] || {};
-    notifs.push({
-      type: 'message',
-      icon: '📨',
-      title: (unread > 1 ? unread + ' messages — ' : 'Message de ') + resolveUserDisplay(lastEntry.from || ''),
-      desc: t.subject,
-      at: t.lastActivityAt,
-      target: 'admin.html#messages-list',
-      isNew: true
     });
   });
   // Tri par date décroissante
@@ -1167,7 +1182,7 @@ function forgotNext(){
     closeForgotModal();
     mcAlert('✓ Mot de passe réinitialisé avec succès.\nVous pouvez maintenant vous connecter.', { title: 'Succès' }).then(function(){
       openLoginModal();
-      document.getElementById('login-username').value = _forgotUser.username;
+      var _luf = document.getElementById('login-idig'); if (_luf) _luf.value = _forgotUser.idIG || _forgotUser.username;
       document.getElementById('login-password').focus();
     });
   }
@@ -1185,11 +1200,13 @@ function showProfilSection(){
   document.getElementById('profil-displayname').value = user.displayName || '';
   document.getElementById('profil-avatar-preview').src = user.avatar || defaultAvatar(user.displayName || user.username);
   _profilAvatarDataURL = user.avatar || '';
-  document.getElementById('profil-secret-question').value = user.secretQuestion || '';
-  // Ne JAMAIS pré-remplir la réponse en clair (sécurité). Placeholder indique l'état.
-  var sa = document.getElementById('profil-secret-answer');
-  sa.value = '';
-  sa.placeholder = user.secretAnswer ? '••••••• (déjà configurée — ressaisir pour modifier)' : 'Votre réponse';
+  // Question secrète : carte optionnelle (peut être absente selon l'édition)
+  var sq = document.getElementById('profil-secret-question');
+  if (sq){
+    sq.value = user.secretQuestion || '';
+    var sa = document.getElementById('profil-secret-answer');
+    if (sa){ sa.value = ''; sa.placeholder = user.secretAnswer ? '••••••• (déjà configurée — ressaisir pour modifier)' : 'Votre réponse'; }
+  }
   renderMyContrats();
   renderMyLogs();
 }
@@ -1224,19 +1241,35 @@ function changeMyPassword(){
   var oldP = document.getElementById('profil-oldpwd').value || '';
   var p1 = document.getElementById('profil-newpwd').value || '';
   var p2 = document.getElementById('profil-newpwd2').value || '';
-  if (oldP !== user.password){ mcAlert('⚠ Mot de passe actuel incorrect.', { title: 'Erreur' }); return; }
+  if (!oldP){ mcAlert('⚠ Saisis ton mot de passe actuel.', { title: 'Erreur' }); return; }
+  var cached = _getAuthPw();
+  if (cached && cached.password && oldP !== cached.password){ mcAlert('⚠ Mot de passe actuel incorrect.', { title: 'Erreur' }); return; }
   if (!p1 || p1.length < 4){ mcAlert('⚠ Le nouveau mot de passe doit faire au moins 4 caractères.', { title: 'Erreur' }); return; }
   if (p1 !== p2){ mcAlert('⚠ Les nouveaux mots de passe ne correspondent pas.', { title: 'Erreur' }); return; }
-  var users = getUsers();
-  var idx = users.findIndex(function(x){ return x.username === user.username; });
-  if (idx === -1) return;
-  users[idx].password = p1;
-  saveUsers(users);
-  logAction('Mot de passe modifié');
-  document.getElementById('profil-oldpwd').value = '';
-  document.getElementById('profil-newpwd').value = '';
-  document.getElementById('profil-newpwd2').value = '';
-  mcAlert('✓ Mot de passe modifié avec succès.', { title: 'Succès' });
+  if (!(window.MC_FB && MC_FB.available && MC_FB.auth && MC_FB.auth.currentUser)){
+    mcAlert('⚠ Connexion au cloud requise pour changer le mot de passe.\nReconnecte-toi puis réessaie.', { title: 'Erreur' });
+    return;
+  }
+  var email = user.email || (String(user.idIG || user.username) + '@masterclash.local');
+  function applyNew(){
+    return MC_FB.auth.currentUser.updatePassword(p1).then(function(){
+      _setAuthPw(user.idIG || user.username, p1);   // le mot de passe réel change côté Firebase Auth
+      logAction('Mot de passe modifié');
+      document.getElementById('profil-oldpwd').value = '';
+      document.getElementById('profil-newpwd').value = '';
+      document.getElementById('profil-newpwd2').value = '';
+      mcAlert('✓ Mot de passe modifié avec succès.', { title: 'Succès' });
+    });
+  }
+  applyNew().catch(function(err){
+    if (err && err.code === 'auth/requires-recent-login' && oldP){
+      MC_FB.auth.signInWithEmailAndPassword(email, oldP).then(applyNew)
+        .catch(function(){ mcAlert('⚠ Impossible de changer le mot de passe. Vérifie ton mot de passe actuel et réessaie.', { title: 'Erreur' }); });
+    } else {
+      console.warn('[MC_AUTH] updatePassword:', err && err.code);
+      mcAlert('⚠ Impossible de changer le mot de passe (' + ((err && err.code) || 'erreur') + '). Reconnecte-toi et réessaie.', { title: 'Erreur' });
+    }
+  });
 }
 function saveMySecret(){
   var user = getCurrentUser();
@@ -1802,7 +1835,7 @@ function resetTplsToDefault(){
 // Rendre la liste templates au chargement de admin (et à l'ouverture de l'onglet)
 (function(){
   if (document.body.dataset.page === 'admin'){
-    setTimeout(renderTemplatesList, 200);
+    setTimeout(refreshQuestionsCount, 200);
   }
 })();
 
@@ -2680,31 +2713,35 @@ function autoReauthFromLegacy(){
   if (!window.MC_FB || !MC_FB.available || !MC_FB.auth) return;
   var localUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
   if (!localUser) return;
+  var pw = _getAuthPw();
+  if (!pw || !pw.password || String(pw.idIG) !== String(localUser.idIG || localUser.username)) return;
   if (!MC_FB.auth.currentUser) return;
   if (!MC_FB.auth.currentUser.isAnonymous) return; // déjà nominal
-  if (typeof MC_DATA === 'undefined') return;
-  MC_DATA.get('users', localUser.username).then(function(u){
-    if (!u || !u.password) return;
-    var email = u.email || (u.username.toLowerCase() + '@masterclash.local');
-    MC_FB.auth.signInWithEmailAndPassword(email, u.password)
-      .then(function(){ console.log('[MC_AUTH] Re-auth nominal :', u.username); })
-      .catch(function(err){
-        if (err && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials')){
-          MC_FB.auth.createUserWithEmailAndPassword(email, u.password)
-            .then(function(){ console.log('[MC_AUTH] Compte Firebase créé pour', u.username); })
-            .catch(function(e){ console.warn('[MC_AUTH] create:', e && e.code); });
-        } else {
-          console.warn('[MC_AUTH] re-auth:', err && err.code);
-        }
-      });
-  });
+  // Ré-auth silencieuse avec le mot de passe device-only (jamais lu depuis Firestore/le code)
+  var email = localUser.email || (String(localUser.idIG || localUser.username).toLowerCase() + '@masterclash.local');
+  MC_FB.auth.signInWithEmailAndPassword(email, pw.password)
+    .then(function(){
+      console.log('[MC_AUTH] Re-auth nominal :', localUser.username);
+      if (typeof renderQuestionsBank === 'function') renderQuestionsBank();
+    })
+    .catch(function(err){
+      if (err && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials')){
+        MC_FB.auth.createUserWithEmailAndPassword(email, pw.password)
+          .then(function(){ console.log('[MC_AUTH] Compte Firebase créé pour', localUser.username); if (typeof renderQuestionsBank === 'function') renderQuestionsBank(); })
+          .catch(function(e){ console.warn('[MC_AUTH] create:', e && e.code); });
+      } else {
+        console.warn('[MC_AUTH] re-auth:', err && err.code);
+      }
+    });
 }
 if (window.MC_FB && MC_FB.ready){
   MC_FB.ready.then(function(){ setTimeout(autoReauthFromLegacy, 200); });
 }
-// Login modal : Enter = submit
-document.getElementById('login-password').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
-document.getElementById('login-username').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('login-password').focus(); } });
+// Login modal : Enter soumet (null-guardé — un id manquant ne doit jamais casser le script)
+['login-nom','login-prenom','login-idig','login-password'].forEach(function(id){
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doLogin(); } });
+});
 
 // ===========================================================
 // DIALOGUE CUSTOM (remplace alert/confirm/prompt — compatible CEF FiveM)
@@ -3874,110 +3911,157 @@ function clearAllArchives(){
 function refreshAdminStats(){
   var c = document.getElementById('admin-stats');
   if (!c) return;
-  var list = getArchives();
-  var pending = list.filter(function(r){ return r.status === 'pending'; }).length;
-  var validated = list.filter(function(r){ return r.status === 'validated'; }).length;
-  var byType = {};
-  list.forEach(function(r){ byType[r.type] = (byType[r.type] || 0) + 1; });
-  var oldest = list.length ? list[list.length - 1].submittedAt || list[list.length - 1].validatedAt : null;
-  var html = ''
-    + '<div class="admin-stat"><div class="admin-stat-label">Total contrats</div><div class="admin-stat-value">' + list.length + '</div></div>'
-    + '<div class="admin-stat" style="border-left-color:#ffab40"><div class="admin-stat-label">⏳ En attente</div><div class="admin-stat-value" style="color:#ffab40">' + pending + '</div></div>'
-    + '<div class="admin-stat" style="border-left-color:#00e676"><div class="admin-stat-label">✓ Validés</div><div class="admin-stat-value" style="color:#00e676">' + validated + '</div></div>';
-  Object.keys(byType).forEach(function(t){
-    var meta = CONTRACT_LABELS[t] || { label: t, icon: '📄' };
-    html += '<div class="admin-stat"><div class="admin-stat-label">' + meta.icon + ' ' + meta.label.replace('Contrat ', '') + '</div><div class="admin-stat-value">' + byType[t] + '</div></div>';
-  });
-  c.innerHTML = html;
+  var parts = getParticipants();
+  var users = getUsers();
+  var byStatus = { pending: 0, confirmed: 0, absent: 0, qualified: 0 };
+  parts.forEach(function(p){ if (byStatus[p.status] !== undefined) byStatus[p.status]++; });
+  c.innerHTML = ''
+    + '<div class="admin-stat"><div class="admin-stat-label">🎯 Participants</div><div class="admin-stat-value">' + parts.length + ' / ' + PARTICIPANTS_LIMIT + '</div></div>'
+    + '<div class="admin-stat" style="border-left-color:#ffab40"><div class="admin-stat-label">⏳ En attente</div><div class="admin-stat-value" style="color:#ffab40">' + byStatus.pending + '</div></div>'
+    + '<div class="admin-stat" style="border-left-color:#00e676"><div class="admin-stat-label">✓ Confirmés</div><div class="admin-stat-value" style="color:#00e676">' + byStatus.confirmed + '</div></div>'
+    + '<div class="admin-stat" style="border-left-color:#f5c518"><div class="admin-stat-label">🏆 Qualifiés</div><div class="admin-stat-value" style="color:#f5c518">' + byStatus.qualified + '</div></div>'
+    + '<div class="admin-stat"><div class="admin-stat-label">👥 Comptes tablette</div><div class="admin-stat-value">' + users.length + '</div></div>';
 }
-// Refresh stats à chaque ouverture de la section admin
-document.querySelector('a[href="admin.html"]').addEventListener('click', function(){
-  setTimeout(refreshAdminStats, 100);
-});
+// Refresh stats à chaque ouverture de la section admin (null-guardé)
+(function(){
+  var al = document.querySelector('a[href="admin.html"]');
+  if (al) al.addEventListener('click', function(){ setTimeout(refreshAdminStats, 100); });
+})();
 refreshAdminStats();
 
-// ============================================================================
-// === INTÉGRATIONS NOVA === (injectées dynamiquement sur toutes les pages MC)
-// ============================================================================
-// Master Clash est un projet de l'Association NOVA. Ce bloc applique partout :
-//   1. Bouton "← Retour NOVA" en haut de la nav
-//   2. Footer NOVA en bas de chaque page (bandeau institutionnel)
-//   3. Mise à jour de la mention "demande à BoulaTV" pour citer NOVA
-// ============================================================================
-(function(){
-  var NOVA_URL = 'https://lahagragaming93-debug.github.io/NOVA/'; // URL à ajuster lors du déploiement
-
-  // 1. Bouton "Retour NOVA" dans la nav
-  function injectReturnNovaBtn(){
-    var nav = document.querySelector('.nav-links');
-    if (!nav || nav.querySelector('.nav-back-nova')) return;
-    var a = document.createElement('a');
-    a.href = NOVA_URL;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    a.className = 'nav-back-nova';
-    a.title = 'Retour vers le site officiel de l\'association NOVA';
-    a.style.cssText = 'background:linear-gradient(135deg,#1f2d4a,#16223C);color:#fbf9f3;padding:6px 14px;border-radius:4px;border:1px solid #b89c5e;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:600;letter-spacing:0.5px;';
-    a.innerHTML = '<span class="nav-icon" style="font-size:14px;">←</span><span class="nav-text">Retour NOVA</span>';
-    nav.insertBefore(a, nav.firstChild);
-  }
-
-  // 2. Footer NOVA sur toutes les pages
-  function injectNovaFooter(){
-    if (document.querySelector('.nova-footer-banner')) return;
-    var banner = document.createElement('footer');
-    banner.className = 'nova-footer-banner';
-    banner.style.cssText = 'background:linear-gradient(135deg,#1f2d4a 0%,#16223C 100%);color:#fbf9f3;padding:24px 20px;text-align:center;border-top:2px solid #b89c5e;font-family:\'EB Garamond\',\'Times New Roman\',serif;font-size:13px;letter-spacing:0.5px;line-height:1.65;margin-top:60px;';
-    banner.innerHTML =
-      '<div style="max-width:780px;margin:0 auto;">'
-      + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;letter-spacing:5px;color:#fbf9f3;margin-bottom:6px;font-weight:700;">'
-      + 'MASTER CLASH <span style="color:#b89c5e;margin:0 8px;">×</span> <span style="color:#b89c5e;">NOVA</span>'
-      + '</div>'
-      + '<div style="font-style:italic;color:#aabbc8;margin-bottom:10px;">'
-      + 'Master Clash est un événement organisé et porté par l\'<strong style="color:#fbf9f3;font-style:normal;">Association NOVA</strong> — <em>Nouvelle Organisation Vie Associative</em>.<br>'
-      + 'Association à but non lucratif déclarée auprès du département de la Vie Civile, conforme au Code des Taxes, du Travail et des Entreprises (T.T.E. — Chap. VIII).'
-      + '</div>'
-      + '<div style="margin:14px 0 8px 0;color:#b89c5e;font-size:11px;letter-spacing:2px;font-variant:small-caps;">État de San Andreas — Los Santos</div>'
-      + '<a href="' + NOVA_URL + '" target="_blank" rel="noopener" '
-      +   'style="display:inline-block;margin-top:8px;background:transparent;color:#b89c5e;border:1px solid #b89c5e;padding:6px 16px;border-radius:3px;text-decoration:none;font-size:11.5px;letter-spacing:1.5px;font-variant:small-caps;transition:all 0.25s;" '
-      +   'onmouseover="this.style.background=\'#b89c5e\';this.style.color=\'#1f2d4a\';" '
-      +   'onmouseout="this.style.background=\'transparent\';this.style.color=\'#b89c5e\';">'
-      + '→ Découvrir l\'association NOVA'
-      + '</a>'
-      + '</div>';
-    document.body.appendChild(banner);
-  }
-
-  // 3. Reformulation des mentions "demande à BoulaTV" pour citer NOVA
-  function updateBoulaTVMentions(){
-    document.querySelectorAll('p, span, div').forEach(function(el){
-      // ne pas re-traiter ; et ne traiter que les nodes texte directs
-      if (el.dataset && el.dataset.novaUpdated) return;
-      if (el.children.length > 0 && !el.querySelector('strong, em, b, i')) {
-        // Si l'élément a des enfants complexes, on évite d'écraser
-      }
-      // Cherche le texte exact
-      var html = el.innerHTML;
-      if (html.indexOf('demande à BoulaTV') !== -1 && el.children.length === 0) {
-        el.innerHTML = html.replace(
-          /demande à BoulaTV\s*\.?/g,
-          'demande à <strong style="color:#b89c5e;">BoulaTV</strong>, président fondateur de l\'<strong style="color:#b89c5e;">Association NOVA</strong>.'
-        );
-        if (el.dataset) el.dataset.novaUpdated = '1';
-      }
-    });
-  }
-
-  function injectAll(){
-    try { injectReturnNovaBtn(); } catch(e) { console.error('NOVA btn err:', e); }
-    try { injectNovaFooter();    } catch(e) { console.error('NOVA footer err:', e); }
-    try { updateBoulaTVMentions();} catch(e) { console.error('NOVA mention err:', e); }
-  }
-
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', injectAll);
+// ===========================================================
+// BANQUE DE QUESTIONS — chargée depuis Firestore (jamais dans le HTML statique)
+// Anti-fuite : aucune question n'est présente dans les fichiers déployés.
+// ===========================================================
+function buildQCard(q){
+  var typeBadge = q.type === 'qcm' ? '<span class="badge b-qcm">QCM</span>'
+               : q.type === 'libre' ? '<span class="badge b-libre">Libre</span>'
+               : '<span class="badge b-blind">Blind</span>';
+  var ptsBadge = q.points === 'v' ? '<span class="badge b-pts-v">15s</span>'
+               : '<span class="badge b-pts-' + q.points + '">' + q.points + (q.points > 1 ? ' pts' : ' pt') + '</span>';
+  var head = '<div class="q-head"><span class="q-num">' + q.id + '</span><span class="q-cat">' + (q.cat || '') + '</span>' + typeBadge + ptsBadge + '</div>';
+  var body;
+  if (q.type === 'qcm'){
+    body = '<div class="q-text">' + (q.text || '') + '</div><ul class="q-choices">'
+         + (q.choices || []).map(function(c){ return '<li' + (c.correct ? ' class="correct"' : '') + '>' + (c.label || '') + '</li>'; }).join('')
+         + '</ul>';
   } else {
-    injectAll();
+    body = '<div class="q-text">' + (q.text || '') + '</div><div class="q-answer">' + (q.answer || '') + '</div>';
   }
+  return '<div class="q-card ' + q.difficulty + '">' + head + body + '</div>';
+}
+function _qNum(id){ return parseInt(String(id).replace(/^[A-Za-z]+/, ''), 10) || 0; }
+function _setQCount(cls, n){ document.querySelectorAll('.' + cls).forEach(function(el){ el.textContent = n; }); }
+
+function renderQuestionsBank(){
+  if (!document.body || document.body.dataset.page !== 'ques') return;
+  var loading = document.getElementById('q-loading');
+  var empty = document.getElementById('q-empty');
+  var denied = document.getElementById('q-denied');
+  function show(el, on){ if (el) el.style.display = on ? '' : 'none'; }
+  if (!window.MC_FB || !MC_FB.available || !MC_FB.db){ show(loading, false); show(empty, false); show(denied, true); return; }
+  // Ne charger que si l'auth NOMINALE est établie (sinon Firestore refuse et on
+  // afficherait "vide" à tort). onAuthStateChanged / autoReauth relanceront.
+  var au = MC_FB.auth && MC_FB.auth.currentUser;
+  if (!au || au.isAnonymous){ show(loading, true); show(empty, false); show(denied, false); return; }
+  // Requête Firestore directe → on distingue "vide" de "refusé" (getAll avale les erreurs)
+  MC_FB.db.collection('questions').get().then(function(snap){
+    var list = [];
+    snap.forEach(function(doc){ list.push(doc.data()); });
+    show(loading, false); show(denied, false);
+    if (!list.length){ show(empty, true); return; }
+    show(empty, false);
+    var groups = { easy: [], medium: [], hard: [], blind: [] };
+    list.forEach(function(q){ if (groups[q.difficulty]) groups[q.difficulty].push(q); });
+    var map = { easy: 'q-list-easy', medium: 'q-list-med', hard: 'q-list-hard', blind: 'q-list-blind' };
+    Object.keys(map).forEach(function(k){
+      groups[k].sort(function(a, b){ return _qNum(a.id) - _qNum(b.id); });
+      var el = document.getElementById(map[k]);
+      if (el) el.innerHTML = groups[k].map(buildQCard).join('\n');
+    });
+    _setQCount('q-cnt-easy', groups.easy.length);
+    _setQCount('q-cnt-med', groups.medium.length);
+    _setQCount('q-cnt-hard', groups.hard.length);
+    _setQCount('q-cnt-blind', groups.blind.length);
+    var tc = document.getElementById('q-total-count'); if (tc) tc.textContent = list.length;
+  }).catch(function(e){
+    console.warn('[MC_QUES] chargement banque :', e && e.code);
+    show(loading, false); show(empty, false); show(denied, true);
+  });
+}
+// Chargement sur la page Questions, robuste face au timing d'auth CEF
+(function(){
+  if (!document.body || document.body.dataset.page !== 'ques') return;
+  if (window.MC_FB && MC_FB.auth && MC_FB.auth.onAuthStateChanged){
+    MC_FB.auth.onAuthStateChanged(function(u){ if (u && !u.isAnonymous) renderQuestionsBank(); });
+  }
+  if (window.MC_FB && MC_FB.ready && MC_FB.ready.then){ MC_FB.ready.then(function(){ renderQuestionsBank(); }); }
+  else { renderQuestionsBank(); }
 })();
+
+// ----- Import / gestion de la banque (super-admin uniquement) -----
+function refreshQuestionsCount(){
+  var el = document.getElementById('ques-count'); if (!el) return;
+  if (!window.MC_DATA){ el.textContent = '—'; return; }
+  MC_DATA.getAll('questions').then(function(list){ el.textContent = (list || []).filter(Boolean).length; }).catch(function(){ el.textContent = '?'; });
+}
+function importQuestionsBank(ev){
+  var file = ev.target.files[0]; if (!file) return;
+  ev.target.value = '';
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var data;
+    try { data = JSON.parse(e.target.result); } catch(err){ mcAlert('⚠ Fichier JSON invalide.', { title: 'Erreur' }); return; }
+    if (!Array.isArray(data) || !data.length){ mcAlert('⚠ Fichier vide ou non conforme (attendu : un tableau de questions).', { title: 'Erreur' }); return; }
+    var bad = data.filter(function(q){ return !q || !q.id || !q.difficulty || !q.type; });
+    if (bad.length){ mcAlert('⚠ ' + bad.length + ' question(s) sans id / difficulté / type. Import annulé.', { title: 'Erreur' }); return; }
+    if (!window.MC_DATA || !window.MC_FB || !MC_FB.available){ mcAlert('⚠ Cloud indisponible — connectez-vous et réessayez.', { title: 'Erreur' }); return; }
+    mcConfirm('Importer ' + data.length + ' questions vers le cloud ?\n\nLes questions portant le même identifiant seront écrasées.', { title: '📥 Importer la banque', okText: 'Importer' }).then(function(ok){
+      if (!ok) return;
+      var info = document.getElementById('ques-import-info');
+      var i = 0, errs = 0;
+      (function step(){
+        if (i >= data.length){
+          var okCount = data.length - errs;
+          if (info) info.textContent = (errs ? '⚠ ' : '✓ ') + 'Import terminé : ' + okCount + '/' + data.length + ' question(s)' + (errs ? (' — ' + errs + ' échec(s), vérifie les règles/connexion') : '') + '.';
+          logAction('Banque de questions importée', okCount + '/' + data.length + ' questions');
+          refreshQuestionsCount();
+          mcAlert((errs ? '⚠ ' + okCount + '/' + data.length + ' question(s) importées — ' + errs + ' échec(s). Vérifie que les règles Firestore sont bien déployées, puis réimporte.' : '✓ ' + okCount + ' question(s) importée(s) dans le cloud.'), { title: errs ? 'Import partiel' : 'Import terminé' });
+          return;
+        }
+        var chunk = data.slice(i, i + 25);
+        Promise.all(chunk.map(function(q){ return MC_DATA.set('questions', String(q.id), q).then(function(ok){ if (!ok) errs++; }); })).then(function(){
+          i += chunk.length;
+          if (info) info.textContent = 'Import en cours… ' + Math.min(i, data.length) + '/' + data.length;
+          setTimeout(step, 20);
+        });
+      })();
+    });
+  };
+  reader.readAsText(file);
+}
+function clearQuestionsBank(){
+  mcConfirm('Vider TOUTE la banque de questions du cloud ?\n\nAction irréversible.', { title: '🗑 Vider la banque', okText: 'Vider' }).then(function(ok){
+    if (!ok || !window.MC_DATA) return;
+    var info = document.getElementById('ques-import-info');
+    MC_DATA.getAll('questions').then(function(list){
+      list = (list || []).filter(Boolean);
+      if (!list.length){ refreshQuestionsCount(); mcAlert('La banque est déjà vide.', { title: 'Info' }); return; }
+      var derr = 0;
+      Promise.all(list.map(function(q){ return MC_DATA.delete('questions', String(q._id || q.id)).then(function(ok){ if (!ok) derr++; }); })).then(function(){
+        var done = list.length - derr;
+        if (info) info.textContent = derr ? ('⚠ ' + done + ' supprimées, ' + derr + ' échec(s).') : ('✓ Banque vidée (' + done + ' supprimées).');
+        logAction('Banque de questions vidée', done + ' questions');
+        refreshQuestionsCount();
+        mcAlert(derr ? ('⚠ ' + done + ' supprimées, ' + derr + ' échec(s) — réessaie.') : '✓ Banque vidée.', { title: derr ? 'Attention' : 'Succès' });
+      });
+    });
+  });
+}
+
+// ============================================================================
+// [Bloc « Intégrations organisateur » retiré lors de la dé-NOVA-isation du projet.
+//  Il injectait un bouton « Retour NOVA », un footer NOVA et une mention NOVA.
+//  À remplacer par le branding BLA Corporate × Life Invader lors de la production.]
+// ============================================================================
 

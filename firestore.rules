@@ -1,118 +1,74 @@
 // ============================================================================
-// Règles de sécurité Firestore — Master Clash (version durcie)
+// Règles de sécurité Firestore — Master Clash (édition Entreprises, BLA x Life Invader)
 // À copier dans Firebase Console → Firestore Database → onglet "Règles"
 //
-// Stratégie :
-// - L'admin (A.Beauchamp / alias BoulaTV) a tous les droits → identifié par son email Firebase
-// - Reconnaît les DEUX emails admin pour assurer la transition :
-//   - 'a.beauchamp@masterclash.local' (nouveau, post-NOVA)
-//   - 'boulatv@masterclash.local' (legacy, conservé pour rétro-compatibilité des données)
-// - Les utilisateurs nommés (non-anonymes) peuvent agir sur leurs propres
-//   données uniquement
-// - Les utilisateurs anonymes ont le minimum (juste lire l'index utilisateurs
-//   pour la liste des partenaires + créer leur compte à l'inscription)
-// - Tout le reste est explicitement bloqué (catch-all final)
+// Modèle :
+// - Comptes tablette = utilisateurs "nommés" (e-mail/mot de passe = <ID>@masterclash.local).
+//   Invités = anonymes (aucun accès aux collections sensibles).
+// - Super-admin = ID en jeu 122653 (email 122653@masterclash.local).
+// - Les permissions sont lues depuis le doc users_v2 de l'appelant (via get()), donc les
+//   règles NE font PAS confiance à l'UI : un organisateur ne peut ni s'accorder 'ques'/'gestion'
+//   ni écrire un compte privilégié, même via la console.
 //
-// Convention : email Firebase = <username>@masterclash.local
-// → permet d'extraire le username depuis l'email pour vérifier la propriété
+// ⚠️ LIMITE CONNUE (voir plan de sécurité) : users_v2 reste lisible par tout compte nommé et
+//    contient le mot de passe en clair ; et le mot de passe super-admin est encore présent dans
+//    le code public. La sécurisation complète nécessite : login Firebase-Auth-only (mot de passe
+//    hors du code), lecture users_v2 restreinte, dépôt privé/historique purgé. Cf. discussion.
 // ============================================================================
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ===== HELPERS =====
-    function isAuth() {
-      return request.auth != null;
-    }
-    function isNamed() {
-      return isAuth() && request.auth.token.firebase.sign_in_provider != 'anonymous';
-    }
-    function isAdmin() {
-      return isNamed() && (
-        request.auth.token.email == 'a.beauchamp@masterclash.local'
-        || request.auth.token.email == 'boulatv@masterclash.local'
-      );
-    }
-    function isOwner(username) {
-      return isNamed()
-        && request.auth.token.email != null
-        && request.auth.token.email == username.lower() + '@masterclash.local';
-    }
-    function ownerUsername() {
-      return request.auth.token.email.replace('@masterclash.local', '');
-    }
-    function changedKeys() {
-      return request.resource.data.diff(resource.data).affectedKeys();
+    function isAuth() { return request.auth != null; }
+    function isNamed() { return isAuth() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
+    function callerId() { return request.auth.token.email.replace('@masterclash.local', ''); }
+    function isAdmin() { return isNamed() && request.auth.token.email == '122653@masterclash.local'; }
+    function isOwner(idIG) { return isNamed() && callerId() == idIG; }
+    // Permissions de l'appelant, lues depuis SON doc users_v2 (get() ignore les règles de read)
+    function myPerms() { return get(/databases/$(database)/documents/users_v2/$(callerId())).data.perms; }
+    function hasPerm(p) { return isNamed() && myPerms().hasAny([p]); }
+    // Un compte "sûr" = ni admin, ni doté d'une permission sensible
+    function acctSafe(d) { return d.isAdmin == false && !d.perms.hasAny(['ques', 'gestion']); }
+    // Auto-édition de profil (nom/mdp/avatar) sans toucher aux privilèges
+    function selfProfileOnly(idIG) {
+      return isOwner(idIG)
+        && request.resource.data.isAdmin == resource.data.isAdmin
+        && request.resource.data.perms == resource.data.perms;
     }
 
-    // ===== USERS =====
-    // Lecture : tout authentifié peut voir la liste (nécessaire pour rendu UI)
-    // Création : tout authentifié (anonyme inclus) — pour permettre l'inscription
-    //   MAIS on impose isAdmin == false pour bloquer l'auto-élévation
-    // Update : admin = tout droits ; owner = tout sauf isAdmin/perms ; sinon ❌
-    // Delete : admin only
-    match /users/{username} {
-      allow read: if isAuth();
-      allow create: if isAuth()
-        && request.resource.data.isAdmin == false;
+    // ===== COMPTES DE LA TABLETTE (v2) =====
+    // Création/modification : super-admin (tout) ; organisateur 'gestion' (comptes NON privilégiés
+    // uniquement) ; propriétaire (son profil, sans changer perms/isAdmin). Suppression : super-admin.
+    match /users_v2/{idIG} {
+      allow read: if isNamed();
+      allow create: if isAdmin() || (hasPerm('gestion') && acctSafe(request.resource.data));
       allow update: if isAdmin()
-        || (isOwner(username)
-            && !changedKeys().hasAny(['isAdmin', 'perms', 'username']));
+                     || (hasPerm('gestion') && acctSafe(resource.data) && acctSafe(request.resource.data))
+                     || selfProfileOnly(idIG);
       allow delete: if isAdmin();
     }
 
-    // ===== MESSAGES =====
-    // Lecture : admin voit tout, sinon il faut être participant du thread
-    // Création : tout authentifié peut envoyer un message
-    // Update : participant ou admin
-    // Delete : admin only
-    match /messages/{threadId} {
-      allow read: if isAdmin()
-        || (isNamed()
-            && resource != null
-            && resource.data.participants is list
-            && resource.data.participants.hasAny([ownerUsername()]));
-      allow create: if isAuth();
-      allow update: if isAdmin()
-        || (isNamed()
-            && resource.data.participants.hasAny([ownerUsername()]));
-      allow delete: if isAdmin();
+    // ===== PARTICIPANTS AU QUIZ =====
+    // Lecture : comptes nommés. Écriture : super-admin ou détenteur de 'participants' (le Life).
+    match /participants/{pid} {
+      allow read: if isNamed();
+      allow write: if isAdmin() || hasPerm('participants');
     }
 
-    // ===== PARTICIPANTS =====
-    // Lecture : tout authentifié (liste publique des inscrits au quiz)
-    // Création : tout authentifié peut s'inscrire
-    // Update : admin (statut, groupe) ou propriétaire (modifier ses infos)
-    // Delete : admin only (sauf si tu te désinscris toi-même)
-    match /participants/{participantId} {
-      allow read: if isAuth();
-      allow create: if isAuth();
-      allow update: if isAdmin()
-        || (isNamed() && resource.data.username == ownerUsername());
-      allow delete: if isAdmin()
-        || (isNamed() && resource.data.username == ownerUsername());
-    }
-
-    // ===== CONTRACTS =====
-    // Lecture : admin voit tout, partenaires voient seulement leurs contrats
-    // Création : tout authentifié peut soumettre un contrat
-    // Update/Delete : admin only (validation, archivage)
-    match /contracts/{contractId} {
-      allow read: if isAdmin()
-        || (isNamed() && resource.data.createdBy == ownerUsername());
-      allow create: if isAuth();
-      allow update, delete: if isAdmin();
-    }
-
-    // ===== CONFIG (budget, allocations) =====
-    // Lecture : tout authentifié (info utile pour les partenaires)
-    // Écriture : admin only
+    // ===== PARAMÈTRES (ouverture des inscriptions, etc.) =====
     match /config/{docId} {
-      allow read: if isAuth();
+      allow read: if isNamed();
       allow write: if isAdmin();
     }
 
-    // ===== CATCH-ALL : tout le reste bloqué =====
+    // ===== BANQUE DE QUESTIONS =====
+    // Anti-fuite : jamais dans le site. Lecture : super-admin OU compte avec 'ques'. Écriture : super-admin.
+    match /questions/{qid} {
+      allow read: if isAdmin() || hasPerm('ques');
+      allow write: if isAdmin();
+    }
+
+    // ===== TOUT LE RESTE (anciennes collections users/messages/contracts incluses) =====
     match /{document=**} {
       allow read, write: if false;
     }
