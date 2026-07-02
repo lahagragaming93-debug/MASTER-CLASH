@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mon Profil — MASTER CLASH</title>
+<title>Lots — MASTER CLASH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <script src="assets/firebase-users.js"></script>
 <script src="assets/firebase-participants.js"></script>
 </head>
-<body data-page="profil">
+<body data-page="lots">
 <nav class="nav">
   <a class="nav-logo" href="index.html"><img src="assets/logo-mc.png" alt="Master Clash" class="nav-logo-img"><span class="nav-logo-text">MASTER CLASH</span></a>
   <div class="nav-links">
@@ -47,40 +47,53 @@
   </div>
 </nav>
 <!-- ===== SECTION MON PROFIL (utilisateur connecté) ===== -->
-<section id="profil">
-  <h2 class="section-title">👤 Mon profil</h2>
-  <div class="section-subtitle">Gérer mes informations</div>
+<section id="lots">
+  <h2 class="section-title">🎁 Lots à gagner</h2>
+  <div class="section-subtitle">Récolte des lots par le Life, puis répartition en fin d'événement</div>
 
-  <div class="card">
-    <h3 style="margin-top:0">📝 Mes informations</h3>
-    <div class="avatar-row" style="margin-bottom:14px">
-      <img id="profil-avatar-preview" class="avatar-preview" style="width:80px;height:80px" src="" alt="">
-      <input type="file" id="profil-avatar-file" accept="image/*" style="display:none" onchange="handleProfilAvatarUpload(event)">
-      <button type="button" class="admin-btn admin-btn-secondary" onclick="document.getElementById('profil-avatar-file').click()">📷 Changer mon avatar / logo</button>
+  <div class="card card-yellow">
+    <h3 style="margin-top:0">📊 Récapitulatif</h3>
+    <div style="display:flex;gap:26px;flex-wrap:wrap;text-align:center">
+      <div><div style="font-size:26px;font-weight:800;color:#00d4ff" id="lots-count">0</div><div style="font-size:12px;color:#6a7a8a">lots</div></div>
+      <div><div style="font-size:26px;font-weight:800;color:#f5c518" id="lots-qty">0</div><div style="font-size:12px;color:#6a7a8a">unités</div></div>
+      <div><div style="font-size:26px;font-weight:800;color:#00e676" id="lots-assigned">0</div><div style="font-size:12px;color:#6a7a8a">attribués</div></div>
+      <div><div style="font-size:26px;font-weight:800;color:#ffab40" id="lots-pending">0</div><div style="font-size:12px;color:#6a7a8a">à attribuer</div></div>
     </div>
-    <label class="auth-label">🎮 ID en jeu (identifiant de connexion) — non modifiable</label>
-    <input type="text" id="profil-username" class="auth-input" disabled>
-    <label class="auth-label">Nom affiché</label>
-    <input type="text" id="profil-displayname" class="auth-input">
-    <button class="admin-btn" onclick="saveMyProfile()" style="margin-top:14px">💾 Enregistrer mes informations</button>
   </div>
 
   <div class="card">
-    <h3 style="margin-top:0">🔑 Changer mon mot de passe</h3>
-    <label class="auth-label">Mot de passe actuel</label>
-    <input type="password" id="profil-oldpwd" class="auth-input">
-    <label class="auth-label">Nouveau mot de passe</label>
-    <input type="password" id="profil-newpwd" class="auth-input">
-    <label class="auth-label">Confirmer le nouveau mot de passe</label>
-    <input type="password" id="profil-newpwd2" class="auth-input">
-    <button class="admin-btn" onclick="changeMyPassword()" style="margin-top:14px">🔑 Changer mon mot de passe</button>
+    <h3 style="margin-top:0" id="lot-form-title">➕ Ajouter un lot récolté</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="flex:2;min-width:200px"><label class="auth-label">Nom du lot</label><input type="text" id="lot-nom" class="auth-input" placeholder="ex : Casque audio, bon d'achat…" autocomplete="off"></div>
+      <div style="flex:1;min-width:110px"><label class="auth-label">Quantité</label><input type="number" id="lot-qte" class="auth-input" min="1" value="1"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="flex:1;min-width:160px"><label class="auth-label">Récolté par</label><input type="text" id="lot-par" class="auth-input" placeholder="Qui l'a apporté" autocomplete="off"></div>
+      <div style="flex:2;min-width:200px"><label class="auth-label">Notes (optionnel)</label><input type="text" id="lot-notes" class="auth-input" placeholder="Valeur, sponsor, détails…" autocomplete="off"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:2;min-width:200px"><label class="auth-label">Attribué à (répartition — laisser vide tant que non attribué)</label><input type="text" id="lot-dest" class="auth-input" placeholder="ex : 1ère place, un nom…" autocomplete="off"></div>
+      <label style="display:flex;align-items:center;gap:6px;color:#dce4f0;font-size:13px;padding-bottom:10px"><input type="checkbox" id="lot-attribue"> Marquer comme attribué</label>
+    </div>
+    <div class="modal-error" id="lot-error"></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="admin-btn" onclick="saveLot()" id="lot-save-btn">➕ Ajouter à la liste</button>
+      <button class="admin-btn admin-btn-secondary" onclick="resetLotForm()" id="lot-cancel-btn" style="display:none">Annuler</button>
+    </div>
   </div>
 
-
   <div class="card">
-    <h3 style="margin-top:0">📜 Mon historique d'activité</h3>
-    <p style="color:#aabbc8;font-size:13px">Les 50 dernières actions de votre compte.</p>
-    <div id="profil-mes-logs"></div>
+    <h3 style="margin-top:0">📋 Lots récoltés</h3>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <input type="text" id="lots-search" class="auth-input" placeholder="🔍 Rechercher…" style="flex:1;min-width:200px;margin:0" oninput="renderLotsList()">
+      <select id="lots-filter" class="auth-input" style="width:auto;margin:0" onchange="renderLotsList()">
+        <option value="">Tous</option>
+        <option value="pending">À attribuer</option>
+        <option value="assigned">Attribués</option>
+      </select>
+      <button class="admin-btn admin-btn-secondary" onclick="loadLots()" style="margin:0">↻ Actualiser</button>
+    </div>
+    <div id="lots-list"></div>
   </div>
 </section>
 <footer>

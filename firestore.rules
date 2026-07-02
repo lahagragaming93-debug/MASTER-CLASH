@@ -63,6 +63,13 @@ service cloud.firestore {
       allow write: if isAdmin() || hasPerm('participants');
     }
 
+    // ===== LOTS À GAGNER (récolte + répartition) =====
+    // Même périmètre que les inscriptions : super-admin ou détenteur de 'participants' (le Life).
+    match /lots/{lid} {
+      allow read: if isAdmin() || hasPerm('participants');
+      allow write: if isAdmin() || hasPerm('participants');
+    }
+
     // ===== PARAMÈTRES (ouverture des inscriptions, etc.) =====
     match /config/{docId} {
       allow read: if isNamed();

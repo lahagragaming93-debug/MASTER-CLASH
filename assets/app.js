@@ -9,6 +9,7 @@ var PAGE_PERMS = {
   ques: 'ques',          // Banque de questions : verrouillée, accordable
   profil: 'login',       // Mon profil : tout compte connecté
   participants: 'participants', // Inscriptions : géré par le Life (permission dédiée)
+  lots: 'participants',  // Lots : même accès que les inscriptions (organisateurs Life)
   admin: 'admin'         // super-admin (isAdmin) OU permission 'gestion'
 };
 
@@ -566,6 +567,8 @@ function applyAuthState(){
   var canParticipants = !!(user && (user.isAdmin || (user.perms || []).indexOf('participants') !== -1));
   var participantsLink = document.getElementById('nav-participants-link');
   if (participantsLink) participantsLink.style.display = canParticipants ? '' : 'none';
+  var lotsLink = document.getElementById('nav-lots-link');
+  if (lotsLink) lotsLink.style.display = canParticipants ? '' : 'none';
   if (profilSection){
     if (user){ profilSection.style.display = ''; if (typeof showProfilSection === 'function') showProfilSection(); }
     else { profilSection.style.display = 'none'; }
@@ -577,6 +580,8 @@ function applyAuthState(){
   if (homeAdminCard) homeAdminCard.style.display = canAdminHome ? '' : 'none';
   var homePartCard = document.getElementById('home-card-participants');
   if (homePartCard) homePartCard.style.display = canParticipants ? '' : 'none';
+  var homeLotsCard = document.getElementById('home-card-lots');
+  if (homeLotsCard) homeLotsCard.style.display = canParticipants ? '' : 'none';
   var homeProfilCard = document.getElementById('home-card-profil');
   if (homeProfilCard) homeProfilCard.style.display = user ? '' : 'none';
   document.querySelectorAll('.home-card[data-perm]').forEach(function(card){
@@ -1884,7 +1889,6 @@ function openParticipantModal(id){
     }
     document.getElementById('part-modal-sub').textContent = 'Modifier l\'inscription';
     document.getElementById('part-modal-title').textContent = 'Édition de l\'inscription';
-    document.getElementById('part-ingameid').value = p.inGameId || '';
     document.getElementById('part-firstname').value = p.firstName || '';
     document.getElementById('part-lastname').value = p.lastName || '';
     document.getElementById('part-phone').value = p.phone || '';
@@ -1910,7 +1914,6 @@ function openParticipantModal(id){
     }
     document.getElementById('part-modal-sub').textContent = isAdmin ? 'Inscrire un participant' : 'Mon inscription au quiz';
     document.getElementById('part-modal-title').textContent = 'Nouvelle inscription';
-    document.getElementById('part-ingameid').value = '';
     document.getElementById('part-firstname').value = '';
     document.getElementById('part-lastname').value = '';
     document.getElementById('part-phone').value = '';
@@ -1919,7 +1922,7 @@ function openParticipantModal(id){
     document.getElementById('part-notes').value = '';
   }
   modal.classList.add('active');
-  setTimeout(function(){ document.getElementById('part-ingameid').focus(); }, 60);
+  setTimeout(function(){ document.getElementById('part-firstname').focus(); }, 60);
 }
 function closeParticipantModal(){
   var m = document.getElementById('participant-modal');
@@ -1950,7 +1953,6 @@ function saveParticipant(){
   var u = getCurrentUser();
   if (!u){ mcAlert('Connexion requise.'); return; }
   var isAdmin = userIsAdmin();
-  var ig = (document.getElementById('part-ingameid').value || '').trim();
   var fn = (document.getElementById('part-firstname').value || '').trim();
   var ln = (document.getElementById('part-lastname').value || '').trim();
   var ph = (document.getElementById('part-phone').value || '').trim();
@@ -1958,7 +1960,6 @@ function saveParticipant(){
   var st = document.getElementById('part-status').value;
   var nt = (document.getElementById('part-notes').value || '').trim();
   var err = document.getElementById('part-error');
-  if (!ig){ err.textContent = '⚠ ID en jeu obligatoire.'; return; }
   if (!fn || !ln){ err.textContent = '⚠ Prénom et nom in-game obligatoires.'; return; }
   if (!ph){ err.textContent = '⚠ Téléphone in-game obligatoire.'; return; }
   // Validation format téléphone XXX-XXXX
@@ -1989,11 +1990,9 @@ function saveParticipant(){
     if (_editingParticipantId){
       var idx = list2.findIndex(function(x){ return x.id === _editingParticipantId; });
       if (idx === -1) return;
-      list2[idx].inGameId = ig;
       list2[idx].firstName = fn;
       list2[idx].lastName = ln;
       list2[idx].fullName = fullName;
-      list2[idx].pseudo = ig;
       list2[idx].phone = ph;
       list2[idx].iban = ib;
       if (isAdmin){
@@ -2005,11 +2004,9 @@ function saveParticipant(){
       list2.push({
         id: 'P' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
         username: u.username,
-        inGameId: ig,
         firstName: fn,
         lastName: ln,
         fullName: fullName,
-        pseudo: ig,
         phone: ph,
         iban: ib,
         ip: ip || null,
@@ -2104,7 +2101,7 @@ function renderParticipantsList(){
   var filtered = list.filter(function(p){
     if (s){
       var q = s.toLowerCase();
-      if ((p.fullName || '').toLowerCase().indexOf(q) === -1 && (p.pseudo || '').toLowerCase().indexOf(q) === -1) return false;
+      if ((p.fullName || '').toLowerCase().indexOf(q) === -1) return false;
     }
     if (fStatus && p.status !== fStatus) return false;
     if (fGroup === 'none' && p.group) return false;
@@ -2138,7 +2135,7 @@ function renderParticipantsList(){
     var detailLine = '';
     if (isAdmin || isOwn){
       detailLine = '<div class="user-item-perms" style="color:#aabbc8;font-size:11px">'
-        + '🎮 ID: ' + escHtml(p.inGameId || '—') + ' &nbsp;·&nbsp; 📞 ' + escHtml(p.phone || '—')
+        + '📞 ' + escHtml(p.phone || '—')
         + (isAdmin ? ' &nbsp;·&nbsp; 💳 ' + escHtml(p.iban || '—') : '')
         + (isAdmin && p.ip ? ' &nbsp;·&nbsp; 🌐 <span class="ip-blur" onclick="this.classList.toggle(\'revealed\')" title="Cliquer pour afficher / masquer l\'IP">' + escHtml(p.ip) + '</span>' : '')
         + '</div>';
@@ -2182,7 +2179,7 @@ function renderGroupsDisplay(list){
     return '<div style="background:#141926;border:1px solid ' + color + ';border-radius:10px;padding:14px">'
       + '<h4 style="color:' + color + ';margin:0 0 10px;text-align:center;letter-spacing:2px;font-size:18px">GROUPE ' + g + ' <span style="font-size:11px;color:#aabbc8">(' + groups[g].length + ')</span></h4>'
       + '<ol style="margin:0;padding-left:24px;color:#dce4f0;font-size:13px">'
-      + groups[g].map(function(p){ return '<li style="margin-bottom:4px">' + escHtml(p.fullName) + (p.pseudo ? ' <span style="color:#6a7a8a">(' + escHtml(p.pseudo) + ')</span>' : '') + '</li>'; }).join('')
+      + groups[g].map(function(p){ return '<li style="margin-bottom:4px">' + escHtml(p.fullName) + '</li>'; }).join('')
       + '</ol>'
     + '</div>';
   }).join('');
@@ -2272,7 +2269,7 @@ function showDrawOverlay(groups){
     var item = allParticipants[i];
     var li = document.createElement('li');
     li.style.cssText = 'margin-bottom:5px;animation:draw-pop .4s ease-out';
-    li.textContent = item.p.fullName + (item.p.pseudo ? ' (' + item.p.pseudo + ')' : '');
+    li.textContent = item.p.fullName;
     document.getElementById('draw-list-' + item.g).appendChild(li);
     status.textContent = '→ ' + item.p.fullName + ' rejoint le Groupe ' + item.g + '…';
     i++;
@@ -4000,6 +3997,180 @@ function renderQuestionsBank(){
   }
   if (window.MC_FB && MC_FB.ready && MC_FB.ready.then){ MC_FB.ready.then(function(){ renderQuestionsBank(); }); }
   else { renderQuestionsBank(); }
+})();
+
+// ============================================================
+//  LOTS — récolte (Life) puis répartition en fin d'événement
+//  Collection Firestore 'lots' — accès : isAdmin OU perm 'participants'
+// ============================================================
+var _lotsData = [];
+var _editingLotId = null;
+function lotId(l){ return l && (l._id || l.id); }
+function sanitizeLot(l){ var c = {}; Object.keys(l || {}).forEach(function(k){ if (k !== '_id') c[k] = l[k]; }); return c; }
+
+function loadLots(){
+  if (!document.body || document.body.dataset.page !== 'lots') return;
+  var host = document.getElementById('lots-list');
+  if (!window.MC_DATA){ if (host) host.innerHTML = '<div style="text-align:center;color:#6a7a8a;padding:24px">Connexion cloud requise.</div>'; return; }
+  MC_DATA.getAll('lots').then(function(list){
+    _lotsData = (list || []).filter(Boolean);
+    renderLotsList();
+  }).catch(function(){
+    if (host) host.innerHTML = '<div style="text-align:center;color:#6a7a8a;padding:24px">Erreur de chargement des lots.</div>';
+  });
+}
+
+function renderLotsSummary(){
+  var n = _lotsData.length;
+  var qty = _lotsData.reduce(function(a, l){ return a + (Number(l.quantite) || 0); }, 0);
+  var assigned = _lotsData.filter(function(l){ return l.attribue; }).length;
+  var set = function(id, v){ var e = document.getElementById(id); if (e) e.textContent = v; };
+  set('lots-count', n); set('lots-qty', qty); set('lots-assigned', assigned); set('lots-pending', n - assigned);
+}
+
+function renderLotsList(){
+  var host = document.getElementById('lots-list'); if (!host) return;
+  renderLotsSummary();
+  var qEl = document.getElementById('lots-search');
+  var fEl = document.getElementById('lots-filter');
+  var q = ((qEl && qEl.value) || '').toLowerCase();
+  var f = (fEl && fEl.value) || '';
+  if (!_lotsData.length){
+    host.innerHTML = '<div style="text-align:center;color:#6a7a8a;padding:24px">Aucun lot pour l\'instant. Ajoutez les lots récoltés avec le formulaire ci-dessus.</div>';
+    return;
+  }
+  var list = _lotsData.filter(function(l){
+    if (f === 'pending' && l.attribue) return false;
+    if (f === 'assigned' && !l.attribue) return false;
+    if (q){
+      var hay = ((l.nom || '') + ' ' + (l.recoltePar || '') + ' ' + (l.destinataire || '') + ' ' + (l.notes || '')).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  }).sort(function(a, b){
+    return (a.attribue ? 1 : 0) - (b.attribue ? 1 : 0) || (b.createdAt || 0) - (a.createdAt || 0);
+  });
+  if (!list.length){
+    host.innerHTML = '<div style="text-align:center;color:#6a7a8a;padding:24px">Aucun lot pour ce filtre.</div>';
+    return;
+  }
+  host.innerHTML = list.map(lotCard).join('');
+}
+
+function lotCard(l){
+  var id = lotId(l);
+  var badge = l.attribue
+    ? '<span style="color:#00e676;border:1px solid rgba(0,230,118,.4);border-radius:999px;padding:2px 9px;font-size:11px;white-space:nowrap">✓ Attribué' + (l.destinataire ? ' → ' + escHtml(l.destinataire) : '') + '</span>'
+    : '<span style="color:#ffab40;border:1px solid rgba(255,171,64,.4);border-radius:999px;padding:2px 9px;font-size:11px;white-space:nowrap">À attribuer' + (l.destinataire ? ' (prévu : ' + escHtml(l.destinataire) + ')' : '') + '</span>';
+  var meta = [];
+  if (l.recoltePar) meta.push('Récolté par ' + escHtml(l.recoltePar));
+  if (l.notes) meta.push(escHtml(l.notes));
+  return '<div style="border:1px solid rgba(0,212,255,.15);background:#0f1420;border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">'
+    + '<div style="flex:1;min-width:220px">'
+      + '<div style="font-weight:700;color:#dce4f0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + escHtml(l.nom || 'Lot') + ' <span style="color:#f5c518">× ' + (Number(l.quantite) || 1) + '</span> ' + badge + '</div>'
+      + (meta.length ? '<div style="font-size:12.5px;color:#6a7a8a;margin-top:5px">' + meta.join('&nbsp;·&nbsp;') + '</div>' : '')
+    + '</div>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap">'
+      + '<button class="admin-btn admin-btn-secondary" style="padding:5px 10px;font-size:12px" onclick="editLot(\'' + id + '\')">✎ Modifier</button>'
+      + '<button class="admin-btn admin-btn-secondary" style="padding:5px 10px;font-size:12px" onclick="toggleLotAttribue(\'' + id + '\')">' + (l.attribue ? '↩ Retirer' : '✓ Attribuer') + '</button>'
+      + '<button class="admin-btn admin-btn-danger" style="padding:5px 10px;font-size:12px" onclick="deleteLot(\'' + id + '\')">🗑</button>'
+    + '</div>'
+  + '</div>';
+}
+
+function resetLotForm(){
+  _editingLotId = null;
+  ['lot-nom', 'lot-par', 'lot-notes', 'lot-dest'].forEach(function(id){ var e = document.getElementById(id); if (e) e.value = ''; });
+  var q = document.getElementById('lot-qte'); if (q) q.value = '1';
+  var a = document.getElementById('lot-attribue'); if (a) a.checked = false;
+  var t = document.getElementById('lot-form-title'); if (t) t.textContent = '➕ Ajouter un lot récolté';
+  var b = document.getElementById('lot-save-btn'); if (b) b.textContent = '➕ Ajouter à la liste';
+  var c = document.getElementById('lot-cancel-btn'); if (c) c.style.display = 'none';
+  var er = document.getElementById('lot-error'); if (er) er.textContent = '';
+  // Re-préremplir "récolté par" avec l'utilisateur courant
+  var pre = document.getElementById('lot-par');
+  var u = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  if (pre && u) pre.value = u.displayName || u.username || '';
+}
+
+function editLot(id){
+  var l = _lotsData.find(function(x){ return lotId(x) === id; }); if (!l) return;
+  _editingLotId = id;
+  var set = function(eid, v){ var e = document.getElementById(eid); if (e) e.value = v; };
+  set('lot-nom', l.nom || ''); set('lot-qte', l.quantite || 1); set('lot-par', l.recoltePar || '');
+  set('lot-notes', l.notes || ''); set('lot-dest', l.destinataire || '');
+  var a = document.getElementById('lot-attribue'); if (a) a.checked = !!l.attribue;
+  var t = document.getElementById('lot-form-title'); if (t) t.textContent = '✎ Modifier le lot';
+  var b = document.getElementById('lot-save-btn'); if (b) b.textContent = '💾 Enregistrer';
+  var c = document.getElementById('lot-cancel-btn'); if (c) c.style.display = '';
+  var er = document.getElementById('lot-error'); if (er) er.textContent = '';
+  try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){ window.scrollTo(0, 0); }
+}
+
+function saveLot(){
+  var er = document.getElementById('lot-error');
+  var nom = ((document.getElementById('lot-nom') || {}).value || '').trim();
+  var qte = parseInt((document.getElementById('lot-qte') || {}).value, 10) || 1;
+  var par = ((document.getElementById('lot-par') || {}).value || '').trim();
+  var notes = ((document.getElementById('lot-notes') || {}).value || '').trim();
+  var dest = ((document.getElementById('lot-dest') || {}).value || '').trim();
+  var attribue = !!(document.getElementById('lot-attribue') || {}).checked;
+  if (!nom){ if (er) er.textContent = '⚠ Le nom du lot est obligatoire.'; return; }
+  if (qte < 1) qte = 1;
+  if (!window.MC_DATA){ if (er) er.textContent = '⚠ Connexion cloud requise.'; return; }
+  if (er) er.textContent = '';
+  var u = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  var existing = _editingLotId ? _lotsData.find(function(x){ return lotId(x) === _editingLotId; }) : null;
+  var id = _editingLotId || ('L' + Date.now() + '-' + Math.random().toString(36).slice(2, 6));
+  var doc = {
+    id: id, nom: nom, quantite: qte, recoltePar: par, notes: notes,
+    destinataire: dest, attribue: attribue,
+    createdAt: (existing && existing.createdAt) || Date.now(),
+    createdBy: (existing && existing.createdBy) || (u ? (u.displayName || u.username) : ''),
+    updatedAt: Date.now()
+  };
+  MC_DATA.set('lots', id, doc).then(function(ok){
+    if (ok === false){ if (er) er.textContent = '⚠ Enregistrement refusé (permissions).'; return; }
+    if (typeof logAction === 'function') logAction(_editingLotId ? 'Lot modifié' : 'Lot ajouté', nom);
+    resetLotForm();
+    loadLots();
+  }).catch(function(e){ if (er) er.textContent = '⚠ Erreur : ' + (e && e.message || e); });
+}
+
+function toggleLotAttribue(id){
+  var l = _lotsData.find(function(x){ return lotId(x) === id; }); if (!l || !window.MC_DATA) return;
+  var doc = sanitizeLot(l);
+  doc.attribue = !l.attribue;
+  doc.updatedAt = Date.now();
+  MC_DATA.set('lots', id, doc).then(function(){
+    if (typeof logAction === 'function') logAction(doc.attribue ? 'Lot attribué' : 'Attribution retirée', l.nom);
+    loadLots();
+  });
+}
+
+function deleteLot(id){
+  var l = _lotsData.find(function(x){ return lotId(x) === id; }); if (!l) return;
+  var go = function(ok){
+    if (!ok || !window.MC_DATA) return;
+    MC_DATA.delete('lots', id).then(function(){
+      if (typeof logAction === 'function') logAction('Lot supprimé', l.nom);
+      loadLots();
+    });
+  };
+  if (typeof mcConfirm === 'function'){
+    mcConfirm('Supprimer le lot « ' + (l.nom || '') + ' » ?', { title: 'Supprimer le lot', okText: 'Supprimer' }).then(go);
+  } else { go(window.confirm('Supprimer ce lot ?')); }
+}
+
+// Chargement de la page Lots, robuste face au timing d'auth CEF
+(function(){
+  if (!document.body || document.body.dataset.page !== 'lots') return;
+  resetLotForm();
+  if (window.MC_FB && MC_FB.auth && MC_FB.auth.onAuthStateChanged){
+    MC_FB.auth.onAuthStateChanged(function(u){ if (u && !u.isAnonymous) loadLots(); });
+  }
+  if (window.MC_FB && MC_FB.ready && MC_FB.ready.then){ MC_FB.ready.then(function(){ loadLots(); }); }
+  else { loadLots(); }
 })();
 
 // ----- Import / gestion de la banque (super-admin uniquement) -----
